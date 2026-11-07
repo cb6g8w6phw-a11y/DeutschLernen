@@ -31,6 +31,8 @@ struct QuizView: View {
             }
             .padding()
             .navigationTitle("Nauka")
+            .containerBackground(for: .navigation) { NightGlow() }
+            .toolbarBackground(.hidden, for: .navigationBar)
         }
     }
 
@@ -41,7 +43,9 @@ struct QuizView: View {
             Text("Opanowane: \(store.masteredCount) · W nauce: \(store.learningCount) · Nowe: \(store.newCount)")
                 .font(.subheadline).foregroundStyle(.secondary)
             Button("Zacznij sesję") { start() }
-                .buttonStyle(.borderedProminent).controlSize(.large)
+                .buttonStyle(.glassProminent)
+                .tint(Ink.brass)
+                .controlSize(.large)
             Spacer()
         }
     }
@@ -53,9 +57,10 @@ struct QuizView: View {
             VStack(spacing: 16) {
                 Text("\(min(index + 1, queue.count)) / \(queue.count)")
                     .font(.caption).foregroundStyle(.secondary)
-                Text(w.topic).font(.caption).padding(6)
-                    .background(.thinMaterial, in: Capsule())
+                Text(w.topic).font(.caption).padding(.horizontal, 10).padding(.vertical, 6)
+                    .liquidGlass(radius: 20)
                 Text(prompt).font(.largeTitle.bold()).multilineTextAlignment(.center)
+                    .padding(.vertical, 8)
                 Text(typing ? "Wpisz po niemiecku" : (deToPl ? "Wybierz tłumaczenie" : "Wybierz po niemiecku"))
                     .font(.footnote).foregroundStyle(.secondary)
 
@@ -68,14 +73,15 @@ struct QuizView: View {
                         .onSubmit { if !answered { finish(Normalizer.same(typed, w.de), w) } }
                     if !answered {
                         Button("Sprawdź") { finish(Normalizer.same(typed, w.de), w) }
-                            .buttonStyle(.borderedProminent)
+                            .buttonStyle(.glassProminent)
+                            .tint(Ink.brass)
                     }
                 } else {
                     ForEach(options, id: \.self) { opt in
                         Button { choose(opt, expected: expected, w: w) } label: {
                             Text(opt).frame(maxWidth: .infinity).padding(.vertical, 6)
                         }
-                        .buttonStyle(.bordered)
+                        .buttonStyle(.glass)
                         .tint(color(for: opt, expected: expected))
                     }
                 }
@@ -87,7 +93,7 @@ struct QuizView: View {
                         Text(w.ex).italic()
                         Text(w.exPl).font(.footnote).foregroundStyle(.secondary)
                     }
-                    Button("Dalej") { next() }.buttonStyle(.borderedProminent)
+                    Button("Dalej") { next() }.buttonStyle(.glassProminent).tint(Ink.brass)
                 }
             }
         }
@@ -98,7 +104,7 @@ struct QuizView: View {
             Spacer()
             Text("Koniec sesji").font(.title.bold())
             Text("Poprawne odpowiedzi: \(score)")
-            Button("Następna sesja") { start() }.buttonStyle(.borderedProminent)
+            Button("Następna sesja") { start() }.buttonStyle(.glassProminent).tint(Ink.brass)
             Text("Chcesz nowe słówka dopasowane do twoich błędów? Zakładka Postępy → Lekcja od AI.")
                 .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
             Spacer()
@@ -108,9 +114,9 @@ struct QuizView: View {
     // MARK: logika
 
     private func color(for opt: String, expected: String) -> Color {
-        guard answered else { return .accentColor }
-        if opt == expected { return .green }
-        if opt == picked { return .red }
+        guard answered else { return Ink.brass }
+        if opt == expected { return Ink.pine }
+        if opt == picked { return Ink.clay }
         return .gray
     }
 

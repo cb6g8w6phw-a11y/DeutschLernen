@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ChatMsg: Identifiable {
     let id = UUID()
-    let role: String   // "user" / "model"
+    let role: String
     let text: String
 }
 
@@ -17,16 +17,21 @@ struct ChatView: View {
             VStack(spacing: 0) {
                 ScrollViewReader { proxy in
                     ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 10) {
+                        LazyVStack(alignment: .leading, spacing: 12) {
                             if messages.isEmpty {
-                                Text("Napisz coś po niemiecku (albo po polsku). Poprawię błędy i dopasuję rozmowę do twoich postępów. Np.: „Chcę umówić wizytę u lekarza.”")
-                                    .foregroundStyle(.secondary).padding()
+                                Text("Napisz po niemiecku albo po polsku. Poprawię i dopasuję rozmowę do tego, co już umiesz. Na przykład: idę do lekarza, boli mnie nos.")
+                                    .foregroundStyle(.secondary)
+                                    .padding(16)
+                                    .liquidGlass(radius: 22)
                             }
                             ForEach(messages) { m in
                                 Text(m.text)
-                                    .padding(10)
-                                    .background(m.role == "user" ? Color.accentColor.opacity(0.2) : Color.gray.opacity(0.15),
-                                                in: RoundedRectangle(cornerRadius: 12))
+                                    .foregroundStyle(.primary)
+                                    .padding(14)
+                                    .liquidGlass(
+                                        radius: 22,
+                                        tint: m.role == "user" ? Ink.brass.opacity(0.45) : nil
+                                    )
                                     .frame(maxWidth: .infinity, alignment: m.role == "user" ? .trailing : .leading)
                                     .id(m.id)
                             }
@@ -34,24 +39,34 @@ struct ChatView: View {
                         }
                         .padding()
                     }
-                    .onChange(of: messages.count) { _ in
+                    .onChange(of: messages.count) { _, _ in
                         if let last = messages.last { proxy.scrollTo(last.id, anchor: .bottom) }
                     }
                 }
-                HStack {
+                HStack(spacing: 10) {
                     TextField("Wiadomość…", text: $input, axis: .vertical)
-                        .textFieldStyle(.roundedBorder)
                         .lineLimit(1...4)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
                     Button { Task { await send() } } label: {
                         Image(systemName: "paperplane.fill")
+                            .frame(width: 44, height: 44)
                     }
+                    .buttonStyle(.glassProminent)
+                    .tint(Ink.brass)
                     .disabled(loading || input.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
-                .padding()
+                .padding(10)
+                .liquidGlass(radius: 28, interactive: true)
+                .padding(.horizontal)
+                .padding(.bottom, 8)
             }
-            .navigationTitle("Czat AI")
+            .navigationTitle("Czat")
+            .containerBackground(for: .navigation) { NightGlow() }
+            .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 Button("Wyczyść") { messages = [] }
+                    .buttonStyle(.glass)
             }
         }
     }
@@ -64,6 +79,7 @@ struct ChatView: View {
         - Jeśli użytkownik zrobi błąd, pokaż poprawną wersję i wyjaśnij w 1–2 zdaniach po polsku dlaczego.
         - Nie tłumacz bardzo prostych słów (powitania itp.). Wprowadzaj 2–3 nowe, przydatne słowa na odpowiedź.
         - Prowadź rozmowę dalej krótkim pytaniem po niemiecku.
+        - Nie używaj markdownu ani gwiazdek.
         - Dopasuj temat i trudność do postępów ucznia:
         \(store.progressSummary())
         """
@@ -81,7 +97,7 @@ struct ChatView: View {
             let reply = try await Gemini.send(messages: history, system: systemPrompt())
             messages.append(ChatMsg(role: "model", text: reply))
         } catch {
-            messages.append(ChatMsg(role: "model", text: "⚠️ \(error.localizedDescription)"))
+            messages.append(ChatMsg(role: "model", text: error.localizedDescription))
         }
     }
 }

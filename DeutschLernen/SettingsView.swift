@@ -20,6 +20,8 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Ustawienia")
+            .scrollContentBackground(.hidden)
+            .containerBackground(for: .navigation) { NightGlow() }
             .confirmationDialog("Na pewno?", isPresented: $confirmReset) {
                 Button("Resetuj", role: .destructive) { store.reset() }
             }

@@ -8,7 +8,10 @@ enum GeminiError: LocalizedError {
         switch self {
         case .noKey: return "Brak klucza API. Wejdź w Ustawienia i wklej darmowy klucz Gemini."
         case .badResponse: return "Nieprawidłowa odpowiedź z Gemini."
-        case .http(let code, let body): return "Błąd Gemini (\(code)): \(body.prefix(200))"
+        case .http(let code, _):
+            if code == 404 { return "Ten model Gemini już nie działa. Zainstaluj nową wersję aplikacji." }
+            if code == 400 || code == 403 { return "Gemini odrzuciło klucz (\(code)). Wklej go jeszcze raz w Ustawieniach." }
+            return "Gemini nie odpowiedziało (\(code)). Spróbuj za chwilę."
         }
     }
 }
@@ -19,7 +22,7 @@ struct GeminiMessage {
 }
 
 enum Gemini {
-    static let model = "gemini-2.5-flash"
+    static let model = "gemini-3.8-flash"
 
     private struct Resp: Decodable {
         struct Cand: Decodable {

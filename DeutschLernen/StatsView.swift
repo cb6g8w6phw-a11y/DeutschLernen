@@ -49,6 +49,8 @@ struct StatsView: View {
                 }
             }
             .navigationTitle("Postępy")
+            .scrollContentBackground(.hidden)
+            .containerBackground(for: .navigation) { NightGlow() }
         }
     }
 
