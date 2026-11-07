@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 enum GeminiError: LocalizedError {
     case noKey, badResponse
