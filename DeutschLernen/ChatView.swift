@@ -35,7 +35,11 @@ struct ChatView: View {
                                     .frame(maxWidth: .infinity, alignment: m.role == "user" ? .trailing : .leading)
                                     .id(m.id)
                             }
-                            if loading { ProgressView().padding() }
+                            if loading {
+                                Text("Łączę… jeśli klucz jest zły, za chwilę zobaczysz błąd.")
+                                    .font(.footnote).foregroundStyle(.secondary)
+                                ProgressView().padding()
+                            }
                         }
                         .padding()
                     }

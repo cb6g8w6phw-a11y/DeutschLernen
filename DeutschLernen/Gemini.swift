@@ -10,11 +10,12 @@ enum GeminiError: LocalizedError {
         case .noKey:
             return "Brak klucza. Ustawienia → darmowy klucz Groq (console.groq.com/keys). Karta nie jest potrzebna."
         case .badResponse: return "Pusta odpowiedź. Spróbuj jeszcze raz."
-        case .http(let code, _):
-            if code == 401 || code == 403 { return "Klucz odrzucony (\(code)). Wklej go jeszcze raz w Ustawieniach." }
-            if code == 429 { return "Za dużo pytań na darmowym limicie. Odczekaj minutę." }
-            if code == 503 || code == 502 { return "Serwis chwilowo nie działa (\(code)). Spróbuj za chwilę albo drugi klucz w Ustawieniach." }
-            return "Serwis nie odpowiedział (\(code))."
+        case .http(let code, let detail):
+            let extra = detail.isEmpty ? "" : " \(detail)"
+            if code == 401 || code == 403 { return "Klucz odrzucony (\(code)). Groq zaczyna się od gsk_, Gemini od AIza. Wklej w odpowiednie pole.\(extra)" }
+            if code == 429 { return "Limit darmowych pytań. Odczekaj minutę.\(extra)" }
+            if code == 503 || code == 502 { return "Serwis chwilowo leży (\(code)).\(extra)" }
+            return "Serwis nie odpowiedział (\(code)).\(extra)"
         }
     }
 }
@@ -26,27 +27,31 @@ struct GeminiMessage {
 
 enum Gemini {
     static func send(messages: [GeminiMessage], system: String, json: Bool = false) async throws -> String {
-        let groq = stored("groqKey")
-        let gemini = stored("geminiKey")
-        guard !groq.isEmpty || !gemini.isEmpty else { throw GeminiError.noKey }
+        let keys = resolved()
+        guard !keys.groq.isEmpty || !keys.gemini.isEmpty else { throw GeminiError.noKey }
 
         var last: Error = GeminiError.badResponse
-        if !groq.isEmpty {
-            for model in ["openai/gpt-oss-20b", "llama-3.1-8b-instant"] {
-                do { return try await groqSend(model: model, messages: messages, system: system) }
+        if !keys.groq.isEmpty {
+            for model in ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"] {
+                do { return try await groqSend(key: keys.groq, model: model, messages: messages, system: system) }
                 catch { last = error }
             }
         }
-        if !gemini.isEmpty {
-            for model in ["gemini-3.8-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash"] {
-                do { return try await geminiSend(model: model, messages: messages, system: system, json: json) }
-                catch let error as GeminiError {
-                    last = error
-                    if case .http(let code, _) = error, code == 401 || code == 403 { throw error }
-                } catch { last = error }
+        if !keys.gemini.isEmpty {
+            for model in ["gemini-2.0-flash", "gemini-3.8-flash"] {
+                do { return try await geminiSend(key: keys.gemini, model: model, messages: messages, system: system, json: json) }
+                catch { last = error }
             }
         }
         throw last
+    }
+
+    private static func resolved() -> (groq: String, gemini: String) {
+        var groq = stored("groqKey")
+        var gemini = stored("geminiKey")
+        if groq.hasPrefix("AIza"), gemini.isEmpty { gemini = groq; groq = "" }
+        if gemini.hasPrefix("gsk_"), groq.isEmpty { groq = gemini; gemini = "" }
+        return (groq, gemini)
     }
 
     private static func stored(_ name: String) -> String {
@@ -54,11 +59,10 @@ enum Gemini {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private static func groqSend(model: String, messages: [GeminiMessage], system: String) async throws -> String {
-        let key = stored("groqKey")
+    private static func groqSend(key: String, model: String, messages: [GeminiMessage], system: String) async throws -> String {
         var req = URLRequest(url: URL(string: "https://api.groq.com/openai/v1/chat/completions")!)
         req.httpMethod = "POST"
-        req.timeoutInterval = 60
+        req.timeoutInterval = 20
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
         var chat: [[String: String]] = [["role": "system", "content": system]]
@@ -68,15 +72,26 @@ enum Gemini {
             "messages": chat,
             "temperature": 0.4
         ])
-        return try await text(from: req, path: ["choices", 0, "message", "content"] as [Any])
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse else { throw GeminiError.badResponse }
+        guard http.statusCode == 200 else {
+            throw GeminiError.http(http.statusCode, "Groq/\(model): \(snippet(data))")
+        }
+        guard let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let choices = obj["choices"] as? [[String: Any]],
+              let message = choices.first?["message"] as? [String: Any] else { throw GeminiError.badResponse }
+        let content = (message["content"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !content.isEmpty { return content }
+        let reasoning = (message["reasoning"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !reasoning.isEmpty else { throw GeminiError.badResponse }
+        return reasoning
     }
 
-    private static func geminiSend(model: String, messages: [GeminiMessage], system: String, json: Bool) async throws -> String {
-        let key = stored("geminiKey")
+    private static func geminiSend(key: String, model: String, messages: [GeminiMessage], system: String, json: Bool) async throws -> String {
         let endpoint = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
         var req = URLRequest(url: URL(string: endpoint)!)
         req.httpMethod = "POST"
-        req.timeoutInterval = 45
+        req.timeoutInterval = 18
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue(key, forHTTPHeaderField: "x-goog-api-key")
         var body: [String: Any] = [
@@ -89,7 +104,7 @@ enum Gemini {
         let (data, resp) = try await URLSession.shared.data(for: req)
         guard let http = resp as? HTTPURLResponse else { throw GeminiError.badResponse }
         guard http.statusCode == 200 else {
-            throw GeminiError.http(http.statusCode, String(data: data, encoding: .utf8) ?? "")
+            throw GeminiError.http(http.statusCode, "Gemini/\(model): \(snippet(data))")
         }
         struct Resp: Decodable {
             struct Cand: Decodable {
@@ -107,22 +122,13 @@ enum Gemini {
         return text
     }
 
-    private static func text(from req: URLRequest, path: [Any]) async throws -> String {
-        let (data, resp) = try await URLSession.shared.data(for: req)
-        guard let http = resp as? HTTPURLResponse else { throw GeminiError.badResponse }
-        guard http.statusCode == 200 else {
-            throw GeminiError.http(http.statusCode, String(data: data, encoding: .utf8) ?? "")
+    private static func snippet(_ data: Data) -> String {
+        guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return String((String(data: data, encoding: .utf8) ?? "").prefix(90))
         }
-        let obj = try JSONSerialization.jsonObject(with: data)
-        var cur: Any = obj
-        for key in path {
-            if let s = key as? String, let d = cur as? [String: Any] { cur = d[s] ?? "" }
-            else if let i = key as? Int, let a = cur as? [Any], a.indices.contains(i) { cur = a[i] }
-            else { throw GeminiError.badResponse }
-        }
-        let text = (cur as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        guard !text.isEmpty else { throw GeminiError.badResponse }
-        return text
+        if let err = obj["error"] as? [String: Any], let m = err["message"] as? String { return String(m.prefix(110)) }
+        if let err = obj["error"] as? String { return String(err.prefix(110)) }
+        return ""
     }
 }
 

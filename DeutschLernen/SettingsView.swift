@@ -5,6 +5,8 @@ struct SettingsView: View {
     @AppStorage("groqKey") private var groq = ""
     @AppStorage("geminiKey") private var gemini = ""
     @State private var confirmReset = false
+    @State private var testing = false
+    @State private var testNote = ""
 
     var body: some View {
         NavigationStack {
@@ -32,6 +34,17 @@ struct SettingsView: View {
                     Text("Gemini — zapas")
                 }
                 Section {
+                    Button {
+                        Task { await ping() }
+                    } label: {
+                        if testing { ProgressView() } else { Text("Sprawdź klucz") }
+                    }
+                    .disabled(testing)
+                    if !testNote.isEmpty {
+                        Text(testNote).font(.footnote)
+                    }
+                }
+                Section {
                     Button("Zresetuj postępy i słówka", role: .destructive) { confirmReset = true }
                 }
             }
@@ -48,6 +61,20 @@ struct SettingsView: View {
             .confirmationDialog("Na pewno?", isPresented: $confirmReset) {
                 Button("Resetuj", role: .destructive) { store.reset() }
             }
+        }
+    }
+
+    private func ping() async {
+        testing = true
+        testNote = "Łączę…"
+        defer { testing = false }
+        do {
+            let reply = try await Gemini.send(
+                messages: [GeminiMessage(role: "user", text: "Napisz dokładnie: OK")],
+                system: "Odpowiedz dokładnie jednym słowem: OK")
+            testNote = "Działa. Odpowiedź: \(reply.prefix(80))"
+        } catch {
+            testNote = error.localizedDescription
         }
     }
 }

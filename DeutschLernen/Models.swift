@@ -4,9 +4,43 @@ struct Word: Identifiable, Codable, Hashable {
     var id: String { de }
     let de: String
     let pl: String
-    let ex: String     // przykład po niemiecku
-    let exPl: String   // tłumaczenie przykładu
+    let ex: String
+    let exPl: String
     let topic: String
+    var level: String
+
+    init(de: String, pl: String, ex: String, exPl: String, topic: String, level: String = "A2") {
+        self.de = de
+        self.pl = pl
+        self.ex = ex
+        self.exPl = exPl
+        self.topic = topic
+        self.level = level
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case de, pl, ex, exPl, topic, level
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        de = try c.decode(String.self, forKey: .de)
+        pl = try c.decode(String.self, forKey: .pl)
+        ex = try c.decode(String.self, forKey: .ex)
+        exPl = try c.decode(String.self, forKey: .exPl)
+        topic = try c.decode(String.self, forKey: .topic)
+        level = try c.decodeIfPresent(String.self, forKey: .level) ?? "A2"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(de, forKey: .de)
+        try c.encode(pl, forKey: .pl)
+        try c.encode(ex, forKey: .ex)
+        try c.encode(exPl, forKey: .exPl)
+        try c.encode(topic, forKey: .topic)
+        try c.encode(level, forKey: .level)
+    }
 }
 
 struct WordStat: Codable {
@@ -51,6 +85,12 @@ final class LearningStore: ObservableObject {
            let saved = try? JSONDecoder().decode(Saved.self, from: data) {
             words = saved.words
             stats = saved.stats
+            let known = Set(words.map { Normalizer.clean($0.de) })
+            let extra = SeedContent.words.filter { !known.contains(Normalizer.clean($0.de)) }
+            if !extra.isEmpty {
+                words += extra
+                save()
+            }
         } else {
             words = SeedContent.words
             stats = [:]
@@ -82,9 +122,15 @@ final class LearningStore: ObservableObject {
     }
 
     /// Sesja: najpierw słabe/zaległe powtórki, potem kilka nowych słówek.
-    func nextSession(size: Int = 10, maxNew: Int = 4) -> [Word] {
+    func nextSession(size: Int = 8, maxNew: Int = 4, level: String = "oba") -> [Word] {
+        let pool: [Word]
+        switch level {
+        case "A1": pool = words.filter { $0.level == "A1" }
+        case "A2": pool = words.filter { $0.level == "A2" }
+        default: pool = words
+        }
         let now = Date()
-        let reviews = words.filter { w in
+        let reviews = pool.filter { w in
             if let s = stats[w.de] { return s.due <= now }
             return false
         }.sorted { a, b in
@@ -92,7 +138,7 @@ final class LearningStore: ObservableObject {
             if sa.box != sb.box { return sa.box < sb.box }
             return sa.wrong > sb.wrong
         }
-        let fresh = words.filter { stats[$0.de] == nil }.shuffled()
+        let fresh = pool.filter { stats[$0.de] == nil }.shuffled()
         var out = Array(reviews.prefix(size))
         let room = max(0, size - out.count)
         out += fresh.prefix(min(room, maxNew + (reviews.isEmpty ? size : 0)))

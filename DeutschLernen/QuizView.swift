@@ -15,6 +15,8 @@ struct QuizView: View {
     @State private var typed = ""
     @State private var answered = false
     @State private var wasCorrect = false
+    @AppStorage("drill") private var drill = "slowa"
+    @AppStorage("band") private var band = "A1"
 
     private var current: Word? { index < queue.count ? queue[index] : nil }
 
@@ -33,6 +35,11 @@ struct QuizView: View {
             .navigationTitle("Nauka")
             .containerBackground(for: .navigation) { NightGlow() }
             .toolbarBackground(.hidden, for: .navigationBar)
+            .toolbar {
+                if started {
+                    Button("Wróć") { started = false }.buttonStyle(.glass)
+                }
+            }
         }
     }
 
@@ -42,6 +49,20 @@ struct QuizView: View {
             Text("Słówek w bazie: \(store.words.count)").font(.headline)
             Text("Opanowane: \(store.masteredCount) · W nauce: \(store.learningCount) · Nowe: \(store.newCount)")
                 .font(.subheadline).foregroundStyle(.secondary)
+            Picker("Poziom", selection: $band) {
+                Text("A1").tag("A1")
+                Text("A2").tag("A2")
+                Text("Oba").tag("oba")
+            }
+            .pickerStyle(.segmented)
+            Picker("Tryb", selection: $drill) {
+                Text("Słówka").tag("slowa")
+                Text("Zdania").tag("zdania")
+                Text("Luki").tag("luki")
+            }
+            .pickerStyle(.segmented)
+            Text(drillHint)
+                .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
             Button("Zacznij sesję") { start() }
                 .buttonStyle(.glassProminent)
                 .tint(Ink.brass)
@@ -51,17 +72,19 @@ struct QuizView: View {
     }
 
     private func questionScreen(_ w: Word) -> some View {
-        let prompt = typing ? w.pl : (deToPl ? w.de : w.pl)
-        let expected = typing ? w.de : (deToPl ? w.pl : w.de)
+        let prompt = promptText(w)
+        let expected = expectedText(w)
         return ScrollView {
             VStack(spacing: 16) {
                 Text("\(min(index + 1, queue.count)) / \(queue.count)")
                     .font(.caption).foregroundStyle(.secondary)
-                Text(w.topic).font(.caption).padding(.horizontal, 10).padding(.vertical, 6)
+                Text("\(w.level) · \(w.topic)").font(.caption).padding(.horizontal, 10).padding(.vertical, 6)
                     .liquidGlass(radius: 20)
-                Text(prompt).font(.largeTitle.bold()).multilineTextAlignment(.center)
+                Text(prompt)
+                    .font(drill == "slowa" ? .largeTitle.bold() : .title3.bold())
+                    .multilineTextAlignment(.center)
                     .padding(.vertical, 8)
-                Text(typing ? "Wpisz po niemiecku" : (deToPl ? "Wybierz tłumaczenie" : "Wybierz po niemiecku"))
+                Text(hint)
                     .font(.footnote).foregroundStyle(.secondary)
 
                 if typing {
@@ -70,9 +93,9 @@ struct QuizView: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .disabled(answered)
-                        .onSubmit { if !answered { finish(Normalizer.same(typed, w.de), w) } }
+                        .onSubmit { if !answered { finish(Normalizer.same(typed, expected), w) } }
                     if !answered {
-                        Button("Sprawdź") { finish(Normalizer.same(typed, w.de), w) }
+                        Button("Sprawdź") { finish(Normalizer.same(typed, expected), w) }
                             .buttonStyle(.glassProminent)
                             .tint(Ink.brass)
                     }
@@ -113,6 +136,58 @@ struct QuizView: View {
 
     // MARK: logika
 
+    private var drillHint: String {
+        switch drill {
+        case "zdania": return "Widzisz polskie zdanie. Wybierz, jak to powiedzieć po niemiecku."
+        case "luki": return "W zdaniu brakuje słowa. Wybierz to, które pasuje."
+        default: return "Słówka i krótkie zwroty z życia i z pracy. Bez „dzień dobry”."
+        }
+    }
+
+    private var hint: String {
+        if typing { return "Wpisz po niemiecku" }
+        switch drill {
+        case "zdania": return "Wybierz zdanie po niemiecku"
+        case "luki": return "Uzupełnij lukę"
+        default: return deToPl ? "Wybierz tłumaczenie" : "Wybierz po niemiecku"
+        }
+    }
+
+    private func promptText(_ w: Word) -> String {
+        switch drill {
+        case "zdania": return w.exPl
+        case "luki": return cloze(w)
+        default: return typing ? w.pl : (deToPl ? w.de : w.pl)
+        }
+    }
+
+    private func expectedText(_ w: Word) -> String {
+        switch drill {
+        case "zdania": return w.ex
+        case "luki", "slowa": return typing ? w.de : (drill == "luki" ? w.de : (deToPl ? w.pl : w.de))
+        default: return w.de
+        }
+    }
+
+    private func cloze(_ w: Word) -> String {
+        var token = w.de
+        for a in ["der ", "die ", "das ", "sich "] where token.lowercased().hasPrefix(a) {
+            token = String(token.dropFirst(a.count))
+        }
+        if let r = w.ex.range(of: token) {
+            return w.ex.replacingCharacters(in: r, with: "______")
+        }
+        return "______  ·  \(w.exPl)"
+    }
+
+    private func choice(_ item: Word) -> String {
+        switch drill {
+        case "zdania": return item.ex
+        case "luki": return item.de
+        default: return deToPl ? item.pl : item.de
+        }
+    }
+
     private func color(for opt: String, expected: String) -> Color {
         guard answered else { return Ink.brass }
         if opt == expected { return Ink.pine }
@@ -121,7 +196,7 @@ struct QuizView: View {
     }
 
     private func start() {
-        queue = store.nextSession()
+        queue = store.nextSession(level: band)
         index = 0
         score = 0
         started = true
@@ -133,13 +208,13 @@ struct QuizView: View {
         picked = nil
         typed = ""
         guard let w = current else { return }
-        typing = (store.stats[w.de]?.box ?? 0) >= 2
+        typing = drill == "slowa" && (store.stats[w.de]?.box ?? 0) >= 2
         deToPl = Bool.random()
-        let pool = store.words.filter { $0.de != w.de }
+        let pool = store.words.filter { $0.de != w.de && (band == "oba" || $0.level == band) }
         let same = pool.filter { $0.topic == w.topic }.shuffled()
         let rest = pool.filter { $0.topic != w.topic }.shuffled()
         let distractors = Array((same + rest).prefix(3))
-        options = ([w] + distractors).shuffled().map { deToPl ? $0.pl : $0.de }
+        options = ([w] + distractors).shuffled().map { choice($0) }
     }
 
     private func choose(_ opt: String, expected: String, w: Word) {

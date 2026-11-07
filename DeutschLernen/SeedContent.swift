@@ -1,8 +1,8 @@
 import Foundation
 
 enum SeedContent {
-    private static func w(_ de: String, _ pl: String, _ ex: String, _ exPl: String, _ topic: String) -> Word {
-        Word(de: de, pl: pl, ex: ex, exPl: exPl, topic: topic)
+    private static func w(_ de: String, _ pl: String, _ ex: String, _ exPl: String, _ topic: String, _ level: String = "A2") -> Word {
+        Word(de: de, pl: pl, ex: ex, exPl: exPl, topic: topic, level: level)
     }
 
     static let words: [Word] = [
@@ -101,6 +101,75 @@ enum SeedContent {
         w("leider", "niestety", "Leider habe ich keine Zeit.", "Niestety nie mam czasu.", "Komunikacja"),
         w("verstehen", "rozumieć", "Ich verstehe das Wort nicht.", "Nie rozumiem tego słowa.", "Komunikacja"),
         w("sich verabreden", "umówić się", "Wir verabreden uns am Samstag.", "Umawiamy się na sobotę.", "Komunikacja"),
-        w("vereinbaren", "uzgodnić, umówić", "Wir vereinbaren einen neuen Termin.", "Uzgadniamy nowy termin.", "Komunikacja")
+        w("vereinbaren", "uzgodnić, umówić", "Wir vereinbaren einen neuen Termin.", "Uzgadniamy nowy termin.", "Komunikacja"),
+
+        // A1 — to, co naprawdę słychać na co dzień
+        w("ich brauche", "potrzebuję", "Ich brauche Hilfe.", "Potrzebuję pomocy.", "Na co dzień", "A1"),
+        w("ich möchte", "chcę", "Ich möchte Wasser.", "Chcę wodę.", "Na co dzień", "A1"),
+        w("ich hätte gern", "poprosiłbym", "Ich hätte gern ein Brot.", "Poprosiłbym chleb.", "Sklep", "A1"),
+        w("wo ist", "gdzie jest", "Wo ist der Ausgang?", "Gdzie jest wyjście?", "Na co dzień", "A1"),
+        w("wie viel kostet", "ile kosztuje", "Wie viel kostet das?", "Ile to kosztuje?", "Sklep", "A1"),
+        w("ich verstehe nicht", "nie rozumiem", "Ich verstehe das nicht.", "Nie rozumiem tego.", "Na co dzień", "A1"),
+        w("noch einmal", "jeszcze raz", "Können Sie das noch einmal sagen?", "Może pan to powiedzieć jeszcze raz?", "Na co dzień", "A1"),
+        w("wie bitte", "słucham, proszę?", "Wie bitte? Ich habe Sie nicht verstanden.", "Słucham? Nie zrozumiałem pana.", "Na co dzień", "A1"),
+        w("links", "w lewo", "Gehen Sie links.", "Proszę iść w lewo.", "Dojazd", "A1"),
+        w("rechts", "w prawo", "Dann rechts.", "Potem w prawo.", "Dojazd", "A1"),
+        w("geradeaus", "prosto", "Gehen Sie geradeaus.", "Proszę iść prosto.", "Dojazd", "A1"),
+        w("der Eingang", "wejście", "Der Eingang ist dort.", "Wejście jest tam.", "Na co dzień", "A1"),
+        w("der Ausgang", "wyjście", "Wo ist der Ausgang?", "Gdzie jest wyjście?", "Na co dzień", "A1"),
+        w("die Toilette", "toaleta", "Wo ist die Toilette?", "Gdzie jest toaleta?", "Na co dzień", "A1"),
+        w("geöffnet", "otwarte", "Ist der Laden geöffnet?", "Czy sklep jest otwarty?", "Sklep", "A1"),
+        w("geschlossen", "zamknięte", "Heute ist geschlossen.", "Dziś zamknięte.", "Sklep", "A1"),
+        w("besetzt", "zajęte", "Die Toilette ist besetzt.", "Toaleta jest zajęta.", "Na co dzień", "A1"),
+        w("mit Karte", "kartą", "Ich zahle mit Karte.", "Płacę kartą.", "Sklep", "A1"),
+        w("in bar", "gotówką", "Ich zahle in bar.", "Płacę gotówką.", "Sklep", "A1"),
+        w("zu teuer", "za drogo", "Das ist mir zu teuer.", "To dla mnie za drogo.", "Sklep", "A1"),
+        w("die Rechnung", "rachunek", "Die Rechnung, bitte.", "Poproszę rachunek.", "Sklep", "A1"),
+        w("ich bin krank", "jestem chory", "Ich bin heute krank.", "Dziś jestem chory.", "Zdrowie", "A1"),
+        w("ich habe Schmerzen", "boli mnie", "Ich habe Schmerzen im Rücken.", "Boli mnie w plecach.", "Zdrowie", "A1"),
+        w("ich habe Hunger", "jestem głodny", "Ich habe Hunger.", "Jestem głodny.", "Na co dzień", "A1"),
+        w("ich komme zu spät", "spóźnię się", "Ich komme heute zu spät.", "Dziś się spóźnię.", "Praca", "A1"),
+        w("die Pause", "przerwa", "Wann ist die Pause?", "Kiedy jest przerwa?", "Praca", "A1"),
+        w("der Chef", "szef", "Der Chef ist im Büro.", "Szef jest w biurze.", "Praca", "A1"),
+        w("ich bin fertig", "skończyłem", "Ich bin fertig.", "Skończyłem.", "Praca", "A1"),
+        w("jetzt", "teraz", "Ich mache das jetzt.", "Robię to teraz.", "Na co dzień", "A1"),
+        w("später", "później", "Ich komme später.", "Przyjdę później.", "Na co dzień", "A1"),
+        w("heute", "dzisiaj", "Ich arbeite heute.", "Dziś pracuję.", "Praca", "A1"),
+        w("morgen", "jutro", "Ich komme morgen.", "Przyjdę jutro.", "Praca", "A1"),
+        w("die Adresse", "adres", "Wie ist die Adresse?", "Jaki jest adres?", "Na co dzień", "A1"),
+        w("die Telefonnummer", "numer telefonu", "Wie ist Ihre Telefonnummer?", "Jaki jest pana numer?", "Na co dzień", "A1"),
+        w("ich weiß nicht", "nie wiem", "Ich weiß es nicht.", "Nie wiem.", "Na co dzień", "A1"),
+        w("einen Moment", "chwilkę", "Einen Moment, bitte.", "Chwilkę, proszę.", "Na co dzień", "A1"),
+        w("kein Problem", "nie ma sprawy", "Kein Problem.", "Nie ma sprawy.", "Na co dzień", "A1"),
+        w("der Bus", "autobus", "Welcher Bus fährt zum Lager?", "Który autobus jedzie do magazynu?", "Dojazd", "A1"),
+        w("die U-Bahn", "metro", "Die U-Bahn kommt in fünf Minuten.", "Metro będzie za pięć minut.", "Dojazd", "A1"),
+        w("haben Sie", "czy ma pan/pani", "Haben Sie das in Größe L?", "Czy ma pan to w rozmiarze L?", "Sklep", "A1"),
+
+        // A2 — sytuacje, nie pojedyncze słówka z podręcznika
+        w("Könnten Sie das wiederholen?", "Mógłby pan to powtórzyć?", "Könnten Sie das bitte wiederholen?", "Mógłby pan to powtórzyć?", "Na co dzień", "A2"),
+        w("Ich würde gern einen Termin machen.", "Chciałbym umówić wizytę.", "Ich würde gern einen Termin beim Arzt machen.", "Chciałbym umówić się do lekarza.", "Zdrowie", "A2"),
+        w("Ich melde mich krank.", "Zgłaszam, że jestem chory.", "Ich melde mich heute krank.", "Dziś zgłaszam chorobę.", "Praca", "A2"),
+        w("Das geht leider nicht.", "Niestety tak się nie da.", "Das geht heute leider nicht.", "Dziś się niestety nie da.", "Praca", "A2"),
+        w("Ich bin damit nicht einverstanden.", "Nie zgadzam się z tym.", "Ich bin mit der Abrechnung nicht einverstanden.", "Nie zgadzam się z tym rozliczeniem.", "Praca", "A2"),
+        w("Wann passt es Ihnen?", "Kiedy panu pasuje?", "Wann passt es Ihnen am besten?", "Kiedy najbardziej panu pasuje?", "Na co dzień", "A2"),
+        w("Ich rufe Sie zurück.", "Oddzwonię do pana.", "Ich rufe Sie später zurück.", "Oddzwonię później.", "Na co dzień", "A2"),
+        w("Können Sie mir das aufschreiben?", "Może mi pan to zapisać?", "Können Sie mir die Adresse aufschreiben?", "Może pan zapisać mi adres?", "Na co dzień", "A2"),
+        w("Ich habe mich verfahren.", "Pomyliłem drogę.", "Ich habe mich verfahren. Wo ist das Lager?", "Źle pojechałem. Gdzie jest magazyn?", "Dojazd", "A2"),
+        w("Ich möchte das reklamieren.", "Chcę to zareklamować.", "Ich möchte die Ware reklamieren.", "Chcę zareklamować towar.", "Sklep", "A2"),
+        w("Ich habe das Paket nicht bekommen.", "Nie dostałem paczki.", "Ich habe das Paket nicht bekommen.", "Nie dostałem paczki.", "Sklep", "A2"),
+        w("Wo muss ich unterschreiben?", "Gdzie mam podpisać?", "Wo muss ich unterschreiben?", "Gdzie mam podpisać?", "Urzędy", "A2"),
+        w("Ich brauche eine Bescheinigung.", "Potrzebuję zaświadczenia.", "Ich brauche eine Bescheinigung vom Arzt.", "Potrzebuję zaświadczenia od lekarza.", "Zdrowie", "A2"),
+        w("Wer ist mein Ansprechpartner?", "Kto jest moją osobą do kontaktu?", "Wer ist mein Ansprechpartner in der Schicht?", "Kto jest moją osobą do kontaktu na zmianie?", "Praca", "A2"),
+        w("Ich habe eine Frage zur Abrechnung.", "Mam pytanie o rozliczenie.", "Ich habe eine Frage zur Abrechnung.", "Mam pytanie o rozliczenie.", "Praca", "A2"),
+        w("Das Gehalt ist noch nicht da.", "Wypłata jeszcze nie przyszła.", "Das Gehalt ist noch nicht auf dem Konto.", "Wypłaty jeszcze nie ma na koncie.", "Praca", "A2"),
+        w("Die Palette ist zu schwer.", "Paleta jest za ciężka.", "Die Palette ist zu schwer für eine Person.", "Paleta jest za ciężka dla jednej osoby.", "Magazyn", "A2"),
+        w("Ich brauche Arbeitsschuhe.", "Potrzebuję butów roboczych.", "Ich brauche neue Arbeitsschuhe.", "Potrzebuję nowych butów roboczych.", "Magazyn", "A2"),
+        w("Ich habe den Scanner nicht.", "Nie mam skanera.", "Ich habe keinen Handscanner.", "Nie mam skanera.", "Magazyn", "A2"),
+        w("Ich brauche eine Pause.", "Potrzebuję przerwy.", "Ich brauche eine kurze Pause.", "Potrzebuję krótkiej przerwy.", "Praca", "A2"),
+        w("Seit wann haben Sie Schmerzen?", "Od kiedy boli?", "Seit wann haben Sie die Schmerzen?", "Od kiedy ma pan ten ból?", "Zdrowie", "A2"),
+        w("Ich bin allergisch gegen", "jestem uczulony na", "Ich bin allergisch gegen Penicillin.", "Jestem uczulony na penicylinę.", "Zdrowie", "A2"),
+        w("Können Sie das liefern?", "Może pan to dostarczyć?", "Können Sie das morgen liefern?", "Może pan to dostarczyć jutro?", "Sklep", "A2"),
+        w("Ich ziehe nächsten Monat um.", "W przyszłym miesiącu się przeprowadzam.", "Ich ziehe nächsten Monat um.", "W przyszłym miesiącu się przeprowadzam.", "Mieszkanie", "A2"),
+        w("Die Heizung ist seit gestern kaputt.", "Ogrzewanie nie działa od wczoraj.", "Die Heizung ist seit gestern kaputt.", "Ogrzewanie nie działa od wczoraj.", "Mieszkanie", "A2")
     ]
 }
