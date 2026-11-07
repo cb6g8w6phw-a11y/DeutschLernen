@@ -17,8 +17,9 @@ struct RootView: View {
             NightGlow()
             TabView {
                 Tab("Nauka", systemImage: "book") { QuizView() }
-                Tab("Czat", systemImage: "bubble.left.and.bubble.right") { ChatView() }
-                Tab("Postęp", systemImage: "chart.bar") { StatsView() }
+                Tab("Sceny", systemImage: "person.2") { ScenesView() }
+                Tab("Życie", systemImage: "sparkles") { LifeView() }
+                Tab("Skan", systemImage: "camera") { ScanView() }
                 Tab("Ustawienia", systemImage: "gear") { SettingsView() }
             }
             .tint(Ink.brass)

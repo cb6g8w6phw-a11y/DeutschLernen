@@ -16,7 +16,11 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
-        MARKETING_VERSION: "1.3"
-        CURRENT_PROJECT_VERSION: "1"
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: "Mikrofon służy do mówienia po niemiecku i sprawdzania wymowy."
+        INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: "Rozpoznawanie mowy zamienia to, co mówisz, na tekst po niemiecku."
+        INFOPLIST_KEY_NSCameraUsageDescription: "Aparat skanuje niemieckie listy, instrukcje i tabliczki."
+        INFOPLIST_KEY_NSPhotoLibraryUsageDescription: "Zdjęcie z galerii można przetłumaczyć i dodać do powtórek."
+        MARKETING_VERSION: "1.4"
+        CURRENT_PROJECT_VERSION: "2"
         SWIFT_VERSION: "5.0"
         TARGETED_DEVICE_FAMILY: "1"

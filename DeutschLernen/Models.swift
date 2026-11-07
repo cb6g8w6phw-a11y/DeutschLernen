@@ -50,6 +50,8 @@ struct WordStat: Codable {
     var due: Date = .distantPast
 }
 
+enum Grade { case hard, mid, easy }
+
 enum Normalizer {
     static func clean(_ s: String) -> String {
         var t = s.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
@@ -117,6 +119,26 @@ final class LearningStore: ObservableObject {
         s.due = correct
             ? Calendar.current.date(byAdding: .day, value: days, to: Date()) ?? Date()
             : Date()
+        stats[w.de] = s
+        save()
+    }
+
+    func grade(_ w: Word, _ g: Grade) {
+        var s = stats[w.de] ?? WordStat()
+        switch g {
+        case .hard:
+            s.wrong += 1
+            s.box = 0
+            s.due = Date().addingTimeInterval(10 * 60)
+        case .mid:
+            s.correct += 1
+            s.box = min(s.box + 1, 4)
+            s.due = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+        case .easy:
+            s.correct += 1
+            s.box = min(max(s.box, 2) + 1, 5)
+            s.due = Calendar.current.date(byAdding: .day, value: 4, to: Date()) ?? Date()
+        }
         stats[w.de] = s
         save()
     }

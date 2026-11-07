@@ -116,7 +116,16 @@ struct QuizView: View {
                         Text(w.ex).italic()
                         Text(w.exPl).font(.footnote).foregroundStyle(.secondary)
                     }
-                    Button("Dalej") { next() }.buttonStyle(.glassProminent).tint(Ink.brass)
+                    Text("Kiedy powtórzyć?")
+                        .font(.caption).foregroundStyle(.secondary)
+                    HStack {
+                        Button("Trudne\n10 min") { apply(.hard, w) }
+                        Button("Średnie\n1 dzień") { apply(.mid, w) }
+                        Button("Łatwe\n4 dni") { apply(.easy, w) }
+                    }
+                    .buttonStyle(.glass)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
                 }
             }
         }
@@ -128,7 +137,9 @@ struct QuizView: View {
             Text("Koniec sesji").font(.title.bold())
             Text("Poprawne odpowiedzi: \(score)")
             Button("Następna sesja") { start() }.buttonStyle(.glassProminent).tint(Ink.brass)
-            Text("Chcesz nowe słówka dopasowane do twoich błędów? Zakładka Postępy → Lekcja od AI.")
+            NavigationLink("Postępy i lekcja od AI") { StatsView() }
+                .buttonStyle(.glass)
+            Text("Trudne wraca za 10 minut, średnie jutro, łatwe za 4 dni. Sesja bierze tylko to, co już czas powtórzyć.")
                 .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
             Spacer()
         }
@@ -226,8 +237,13 @@ struct QuizView: View {
     private func finish(_ ok: Bool, _ w: Word) {
         answered = true
         wasCorrect = ok
-        store.record(w, correct: ok)
-        if ok { score += 1 } else { queue.append(w) }  // błędne wraca na koniec sesji
+        if ok { score += 1 }
+    }
+
+    private func apply(_ g: Grade, _ w: Word) {
+        store.grade(w, g)
+        if g == .hard { queue.append(w) }
+        next()
     }
 
     private func next() {
