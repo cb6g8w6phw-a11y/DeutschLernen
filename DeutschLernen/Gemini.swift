@@ -13,7 +13,9 @@ enum GeminiError: LocalizedError {
         case .http(let code, let detail):
             let extra = detail.isEmpty ? "" : " \(detail)"
             if code == 401 || code == 403 { return "Klucz odrzucony (\(code)). Groq zaczyna się od gsk_, Gemini od AIza. Wklej w odpowiednie pole.\(extra)" }
-            if code == 429 { return "Limit darmowych pytań. Odczekaj minutę.\(extra)" }
+            if code == 408 { return "Groq nie zdążył odpowiedzieć. Stuknij wyślij jeszcze raz." }
+            if code == 404 { return "Ten model Groq został wyłączony. Wgraj najnowszą wersję aplikacji, sama wybierze działający." }
+            if code == 429 { return "Limit darmowych pytań. Odczekaj minutę." }
             if code == 503 || code == 502 { return "Serwis chwilowo leży (\(code)).\(extra)" }
             return "Serwis nie odpowiedział (\(code)).\(extra)"
         }
@@ -32,9 +34,18 @@ enum Gemini {
 
         var last: Error = GeminiError.badResponse
         if !keys.groq.isEmpty {
-            for model in ["llama-3.1-8b-instant", "llama-3.3-70b-versatile"] {
+            let listed = await groqModels(key: keys.groq)
+            let models = listed.isEmpty ? ["openai/gpt-oss-20b", "openai/gpt-oss-120b"] : listed
+            for model in models.prefix(2) {
                 do { return try await groqSend(key: keys.groq, model: model, messages: messages, system: system) }
-                catch { last = error }
+                catch let error as URLError where error.code == .timedOut {
+                    last = GeminiError.http(408, "Groq/\(model): czas minął, model myślał za długo.")
+                } catch {
+                    last = error
+                    if let g = error as? GeminiError, case .http(let code, _) = g, code == 401 || code == 403 {
+                        throw error
+                    }
+                }
             }
         }
         if !keys.gemini.isEmpty {
@@ -59,19 +70,41 @@ enum Gemini {
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private static func groqModels(key: String) async -> [String] {
+        var req = URLRequest(url: URL(string: "https://api.groq.com/openai/v1/models")!)
+        req.timeoutInterval = 10
+        req.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        guard let (data, resp) = try? await URLSession.shared.data(for: req),
+              (resp as? HTTPURLResponse)?.statusCode == 200,
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let rows = obj["data"] as? [[String: Any]] else { return [] }
+        let banned = ["whisper", "tts", "guard", "orpheus", "safeguard"]
+        let chat = rows.compactMap { $0["id"] as? String }.filter { id in
+            let low = id.lowercased()
+            return !banned.contains { low.contains($0) }
+        }
+        let prefer = ["openai/gpt-oss-20b", "openai/gpt-oss-120b"]
+        var ordered = prefer.filter { chat.contains($0) }
+        ordered += chat.filter { !ordered.contains($0) && !$0.contains("70b") && !$0.contains("3.1-8b") }
+        return ordered
+    }
+
     private static func groqSend(key: String, model: String, messages: [GeminiMessage], system: String) async throws -> String {
         var req = URLRequest(url: URL(string: "https://api.groq.com/openai/v1/chat/completions")!)
         req.httpMethod = "POST"
-        req.timeoutInterval = 20
+        req.timeoutInterval = 25
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
         var chat: [[String: String]] = [["role": "system", "content": system]]
         chat += messages.map { ["role": $0.role == "model" ? "assistant" : "user", "content": $0.text] }
-        req.httpBody = try JSONSerialization.data(withJSONObject: [
+        var body: [String: Any] = [
             "model": model,
             "messages": chat,
-            "temperature": 0.4
-        ])
+            "temperature": 0.4,
+            "max_tokens": 450
+        ]
+        if model.contains("gpt-oss") { body["reasoning_effort"] = "low" }
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
         let (data, resp) = try await URLSession.shared.data(for: req)
         guard let http = resp as? HTTPURLResponse else { throw GeminiError.badResponse }
         guard http.statusCode == 200 else {
