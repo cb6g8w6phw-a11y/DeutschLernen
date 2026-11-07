@@ -39,6 +39,7 @@ struct ChatView: View {
                         }
                         .padding()
                     }
+                    .scrollDismissesKeyboard(.interactively)
                     .onChange(of: messages.count) { _, _ in
                         if let last = messages.last { proxy.scrollTo(last.id, anchor: .bottom) }
                     }
@@ -46,8 +47,15 @@ struct ChatView: View {
                 HStack(spacing: 10) {
                     TextField("Wiadomość…", text: $input, axis: .vertical)
                         .lineLimit(1...4)
+                        .submitLabel(.send)
+                        .onSubmit { Task { await send() } }
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
+                    Button { Keyboard.hide() } label: {
+                        Image(systemName: "keyboard.chevron.compact.down")
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.glass)
                     Button { Task { await send() } } label: {
                         Image(systemName: "paperplane.fill")
                             .frame(width: 44, height: 44)
@@ -65,8 +73,22 @@ struct ChatView: View {
             .containerBackground(for: .navigation) { NightGlow() }
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
-                Button("Wyczyść") { messages = [] }
-                    .buttonStyle(.glass)
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cofnij") { undo() }
+                        .buttonStyle(.glass)
+                        .disabled(messages.isEmpty || loading)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Wyczyść") { messages = [] }
+                        .buttonStyle(.glass)
+                        .disabled(messages.isEmpty)
+                }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Button("Cofnij") { undo() }
+                        .disabled(messages.isEmpty || loading)
+                    Spacer()
+                    Button("Zamknij") { Keyboard.hide() }
+                }
             }
         }
     }
@@ -89,6 +111,7 @@ struct ChatView: View {
         let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         input = ""
+        Keyboard.hide()
         messages.append(ChatMsg(role: "user", text: text))
         loading = true
         defer { loading = false }
@@ -99,5 +122,11 @@ struct ChatView: View {
         } catch {
             messages.append(ChatMsg(role: "model", text: error.localizedDescription))
         }
+    }
+
+    private func undo() {
+        guard !messages.isEmpty else { return }
+        messages.removeLast()
+        if messages.last?.role == "user" { messages.removeLast() }
     }
 }
