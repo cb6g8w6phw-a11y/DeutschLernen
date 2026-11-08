@@ -93,11 +93,12 @@ struct Journal: Codable {
     var sceneStars: [String: Int] = [:]
     var mistakes: [StoredMistake] = []
     var streak: Int = 0
+    var bestStreak: Int = 0
     var lastActive: String = ""
     var history: [String: Int] = [:]
 
     private enum CodingKeys: String, CodingKey {
-        case startDay, day, reviews, month, monthSeconds, listenOk, listenTries, said, scenes, sceneStars, mistakes, streak, lastActive, history
+        case startDay, day, reviews, month, monthSeconds, listenOk, listenTries, said, scenes, sceneStars, mistakes, streak, bestStreak, lastActive, history
     }
 
     init() {}
@@ -116,6 +117,7 @@ struct Journal: Codable {
         sceneStars = try c.decodeIfPresent([String: Int].self, forKey: .sceneStars) ?? [:]
         mistakes = try c.decodeIfPresent([StoredMistake].self, forKey: .mistakes) ?? []
         streak = try c.decodeIfPresent(Int.self, forKey: .streak) ?? 0
+        bestStreak = try c.decodeIfPresent(Int.self, forKey: .bestStreak) ?? streak
         lastActive = try c.decodeIfPresent(String.self, forKey: .lastActive) ?? ""
         history = try c.decodeIfPresent([String: Int].self, forKey: .history) ?? [:]
     }
@@ -134,6 +136,7 @@ struct Journal: Codable {
         try c.encode(sceneStars, forKey: .sceneStars)
         try c.encode(mistakes, forKey: .mistakes)
         try c.encode(streak, forKey: .streak)
+        try c.encode(bestStreak, forKey: .bestStreak)
         try c.encode(lastActive, forKey: .lastActive)
         try c.encode(history, forKey: .history)
     }
@@ -490,6 +493,7 @@ final class LearningStore: ObservableObject {
         if journal.lastActive != day {
             let yesterday = Self.dayKey(Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date())
             journal.streak = journal.lastActive == yesterday ? journal.streak + 1 : 1
+            journal.bestStreak = max(journal.bestStreak, journal.streak)
             journal.lastActive = day
         }
         publishJournal()

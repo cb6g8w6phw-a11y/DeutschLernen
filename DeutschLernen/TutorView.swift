@@ -10,6 +10,15 @@ private struct Turn: Identifiable {
     var flag: String = ""
 }
 
+struct TalkLaunch: Hashable {
+    var id: String
+    var title: String
+    var who: String
+    var de: String
+    var pl: String
+    var say: String
+}
+
 struct TutorView: View {
     @EnvironmentObject var store: LearningStore
     @StateObject private var mic = Mic()
@@ -25,6 +34,7 @@ struct TutorView: View {
     @State private var openPL: Set<UUID> = []
     @State private var tick = Date()
     @AppStorage("persona") private var persona = "Marek"
+    var launch: TalkLaunch? = nil
 
     private let people = ["Marek", "Lena", "Piotr", "Kierownik", "Sklep", "Telefon", "Lekarz", "Agencja"]
     private var blind: Bool { persona == "Telefon" || persona == "Agencja" }
@@ -39,7 +49,7 @@ struct TutorView: View {
                                 Spacer()
                                 tutorFace
                             }
-                            peopleRow
+                            if launch == nil { peopleRow }
                             ForEach(turns) { t in
                                 bubble(t).id(t.id)
                             }
@@ -114,7 +124,7 @@ struct TutorView: View {
                 }
                 ToolbarItem(placement: .principal) {
                     VStack(spacing: 0) {
-                        Text(persona).font(.system(size: 17, weight: .bold, design: .rounded))
+                        Text(launch?.title ?? persona).font(.system(size: 17, weight: .bold, design: .rounded))
                         Text("Scena, praca").font(.system(size: 12, design: .rounded)).foregroundStyle(Theme.text2)
                     }
                 }
@@ -535,6 +545,9 @@ struct TutorView: View {
     }
 
     private var opener: Turn {
+        if let launch {
+            return Turn(role: "model", german: launch.de, polish: launch.pl, say: launch.say)
+        }
         switch persona {
         case "Lena":
             return Turn(role: "model", german: "Na, wie war dein Tag bisher?", polish: "No i jak ci minął dzień do tej pory?", say: "Ganz okay, ich komme gerade von der Arbeit.")
@@ -557,6 +570,9 @@ struct TutorView: View {
 
     private func systemPrompt() -> String {
         let who: String
+        if let launch {
+            who = launch.who
+        } else {
         switch persona {
         case "Lena":
             who = "Masz na imię Lena. Jesteś koleżanką z codziennego życia w Niemczech: urząd, sklep, mieszkanie, lekarz. Mówisz spokojnie i konkretnie."
@@ -574,6 +590,7 @@ struct TutorView: View {
             who = "Dzwonisz z agencji pracy. Pytasz o termin, doświadczenie i czy może zacząć jutro."
         default:
             who = "Masz na imię Marek. Pracujesz na budowie i przy montażu w Niemczech. Gadasz jak kolega na zmianie, nie jak nauczyciel."
+        }
         }
         return """
         \(who)

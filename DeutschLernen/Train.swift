@@ -685,7 +685,7 @@ struct WordsView: View {
             }
         }
         .padding()
-        .navigationTitle("Słówka")
+        .navigationTitle("Słownik")
         .containerBackground(for: .navigation) { NightGlow() }
         .fullScreenCover(isPresented: $deck) {
             FlashDeck(words: filtered)

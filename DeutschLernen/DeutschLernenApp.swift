@@ -14,11 +14,13 @@ struct DeutschLernenApp: App {
 struct RootView: View {
     var body: some View {
         TabView {
-            TodayView().tabItem { Label("Dziś", systemImage: "sun.max") }
-            TutorView().tabItem { Label("Czat", systemImage: "bubble.left.and.bubble.right") }
-            StatsView().tabItem { Label("Postęp", systemImage: "chart.bar") }
-            ScenesView().tabItem { Label("Sceny", systemImage: "person.2") }
-            MoreView().tabItem { Label("Więcej", systemImage: "ellipsis.circle") }
+            TodayView().tabItem { Label("Lekcje", systemImage: "book.closed") }
+            PracticeView().tabItem { Label("Ćwicz", systemImage: "bubble.left.and.bubble.right") }
+            NavigationStack {
+                WordsView()
+            }
+            .tabItem { Label("Słownik", systemImage: "text.book.closed") }
+            ProfileView().tabItem { Label("Profil", systemImage: "person.crop.circle") }
         }
         .tint(Color(hex: "8B6CF0"))
         .preferredColorScheme(.dark)
