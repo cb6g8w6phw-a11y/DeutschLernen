@@ -66,8 +66,7 @@ enum Gemini {
     }
 
     private static func stored(_ name: String) -> String {
-        (UserDefaults.standard.string(forKey: name) ?? "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+        Secret.load(name).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private static func groqModels(key: String) async -> [String] {

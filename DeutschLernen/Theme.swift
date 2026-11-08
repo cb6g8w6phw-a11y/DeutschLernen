@@ -6,10 +6,12 @@ enum Theme {
     static let card2 = Color(red: 0x24 / 255, green: 0x1D / 255, blue: 0x3D / 255)
     static let track = Color(red: 0x2D / 255, green: 0x25 / 255, blue: 0x47 / 255)
     static let text = Color(red: 0xF4 / 255, green: 0xF1 / 255, blue: 1)
-    static let text2 = Color(red: 0xB9 / 255, green: 0xB1 / 255, blue: 0xD6 / 255)
-    static let accent = Color(red: 0x8B / 255, green: 0x6C / 255, blue: 0xF0 / 255)
-    static let orange = Color(red: 1, green: 0x9A / 255, blue: 0x62 / 255)
-    static let ink = Color(red: 0x14 / 255, green: 0x10 / 255, blue: 0x1F / 255)
+    static let text2 = Color(red: 0.86, green: 0.84, blue: 0.94)
+    static let accent = Color(hex: "8B6CF0")
+    static let orange = Color(hex: "FF9A62")
+    static let ok = Color(hex: "34C759")
+    static let bad = Color(hex: "FF453A")
+    static let ink = Color(hex: "14101F")
 
     static var gradient: LinearGradient {
         LinearGradient(colors: [accent, orange], startPoint: .leading, endPoint: .trailing)
@@ -58,6 +60,20 @@ extension View {
 }
 
 enum Haptic {
-    static func good() { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
+    static func good() { UINotificationFeedbackGenerator().notificationOccurred(.success) }
     static func bad() { UINotificationFeedbackGenerator().notificationOccurred(.error) }
+}
+
+extension Color {
+    init(hex: String) {
+        var s = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        if s.hasPrefix("#") { s.removeFirst() }
+        var n: UInt64 = 0
+        Scanner(string: s).scanHexInt64(&n)
+        self.init(
+            red: Double((n >> 16) & 0xFF) / 255,
+            green: Double((n >> 8) & 0xFF) / 255,
+            blue: Double(n & 0xFF) / 255
+        )
+    }
 }

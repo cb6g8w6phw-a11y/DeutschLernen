@@ -251,6 +251,16 @@ final class LearningStore: ObservableObject {
         save()
     }
 
+    func scheduleTomorrow(_ w: Word) {
+        var s = stats[w.de] ?? WordStat()
+        s.wrong += 1
+        s.due = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+        stats[w.de] = s
+        UserDefaults.standard.set(w.de, forKey: "lastMiss")
+        noteReview()
+        save()
+    }
+
     /// Sesja: najpierw słabe/zaległe powtórki, potem kilka nowych słówek.
     func nextSession(size: Int = 8, maxNew: Int = 4, level: String = "oba") -> [Word] {
         let pool: [Word]

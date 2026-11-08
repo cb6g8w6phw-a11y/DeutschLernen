@@ -15,6 +15,7 @@ struct TutorView: View {
     @StateObject private var mic = Mic()
     @State private var turns: [Turn] = []
     @State private var loading = false
+    @State private var chatError: String?
     @State private var hint = ""
     @State private var note = ""
     @State private var typed = ""
@@ -74,7 +75,13 @@ struct TutorView: View {
                                 .padding(16)
                                 .background(Theme.card2, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
                             }
-                            if loading { ProgressView().padding() }
+                            if loading { LoadingDots().padding(.vertical, 6) }
+                            if let chatError {
+                                ErrorRetry(text: chatError) {
+                                    self.chatError = nil
+                                    Task { await retryLast() }
+                                }
+                            }
                             if !note.isEmpty {
                                 Text(note).font(.footnote).foregroundStyle(Theme.text2)
                             }
@@ -223,6 +230,7 @@ struct TutorView: View {
     private func bubble(_ t: Turn) -> some View {
         HStack {
             if t.role == "user" { Spacer(minLength: 48) }
+            if t.role == "model" { TutorAvatar(size: 36) }
             VStack(alignment: .leading, spacing: 6) {
                 if t.role == "model" {
                     HStack(spacing: 6) {
@@ -276,19 +284,7 @@ struct TutorView: View {
     }
 
     private var tutorFace: some View {
-        Group {
-            if let ui = UIImage(named: "Tutor") {
-                Image(uiImage: ui).resizable().scaledToFill()
-            } else {
-                Image(systemName: "person.crop.circle.fill")
-                    .resizable()
-                    .padding(28)
-                    .foregroundStyle(Theme.accent)
-            }
-        }
-        .frame(width: 168, height: 112)
-        .background(Theme.card2)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        TutorAvatar(size: 56)
     }
 
     private func reveal(_ t: Turn) async {
@@ -427,8 +423,14 @@ struct TutorView: View {
             tickTalk()
             Talk.de(speech(turn))
         } catch {
-            turns.append(Turn(role: "model", german: error.localizedDescription, polish: ""))
+            chatError = "Nie udało się dostać odpowiedzi. Sprawdź sieć albo klucz."
         }
+    }
+
+    private func retryLast() async {
+        guard let last = turns.last(where: { $0.role == "user" })?.german else { return }
+        if turns.last?.role == "user" { turns.removeLast() }
+        await send(last)
     }
 
     private func suggest() async {

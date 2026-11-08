@@ -2,8 +2,9 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var store: LearningStore
-    @AppStorage("groqKey") private var groq = ""
-    @AppStorage("geminiKey") private var gemini = ""
+    @State private var groq = ""
+    @State private var gemini = ""
+    @State private var keyOK = false
     @AppStorage("profileJob") private var job = ""
     @AppStorage("profileCity") private var city = ""
     @AppStorage("profileBoss") private var boss = ""
@@ -40,6 +41,7 @@ struct SettingsView: View {
                     SecureField("Klucz Groq", text: $groq)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                        .onChange(of: groq) { _, value in Secret.save(value, "groqKey") }
                     Link("Darmowy klucz, bez karty: console.groq.com/keys",
                          destination: URL(string: "https://console.groq.com/keys")!)
                     Text("Konto na Groq, potem Create API Key i wklej tutaj. To działa, gdy Gemini ma przerwę.")
@@ -51,6 +53,7 @@ struct SettingsView: View {
                     SecureField("Klucz Gemini", text: $gemini)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
+                        .onChange(of: gemini) { _, value in Secret.save(value, "geminiKey") }
                     Link("Klucz Gemini: aistudio.google.com/apikey",
                          destination: URL(string: "https://aistudio.google.com/apikey")!)
                     Text("Zapas. Aplikacja użyje go, gdy Groq nie odpowie.")
@@ -62,7 +65,12 @@ struct SettingsView: View {
                     Button {
                         Task { await ping() }
                     } label: {
-                        if testing { ProgressView() } else { Text("Sprawdź klucz") }
+                        HStack {
+                            if testing { ProgressView() }
+                            else { Text("Sprawdź klucz") }
+                            if keyOK { Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.ok) }
+                        }
+                        .frame(minHeight: 44)
                     }
                     .disabled(testing)
                     if !testNote.isEmpty {
@@ -86,20 +94,27 @@ struct SettingsView: View {
             .confirmationDialog("Na pewno?", isPresented: $confirmReset) {
                 Button("Resetuj", role: .destructive) { store.reset() }
             }
+            .onAppear {
+                groq = Secret.load("groqKey")
+                gemini = Secret.load("geminiKey")
+            }
         }
     }
 
     private func ping() async {
         testing = true
         testNote = "Łączę…"
+        keyOK = false
         defer { testing = false }
         do {
-            let reply = try await Gemini.send(
+            _ = try await Gemini.send(
                 messages: [GeminiMessage(role: "user", text: "Napisz dokładnie: OK")],
                 system: "Odpowiedz dokładnie jednym słowem: OK")
-            testNote = "Działa. Odpowiedź: \(reply.prefix(80))"
+            testNote = "Klucz działa."
+            keyOK = true
         } catch {
             testNote = error.localizedDescription
+            keyOK = false
         }
     }
 }

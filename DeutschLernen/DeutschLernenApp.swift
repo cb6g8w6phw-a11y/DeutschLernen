@@ -14,13 +14,13 @@ struct DeutschLernenApp: App {
 struct RootView: View {
     var body: some View {
         TabView {
-            Tab("Dziś", systemImage: "sun.max") { TodayView() }
-            Tab("Czat", systemImage: "bubble.left.and.bubble.right") { TutorView() }
-            Tab("Postęp", systemImage: "chart.bar") { StatsView() }
-            Tab("Sceny", systemImage: "person.2") { ScenesView() }
-            Tab("Więcej", systemImage: "ellipsis.circle") { MoreView() }
+            TodayView().tabItem { Label("Dziś", systemImage: "sun.max") }
+            TutorView().tabItem { Label("Czat", systemImage: "bubble.left.and.bubble.right") }
+            StatsView().tabItem { Label("Postęp", systemImage: "chart.bar") }
+            ScenesView().tabItem { Label("Sceny", systemImage: "person.2") }
+            MoreView().tabItem { Label("Więcej", systemImage: "ellipsis.circle") }
         }
-        .tint(Theme.accent)
+        .tint(Color(hex: "8B6CF0"))
         .preferredColorScheme(.dark)
         .fontDesign(.rounded)
     }
@@ -30,51 +30,29 @@ struct MoreView: View {
     var body: some View {
         NavigationStack {
             List {
-                NavigationLink {
-                    WordsView()
-                } label: {
-                    Label("Moje słówka", systemImage: "text.book.closed")
-                }
-                NavigationLink {
-                    BuildView()
-                } label: {
-                    Label("Niemiecki na budowie", systemImage: "hammer")
-                }
-                NavigationLink {
-                    ListenView()
-                } label: {
-                    Label("Słuchanie", systemImage: "ear")
-                }
-                NavigationLink {
-                    SentenceView()
-                } label: {
-                    Label("Generator zdań", systemImage: "text.badge.checkmark")
-                }
-                NavigationLink {
-                    ClipView()
-                } label: {
-                    Label("Słówka z filmu", systemImage: "play.rectangle")
-                }
-                NavigationLink {
-                    LifeView()
-                } label: {
-                    Label("Z twojego życia", systemImage: "sparkles")
-                }
-                NavigationLink {
-                    ScanView()
-                } label: {
-                    Label("Skan zdjęcia", systemImage: "camera")
-                }
-                NavigationLink {
-                    SettingsView()
-                } label: {
-                    Label("Ustawienia i klucz", systemImage: "gear")
-                }
+                more("Moje słówka", "text.book.closed", Theme.accent) { WordsView() }
+                more("Niemiecki na budowie", "hammer", Theme.orange) { BuildView() }
+                more("Słuchanie", "ear", Color(hex: "5AC8FA")) { ListenView() }
+                more("Generator zdań", "text.badge.checkmark", Color(hex: "FF6B9A")) { SentenceView() }
+                more("Słówka z filmu", "play.rectangle", Theme.accent) { ClipView() }
+                more("Z twojego życia", "sparkles", Theme.orange) { LifeView() }
+                more("Skan zdjęcia", "camera", Color(hex: "5AC8FA")) { ScanView() }
+                more("Ustawienia i klucz", "gear", Color(hex: "FF6B9A")) { SettingsView() }
             }
             .navigationTitle("Więcej")
             .scrollContentBackground(.hidden)
             .containerBackground(for: .navigation) { NightGlow() }
             .toolbarBackground(.hidden, for: .navigationBar)
+        }
+    }
+
+    private func more<Dest: View>(_ title: String, _ icon: String, _ tint: Color, @ViewBuilder dest: () -> Dest) -> some View {
+        NavigationLink { dest() } label: {
+            HStack(spacing: 12) {
+                IconBadge(system: icon, tint: tint)
+                Text(title).font(.body).foregroundStyle(Theme.text)
+            }
+            .frame(minHeight: 44)
         }
     }
 }

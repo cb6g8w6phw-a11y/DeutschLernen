@@ -87,13 +87,13 @@ struct TodayView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Dzień \(store.planDay) z 30")
-                        .font(.system(size: 14, design: .rounded))
+                        .font(.subheadline)
                         .foregroundStyle(Theme.text2)
-                    Text("Czas na 20 minut nauki")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundStyle(Theme.text)
+                    Text(store.phaseTitle)
+                        .font(.footnote)
+                        .foregroundStyle(Theme.text2)
                     Text("Do końca miesiąca: \(store.masteredCount)/300 zdań, \(store.scenesClean)/5 scen bez podpowiedzi")
-                        .font(.system(size: 14, design: .rounded))
+                        .font(.footnote)
                         .foregroundStyle(Theme.text2)
                     plan
                     NavigationLink { DailyRunView() } label: {
@@ -107,21 +107,31 @@ struct TodayView: View {
                     }
                     if let word = store.wordOfDay { wordCard(word) }
                     Text("Trening")
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
-                    NavigationLink { QuizView(sessionSize: 10) } label: { row("Powtórki", "Słówka, które już czas przypomnieć", "rectangle.stack") }
-                    NavigationLink { WordsView() } label: { row("Moje słówka", "Lista i fiszka", "text.book.closed") }
-                    NavigationLink { TutorView() } label: { row("Rozmowa", "Mówisz, dostajesz krótką poprawkę", "waveform") }
-                    NavigationLink { ListenView() } label: { row("Słuchanie", "Wolno, normalnie albo szybko", "ear") }
-                    NavigationLink { PronounceView() } label: { row("Wymowa", "Powtarzasz zdanie na głos", "mic") }
-                    NavigationLink { SentenceView() } label: { row("Zdania", "Tłumaczysz sam", "text.badge.checkmark") }
-                    NavigationLink { BuildView() } label: { row("Budowa", "Narzędzia i polecenia", "hammer") }
+                        .font(.headline)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 10) {
+                            tile("Powtórki", "rectangle.stack", Theme.accent) { QuizView(sessionSize: 10) }
+                            tile("Moje słówka", "text.book.closed", Theme.orange) { WordsView() }
+                            tile("Rozmowa", "waveform", Color(hex: "5AC8FA")) { TutorView() }
+                            tile("Słuchanie", "ear", Color(hex: "FF6B9A")) { ListenView() }
+                            tile("Wymowa", "mic", Color(hex: "30D158")) { PronounceView() }
+                        }
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
-                .padding(.bottom, 28)
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.hidden, for: .navigationBar)
+            .safeAreaPadding(.bottom, 90)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                Color.clear
+                    .frame(height: 0)
+                    .background(.ultraThinMaterial)
+                    .ignoresSafeArea(edges: .top)
+            }
+            .navigationTitle("Czas na 20 minut nauki")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .containerBackground(for: .navigation) { NightGlow() }
         }
     }
@@ -130,28 +140,30 @@ struct TodayView: View {
         let goal = UserDefaults.standard.integer(forKey: "dailyGoal")
         let target = goal == 0 ? 20 : goal
         let done = min(store.reviewsToday, target)
-        let progress = Double(done) / Double(target)
+        let progress = Double(done) / Double(max(target, 1))
         return HStack(alignment: .center, spacing: 12) {
+            TutorAvatar()
             VStack(alignment: .leading, spacing: 4) {
                 Text("Plan na dziś")
-                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                    .font(.headline)
                 Text("Powtórki, 1 scena, krótki test")
-                    .font(.system(size: 14, design: .rounded))
-                    .foregroundStyle(Theme.text2)
-                Text(store.phaseTitle)
-                    .font(.system(size: 14, design: .rounded))
+                    .font(.subheadline)
                     .foregroundStyle(Theme.text2)
             }
             Spacer(minLength: 8)
             ZStack {
-                Circle().stroke(Theme.track, lineWidth: 7)
+                Circle().stroke(Color(hex: "2D2547"), lineWidth: 10)
                 Circle()
                     .trim(from: 0, to: progress)
-                    .stroke(Theme.gradient, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                    .stroke(Theme.gradient, style: StrokeStyle(lineWidth: 10, lineCap: .round))
                     .rotationEffect(.degrees(-90))
-                    .animation(.spring(duration: 0.5), value: progress)
+                Text("\(Int(progress * 100))%")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(Theme.text)
+                    .contentTransition(.numericText())
             }
-            .frame(width: 54, height: 54)
+            .frame(width: 72, height: 72)
+            .animation(.spring(duration: 0.5), value: progress)
         }
         .padding(16)
         .themedCard()
@@ -160,15 +172,16 @@ struct TodayView: View {
     private func stat(_ value: String, _ title: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(value)
-                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .font(.title3.weight(.bold))
                 .foregroundStyle(Theme.text)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
+                .contentTransition(.numericText())
             Text(title)
-                .font(.system(size: 13, design: .rounded))
+                .font(.footnote)
                 .foregroundStyle(Theme.text2)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
         .padding(14)
         .themedCard(radius: 20)
     }
@@ -176,38 +189,38 @@ struct TodayView: View {
     private func wordCard(_ word: Word) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Zdanie na dziś")
-                .font(.system(size: 14, design: .rounded))
+                .font(.footnote)
                 .foregroundStyle(Theme.text2)
             Text(word.de)
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .font(.title2.weight(.bold))
                 .foregroundStyle(Theme.text)
             Text(word.pl)
-                .font(.system(size: 14, design: .rounded))
+                .font(.subheadline)
                 .foregroundStyle(Theme.text2)
             Button { Talk.de(word.ex) } label: {
                 Text("Odtwórz").ghostButton()
             }
             .buttonStyle(.plain)
+            .padding(.top, 4)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .themedCard()
     }
 
-    private func row(_ title: String, _ text: String, _ icon: String) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .frame(width: 36, height: 36)
-                .foregroundStyle(Theme.accent)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 17, weight: .semibold, design: .rounded)).foregroundStyle(Theme.text)
-                Text(text).font(.system(size: 14, design: .rounded)).foregroundStyle(Theme.text2)
+    private func tile<Dest: View>(_ title: String, _ icon: String, _ tint: Color, @ViewBuilder dest: () -> Dest) -> some View {
+        NavigationLink { dest() } label: {
+            VStack(spacing: 8) {
+                IconBadge(system: icon, tint: tint)
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.text)
+                    .lineLimit(1)
             }
-            Spacer()
-            Image(systemName: "chevron.right").font(.caption).foregroundStyle(Theme.text2)
+            .frame(width: 96, height: 96)
+            .themedCard(radius: 18)
         }
-        .padding(14)
-        .themedCard(radius: 20)
+        .buttonStyle(.plain)
     }
 }
 
