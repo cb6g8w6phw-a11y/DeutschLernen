@@ -92,8 +92,11 @@ struct TodayView: View {
                     Text("Czas na 20 minut nauki")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundStyle(Theme.text)
+                    Text("Do końca miesiąca: \(store.masteredCount)/300 zdań, \(store.scenesClean)/5 scen bez podpowiedzi")
+                        .font(.system(size: 14, design: .rounded))
+                        .foregroundStyle(Theme.text2)
                     plan
-                    NavigationLink { QuizView(sessionSize: 10) } label: {
+                    NavigationLink { DailyRunView() } label: {
                         Text("Zacznij naukę").primaryButton()
                     }
                     .buttonStyle(.plain)
@@ -124,13 +127,15 @@ struct TodayView: View {
     }
 
     private var plan: some View {
-        let done = min(store.reviewsToday, 20)
-        let progress = Double(done) / 20
+        let goal = UserDefaults.standard.integer(forKey: "dailyGoal")
+        let target = goal == 0 ? 20 : goal
+        let done = min(store.reviewsToday, target)
+        let progress = Double(done) / Double(target)
         return HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Plan na dziś")
                     .font(.system(size: 17, weight: .semibold, design: .rounded))
-                Text("3 powtórki, 1 scena, dyktando")
+                Text("Powtórki, 1 scena, krótki test")
                     .font(.system(size: 14, design: .rounded))
                     .foregroundStyle(Theme.text2)
                 Text(store.phaseTitle)
@@ -614,7 +619,7 @@ struct WordsView: View {
                                 Text(word.pl).font(.footnote).foregroundStyle(Ink.muted)
                             }
                             Spacer()
-                            Image(systemName: (store.stats[word.de]?.box ?? 0) >= 3 ? "star.fill" : "star")
+                            Image(systemName: (store.stats[word.de]?.days.count ?? 0) >= 3 ? "star.fill" : "star")
                                 .foregroundStyle(Ink.accent.opacity((store.stats[word.de]?.box ?? 0) >= 4 ? 1 : 0.35))
                         }
                         .padding(12)

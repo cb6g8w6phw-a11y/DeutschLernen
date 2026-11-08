@@ -576,6 +576,7 @@ struct TutorView: View {
         return """
         \(who)
         Rozmówca jest Polakiem i chce mówić po niemiecku jak z żywym człowiekiem, poziom około B1, praca i codzienność.
+        \(Learner.line)
         Zasady:
         - Odpowiadaj tak, jakbyś stał obok niego. Jedno albo dwa krótkie zdania. Potem pytanie.
         - Nie wykładaj gramatyki i nie pisz list.

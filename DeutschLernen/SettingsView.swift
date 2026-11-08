@@ -4,13 +4,33 @@ struct SettingsView: View {
     @EnvironmentObject var store: LearningStore
     @AppStorage("groqKey") private var groq = ""
     @AppStorage("geminiKey") private var gemini = ""
-    @State private var confirmReset = false
+    @AppStorage("profileJob") private var job = ""
+    @AppStorage("profileCity") private var city = ""
+    @AppStorage("profileBoss") private var boss = ""
+    @AppStorage("profileCar") private var car = ""
+    @AppStorage("dailyGoal") private var dailyGoal = 20
+    @AppStorage("sessionSize") private var sessionSize = 20
     @State private var testing = false
     @State private var testNote = ""
+    @State private var confirmReset = false
 
     var body: some View {
         NavigationStack {
             Form {
+                Section("Twoje dane w scenach") {
+                    TextField("Praca, np. magazyn", text: $job)
+                    TextField("Miasto", text: $city)
+                    TextField("Imię szefa", text: $boss)
+                    TextField("Auto, np. Audi A4", text: $car)
+                    Text("Rozmowy będą o tym, nie o wymyślonej osobie.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+                Section("Ile dziennie") {
+                    Stepper("Cel: \(dailyGoal) słówek", value: $dailyGoal, in: 5...200, step: 5)
+                    Stepper("Sesja: \(sessionSize) słówek", value: $sessionSize, in: 5...200, step: 5)
+                    Text("Po celu możesz ćwiczyć dalej. Nie ma blokady.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
                 Section("Wygląd") {
                     ThemePicker()
                         .listRowInsets(EdgeInsets())

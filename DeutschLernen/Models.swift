@@ -44,10 +44,33 @@ struct Word: Identifiable, Codable, Hashable {
 }
 
 struct WordStat: Codable {
-    var box: Int = 0          // 0 = nowe/słabe ... 5 = opanowane
+    var box: Int = 0
     var correct: Int = 0
     var wrong: Int = 0
     var due: Date = .distantPast
+    var days: [String] = []
+
+    private enum CodingKeys: String, CodingKey { case box, correct, wrong, due, days }
+
+    init() {}
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        box = try c.decodeIfPresent(Int.self, forKey: .box) ?? 0
+        correct = try c.decodeIfPresent(Int.self, forKey: .correct) ?? 0
+        wrong = try c.decodeIfPresent(Int.self, forKey: .wrong) ?? 0
+        due = try c.decodeIfPresent(Date.self, forKey: .due) ?? .distantPast
+        days = try c.decodeIfPresent([String].self, forKey: .days) ?? []
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(box, forKey: .box)
+        try c.encode(correct, forKey: .correct)
+        try c.encode(wrong, forKey: .wrong)
+        try c.encode(due, forKey: .due)
+        try c.encode(days, forKey: .days)
+    }
 }
 
 struct StoredMistake: Codable, Identifiable, Hashable {
@@ -67,13 +90,14 @@ struct Journal: Codable {
     var listenTries: Int = 0
     var said: Int = 0
     var scenes: [String] = []
+    var sceneStars: [String: Int] = [:]
     var mistakes: [StoredMistake] = []
     var streak: Int = 0
     var lastActive: String = ""
     var history: [String: Int] = [:]
 
     private enum CodingKeys: String, CodingKey {
-        case startDay, day, reviews, month, monthSeconds, listenOk, listenTries, said, scenes, mistakes, streak, lastActive, history
+        case startDay, day, reviews, month, monthSeconds, listenOk, listenTries, said, scenes, sceneStars, mistakes, streak, lastActive, history
     }
 
     init() {}
@@ -89,6 +113,7 @@ struct Journal: Codable {
         listenTries = try c.decodeIfPresent(Int.self, forKey: .listenTries) ?? 0
         said = try c.decodeIfPresent(Int.self, forKey: .said) ?? 0
         scenes = try c.decodeIfPresent([String].self, forKey: .scenes) ?? []
+        sceneStars = try c.decodeIfPresent([String: Int].self, forKey: .sceneStars) ?? [:]
         mistakes = try c.decodeIfPresent([StoredMistake].self, forKey: .mistakes) ?? []
         streak = try c.decodeIfPresent(Int.self, forKey: .streak) ?? 0
         lastActive = try c.decodeIfPresent(String.self, forKey: .lastActive) ?? ""
@@ -106,6 +131,7 @@ struct Journal: Codable {
         try c.encode(listenTries, forKey: .listenTries)
         try c.encode(said, forKey: .said)
         try c.encode(scenes, forKey: .scenes)
+        try c.encode(sceneStars, forKey: .sceneStars)
         try c.encode(mistakes, forKey: .mistakes)
         try c.encode(streak, forKey: .streak)
         try c.encode(lastActive, forKey: .lastActive)
@@ -153,30 +179,29 @@ final class LearningStore: ObservableObject {
            let saved = try? JSONDecoder().decode(Saved.self, from: data) {
             words = saved.words
             stats = saved.stats
+            let catalog = SeedContent.words + LifePack.words
             let known = Set(words.map { Normalizer.clean($0.de) })
-            let extra = SeedContent.words.filter { !known.contains(Normalizer.clean($0.de)) }
+            let extra = catalog.filter { !known.contains(Normalizer.clean($0.de)) }
             if !extra.isEmpty {
                 words += extra
                 save()
             }
         } else {
-            words = SeedContent.words
+            words = SeedContent.words + LifePack.words
             stats = [:]
         }
         if let data = try? Data(contentsOf: journalURL),
            let saved = try? JSONDecoder().decode(Journal.self, from: data) {
             journal = saved
         }
-        var promoted = false
         for key in stats.keys {
             var stat = stats[key]!
-            if stat.correct >= 1, stat.box < 3 {
-                stat.box = 3
+            if stat.days.count < 3, stat.box >= 3 {
+                stat.box = min(stat.days.count, 2)
                 stats[key] = stat
-                promoted = true
             }
         }
-        if promoted { save() }
+        save()
         roll()
     }
 
@@ -207,19 +232,19 @@ final class LearningStore: ObservableObject {
 
     func grade(_ w: Word, _ g: Grade) {
         var s = stats[w.de] ?? WordStat()
+        let today = Self.dayKey()
         switch g {
         case .hard:
             s.wrong += 1
-            if s.box < 3 { s.box = 0 }
-            s.due = Date().addingTimeInterval(10 * 60)
-        case .mid:
+            s.due = Date()
+            UserDefaults.standard.set(w.de, forKey: "lastMiss")
+        case .mid, .easy:
             s.correct += 1
-            s.box = min(s.box + 2, 5)
-            s.due = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
-        case .easy:
-            s.correct += 1
-            s.box = 5
-            s.due = Calendar.current.date(byAdding: .day, value: 4, to: Date()) ?? Date()
+            if !s.days.contains(today) { s.days.append(today) }
+            s.box = min(s.days.count, 5)
+            let gap = s.days.count >= 3 ? 7 : (s.days.count == 2 ? 3 : 1)
+            s.due = Calendar.current.date(byAdding: .day, value: gap, to: Date()) ?? Date()
+            UserDefaults.standard.set(w.de, forKey: "lastHit")
         }
         stats[w.de] = s
         noteReview()
@@ -243,10 +268,20 @@ final class LearningStore: ObservableObject {
             if sa.box != sb.box { return sa.box < sb.box }
             return sa.wrong > sb.wrong
         }
-        let fresh = pool.filter { stats[$0.de] == nil }.shuffled()
         var out = Array(reviews.prefix(size))
-        let room = max(0, size - out.count)
-        out += fresh.prefix(min(room, maxNew + (reviews.isEmpty ? size : 0)))
+        if out.count < size {
+            let fresh = pool.filter { stats[$0.de] == nil }.shuffled()
+            out += fresh.prefix(size - out.count)
+        }
+        if out.count < size {
+            let more = pool.filter { w in
+                !out.contains(where: { $0.de == w.de }) && (stats[w.de]?.days.count ?? 0) < 3
+            }.shuffled()
+            out += more.prefix(size - out.count)
+        }
+        if out.isEmpty {
+            out = Array(pool.shuffled().prefix(max(size, 1)))
+        }
         return out
     }
 
@@ -278,8 +313,8 @@ final class LearningStore: ObservableObject {
 
     // MARK: statystyki
 
-    var masteredCount: Int { stats.values.filter { $0.box >= 3 }.count }
-    var learningCount: Int { stats.values.filter { $0.box < 3 }.count }
+    var masteredCount: Int { stats.values.filter { $0.days.count >= 3 }.count }
+    var learningCount: Int { stats.values.filter { $0.days.count < 3 }.count }
     var newCount: Int { words.count - stats.count }
 
     var weakWords: [Word] {
@@ -400,6 +435,24 @@ final class LearningStore: ObservableObject {
         roll()
         if !journal.scenes.contains(id) { journal.scenes.append(id) }
         publishJournal()
+    }
+
+    func stars(for id: String) -> Int { journal.sceneStars[id] ?? 0 }
+
+    func awardStars(_ id: String, _ n: Int) {
+        roll()
+        let next = min(3, max(journal.sceneStars[id] ?? 0, n))
+        journal.sceneStars[id] = next
+        if !journal.scenes.contains(id) { journal.scenes.append(id) }
+        publishJournal()
+    }
+
+    var scenesClean: Int { journal.sceneStars.values.filter { $0 >= 3 }.count }
+
+    func sceneUnlocked(_ index: Int) -> Bool {
+        guard index > 0 else { return true }
+        let prev = Scenarios.all[index - 1].id
+        return stars(for: prev) >= 1
     }
 
     func noteListen(ok: Bool) {

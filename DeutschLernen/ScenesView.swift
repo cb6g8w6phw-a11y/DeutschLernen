@@ -44,27 +44,35 @@ enum Scenarios {
 }
 
 struct ScenesView: View {
+    @EnvironmentObject var store: LearningStore
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Wybierz scenę. Druga strona mówi po niemiecku, pod spodem dostajesz krótką poprawkę po polsku.")
+                    Text("Po kolei. Poprzednia scena musi mieć choć jedną gwiazdkę, żeby otworzyć następną.")
                         .font(.system(size: 14, design: .rounded))
                         .foregroundStyle(Theme.text2)
                     NavigationLink {
                         ChatView()
                     } label: {
-                        row("Wolna rozmowa", "Piszesz, o czym chcesz. Bez scenariusza.")
+                        row("Wolna rozmowa", "Piszesz, o czym chcesz. Bez scenariusza.", stars: nil, locked: false)
                     }
-                    ForEach(Scenarios.all) { s in
-                        NavigationLink {
-                            SceneChatView(scenario: s)
-                        } label: {
-                            row(s.title, s.task)
+                    ForEach(Array(Scenarios.all.enumerated()), id: \.element.id) { index, s in
+                        let open = store.sceneUnlocked(index)
+                        if open {
+                            NavigationLink {
+                                SceneChatView(scenario: s)
+                            } label: {
+                                row(s.title, s.task, stars: store.stars(for: s.id), locked: false)
+                            }
+                        } else {
+                            row(s.title, "Najpierw zalicz poprzednią scenę.", stars: 0, locked: true)
                         }
                     }
                 }
                 .padding()
+                .padding(.bottom, 24)
             }
             .navigationTitle("Sceny")
             .containerBackground(for: .navigation) { NightGlow() }
@@ -72,11 +80,20 @@ struct ScenesView: View {
         }
     }
 
-    private func row(_ title: String, _ text: String) -> some View {
+    private func row(_ title: String, _ text: String, stars: Int?, locked: Bool) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.system(size: 17, weight: .semibold, design: .rounded))
-                .foregroundStyle(Theme.text)
+            HStack {
+                Text(title)
+                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                    .foregroundStyle(Theme.text)
+                Spacer()
+                if locked {
+                    Image(systemName: "lock.fill").foregroundStyle(Theme.text2)
+                } else if let stars {
+                    Text(String(repeating: "★", count: stars) + String(repeating: "☆", count: 3 - stars))
+                        .foregroundStyle(Theme.orange)
+                }
+            }
             Text(text)
                 .font(.system(size: 14, design: .rounded))
                 .foregroundStyle(Theme.text2)
@@ -84,7 +101,10 @@ struct ScenesView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
-        .liquidGlass(radius: 20)
+        .themedCard(radius: 20)
+        .opacity(locked ? 0.45 : 1)
+    }
+}
     }
 }
 
@@ -96,6 +116,8 @@ struct SceneChatView: View {
     @State private var input = ""
     @State private var loading = false
     @State private var started = false
+    @State private var showStars = false
+    @State private var earned = 1
 
     var body: some View {
         VStack(spacing: 0) {
@@ -175,6 +197,9 @@ struct SceneChatView: View {
             ToolbarItemGroup(placement: .keyboard) {
                 Button("Zamknij") { Keyboard.hide() }
             }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Gwiazdki") { finishScene() }
+            }
         }
         .onAppear {
             guard !started else { return }
@@ -185,6 +210,23 @@ struct SceneChatView: View {
         .onChange(of: mic.text) { _, new in
             if mic.listening, !new.isEmpty { input = new }
         }
+        .alert("Scena zaliczona", isPresented: $showStars) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("\(earned) z 3 gwiazdek. Jedna gwiazdka otwiera następną scenę. Trzy gwiazdki to scena bez potknięć.")
+        }
+    }
+
+    private func finishScene() {
+        let mine = messages.filter { $0.role == "user" }.count
+        let fixes = messages.filter { $0.role == "model" && $0.text.lowercased().contains("popraw") }.count
+        let stars: Int
+        if mine >= 3 && fixes == 0 { stars = 3 }
+        else if mine >= 2 { stars = 2 }
+        else { stars = 1 }
+        store.awardStars(scenario.id, stars)
+        earned = store.stars(for: scenario.id)
+        showStars = true
     }
 
     private func systemPrompt() -> String {
@@ -192,6 +234,7 @@ struct SceneChatView: View {
         Jesteś Niemcem i grasz rolę: \(scenario.role).
         Scena: \(scenario.title).
         Zadanie ucznia (nie zdradzaj mu gotowej odpowiedzi, dopóki nie poprosi o pomoc): \(scenario.task).
+        \(Learner.line)
         Zasady:
         - Odpowiadaj krótko po niemiecku, poziom A2, maksymalnie 3 zdania.
         - Pod spodem jedna linia po polsku: korekta błędu ucznia albo „OK”.

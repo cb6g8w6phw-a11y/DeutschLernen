@@ -17,8 +17,13 @@ struct QuizView: View {
     @State private var wasCorrect = false
     @AppStorage("drill") private var drill = "slowa"
     @AppStorage("band") private var band = "A1"
-    var sessionSize: Int = 8
+    @AppStorage("dailyGoal") private var dailyGoal = 20
+    @AppStorage("sessionSize") private var savedSize = 20
+    var sessionSize: Int = 0
+    var onDone: ((Int) -> Void)? = nil
     @StateObject private var mic = Mic()
+
+    private var size: Int { sessionSize > 0 ? sessionSize : savedSize }
 
     private var current: Word? { index < queue.count ? queue[index] : nil }
 
@@ -60,10 +65,12 @@ struct QuizView: View {
                 .font(.subheadline).foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 6) {
                 Text("Do powtórki dzisiaj: \(store.dueToday)").font(.headline)
-                let done = min(store.reviewsToday, 20)
-                ProgressView(value: Double(done), total: 20).tint(Ink.brass)
-                Text("Dzisiejszy cel: \(done)/20 słówek")
+                let done = min(store.reviewsToday, dailyGoal)
+                ProgressView(value: Double(done), total: Double(max(dailyGoal, 1))).tint(Ink.brass)
+                Text("Dzisiejszy cel: \(store.reviewsToday)/\(dailyGoal). Cel nie zatrzymuje sesji.")
                     .font(.footnote).foregroundStyle(.secondary)
+                Stepper("Słówek w sesji: \(savedSize)", value: $savedSize, in: 5...200, step: 5)
+                Stepper("Cel dzienny: \(dailyGoal)", value: $dailyGoal, in: 5...200, step: 5)
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -145,7 +152,7 @@ struct QuizView: View {
 
                 if answered {
                     VStack(spacing: 6) {
-                        Text(wasCorrect ? "Dobrze. Słówko jest opanowane." : "Poprawnie: \(expected)")
+                        Text(wasCorrect ? "Dobrze. Dzień \(min(3, (store.stats[w.de]?.days.count ?? 1))) z 3." : "Poprawnie: \(expected)")
                             .font(.headline).foregroundStyle(wasCorrect ? .green : .red)
                         Text(w.ex).italic()
                         Text(w.exPl).font(.footnote).foregroundStyle(.secondary)
@@ -162,11 +169,16 @@ struct QuizView: View {
         VStack(spacing: 16) {
             Spacer()
             Text("Koniec sesji").font(.title.bold())
-            Text("Poprawne odpowiedzi: \(score)")
-            Button("Następna sesja") { start() }.buttonStyle(.glassProminent).tint(Ink.brass)
+            Text("Poprawne odpowiedzi: \(score) z \(max(queue.count, 1))")
+            if onDone != nil {
+                Button("Dalej") { onDone?(score) }
+                    .buttonStyle(.glassProminent).tint(Ink.brass)
+            } else {
+                Button("Następna sesja") { start() }.buttonStyle(.glassProminent).tint(Ink.brass)
+            }
             NavigationLink("Postępy i lekcja od AI") { StatsView() }
                 .buttonStyle(.glass)
-            Text("Trudne wraca za 10 minut, średnie jutro, łatwe za 4 dni. Sesja bierze tylko to, co już czas powtórzyć.")
+            Text("Opanowane jest dopiero po 3 poprawnych dniach. Dziś to dzień 1, potem za dzień i za 3 dni. Możesz robić kolejne sesje bez limitu.")
                 .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
             Spacer()
         }
@@ -259,7 +271,7 @@ struct QuizView: View {
     }
 
     private func start() {
-        queue = store.nextSession(size: sessionSize, level: band)
+        queue = store.nextSession(size: size, level: band)
         index = 0
         score = 0
         started = true
