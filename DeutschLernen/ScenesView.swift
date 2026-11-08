@@ -116,6 +116,7 @@ struct SceneChatView: View {
     @State private var started = false
     @State private var showStars = false
     @State private var earned = 1
+    @State private var openPL: Set<UUID> = []
 
     var body: some View {
         VStack(spacing: 0) {
@@ -133,10 +134,34 @@ struct SceneChatView: View {
                                     .padding(14)
                                     .liquidGlass(radius: 22, tint: m.role == "user" ? Ink.brass.opacity(0.45) : nil)
                                 if m.role == "model" {
-                                    Button { Talk.de(m.text) } label: {
-                                        Image(systemName: "speaker.wave.2")
+                                    HStack(spacing: 16) {
+                                        Button { Talk.de(m.text) } label: {
+                                            Image(systemName: "speaker.wave.2")
+                                                .frame(width: 44, height: 44)
+                                        }
+                                        .buttonStyle(.plain)
+                                        .foregroundStyle(Theme.accent)
+                                        Button { Task { await reveal(m) } } label: {
+                                            Label(openPL.contains(m.id) ? "Ukryj" : "Tłumaczenie", systemImage: "character.book.closed")
+                                                .font(.subheadline.weight(.semibold))
+                                                .frame(minHeight: 44)
+                                        }
+                                        .buttonStyle(.plain)
+                                        .foregroundStyle(Theme.accent)
                                     }
-                                    .buttonStyle(.glass)
+                                    if openPL.contains(m.id) {
+                                        Text(m.polish.isEmpty ? "Tłumaczę…" : m.polish)
+                                            .font(.subheadline)
+                                            .foregroundStyle(Theme.text2)
+                                            .padding(12)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .themedCard(radius: 16)
+                                    }
+                                    if !m.fix.isEmpty {
+                                        Text(m.fix)
+                                            .font(.footnote)
+                                            .foregroundStyle(Theme.orange)
+                                    }
                                 }
                             }
                             .frame(maxWidth: .infinity, alignment: m.role == "user" ? .trailing : .leading)
@@ -234,10 +259,12 @@ struct SceneChatView: View {
         Zadanie ucznia (nie zdradzaj mu gotowej odpowiedzi, dopóki nie poprosi o pomoc): \(scenario.task).
         \(Learner.line)
         Zasady:
-        - Odpowiadaj krótko po niemiecku, poziom A2, maksymalnie 3 zdania.
-        - Pod spodem jedna linia po polsku: korekta błędu ucznia albo „OK”.
-        - Prowadź rozmowę dalej jednym pytaniem.
-        - Nie używaj markdownu ani gwiazdek.
+        - Odpowiadasz jako ta postać, nie jako nauczyciel i nie poprawiasz zdania ucznia w swojej kwestii.
+        - Format, każda rzecz w osobnej linii, bez markdownu:
+        DE: twoja kwestia po niemiecku, najwyżej dwa zdania, na końcu pytanie
+        PL: tłumaczenie tej kwestii na polski
+        ERR: po polsku co było nie tak | poprawne zdanie
+        ERR tylko gdy uczeń powiedział coś źle. Jak było dobrze, nie pisz ERR i nie pisz OK.
         Postępy: \(store.progressSummary())
         """
     }
@@ -254,10 +281,12 @@ struct SceneChatView: View {
         do {
             let history = messages.map { GeminiMessage(role: $0.role, text: $0.text) }
             let reply = try await Gemini.send(messages: history, system: systemPrompt())
-            messages.append(ChatMsg(role: "model", text: reply))
+            let turn = splitReply(reply)
+            messages.append(turn)
+            if !turn.polish.isEmpty { openPL.insert(turn.id) }
             let mine = messages.filter { $0.role == "user" }.count
             if mine >= 2 { store.markScene(scenario.id) }
-            Talk.de(firstGerman(reply))
+            Talk.de(turn.text)
         } catch {
             messages.append(ChatMsg(role: "model", text: error.localizedDescription))
         }
@@ -280,6 +309,51 @@ struct SceneChatView: View {
         } catch {
             messages.append(ChatMsg(role: "model", text: error.localizedDescription))
         }
+    }
+
+    private func reveal(_ m: ChatMsg) async {
+        if openPL.contains(m.id) {
+            openPL.remove(m.id)
+            return
+        }
+        openPL.insert(m.id)
+        guard m.polish.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        do {
+            let pl = try await Gemini.send(
+                messages: [GeminiMessage(role: "user", text: m.text)],
+                system: "Przetłumacz na polski. Oddaj tylko tłumaczenie, bez cudzysłowu i bez komentarza.")
+            if let i = messages.firstIndex(where: { $0.id == m.id }) {
+                messages[i].polish = pl.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+        } catch {
+            if let i = messages.firstIndex(where: { $0.id == m.id }) {
+                messages[i].polish = "Nie udało się przetłumaczyć. Sprawdź klucz w Ustawieniach."
+            }
+        }
+    }
+
+    private func splitReply(_ raw: String) -> ChatMsg {
+        var de = ""
+        var pl = ""
+        var fix = ""
+        for line in raw.components(separatedBy: .newlines) {
+            let t = line.trimmingCharacters(in: .whitespaces)
+            guard !t.isEmpty else { continue }
+            let up = t.uppercased()
+            if up.hasPrefix("DE:") { de = join(de, String(t.dropFirst(3))) }
+            else if up.hasPrefix("PL:") { pl = join(pl, String(t.dropFirst(3))) }
+            else if up.hasPrefix("ERR:") { fix = String(t.dropFirst(4)).trimmingCharacters(in: .whitespaces) }
+            else if up == "OK" { continue }
+            else if t.range(of: "[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]", options: .regularExpression) != nil { pl = join(pl, t) }
+            else { de = join(de, t) }
+        }
+        if de.isEmpty { de = raw.trimmingCharacters(in: .whitespacesAndNewlines) }
+        return ChatMsg(role: "model", text: de, polish: pl, fix: fix)
+    }
+
+    private func join(_ base: String, _ extra: String) -> String {
+        let piece = extra.trimmingCharacters(in: .whitespaces)
+        return base.isEmpty ? piece : base + " " + piece
     }
 
     private func firstGerman(_ text: String) -> String {

@@ -3,7 +3,9 @@ import SwiftUI
 struct ChatMsg: Identifiable {
     let id = UUID()
     let role: String
-    let text: String
+    var text: String
+    var polish: String = ""
+    var fix: String = ""
 }
 
 struct ChatView: View {
