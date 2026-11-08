@@ -248,6 +248,18 @@ final class LearningStore: ObservableObject {
         return fresh.count
     }
 
+    func pinForReview(_ word: Word) {
+        let known = Set(words.map { Normalizer.clean($0.de) })
+        if !known.contains(Normalizer.clean(word.de)) {
+            words.append(word)
+        }
+        var stat = stats[word.de] ?? WordStat()
+        stat.box = 0
+        stat.due = Date()
+        stats[word.de] = stat
+        save()
+    }
+
     func reset() {
         words = SeedContent.words
         stats = [:]

@@ -12,6 +12,7 @@ enum CoachData {
     struct ListenQ: Identifiable {
         var id: String { de }
         let de: String
+        let pl: String
         let question: String
         let options: [String]
         let answer: Int
@@ -24,14 +25,14 @@ enum CoachData {
     }
 
     static let listen: [ListenQ] = [
-        ListenQ(de: "Kacper, hol bitte die Schaufel und komm zur Baustelle.", question: "Co masz zrobić?", options: ["Przynieść łopatę i przyjść na budowę", "Zostać w aucie", "Iść do lekarza"], answer: 0),
-        ListenQ(de: "Wir fangen morgen um sechs Uhr an.", question: "O której zaczynacie?", options: ["O ósmej", "O szóstej", "W południe"], answer: 1),
-        ListenQ(de: "Mach das Loch achtzig Zentimeter tief.", question: "Jak głęboki ma być dół?", options: ["40 cm", "80 cm", "2 metry"], answer: 1),
-        ListenQ(de: "Pass auf, hier ist ein Kabel.", question: "O co chodzi?", options: ["Uważaj, tu jest kabel", "Weź drabinę", "Idź na przerwę"], answer: 0),
-        ListenQ(de: "Die Lieferung kommt erst um zehn.", question: "Kiedy jest dostawa?", options: ["O siódmej", "Już stoi", "Dopiero o dziesiątej"], answer: 2),
-        ListenQ(de: "Kannst du den Transporter alleine beladen?", question: "O co pyta?", options: ["Czy sam załadujesz busa", "Czy masz prawo jazdy na busa", "Czy bus jest zepsuty"], answer: 0),
-        ListenQ(de: "Ich bin krank und komme heute nicht.", question: "Co mówi pracownik?", options: ["Jest chory i dziś nie przyjdzie", "Spóźni się 10 minut", "Skończył robotę"], answer: 0),
-        ListenQ(de: "Der Chef sagt, dass du morgen um sieben Uhr anfangen sollst.", question: "O której masz zacząć?", options: ["O 6:00", "O 7:00", "O 9:00"], answer: 1)
+        ListenQ(de: "Kacper, hol bitte die Schaufel und komm zur Baustelle.", pl: "Kacper, przynieś proszę łopatę i przyjdź na budowę.", question: "Co masz zrobić?", options: ["Przynieść łopatę i przyjść na budowę", "Zostać w aucie", "Iść do lekarza"], answer: 0),
+        ListenQ(de: "Wir fangen morgen um sechs Uhr an.", pl: "Jutro zaczynamy o szóstej.", question: "O której zaczynacie?", options: ["O ósmej", "O szóstej", "W południe"], answer: 1),
+        ListenQ(de: "Mach das Loch achtzig Zentimeter tief.", pl: "Zrób dół na osiemdziesiąt centymetrów.", question: "Jak głęboki ma być dół?", options: ["40 cm", "80 cm", "2 metry"], answer: 1),
+        ListenQ(de: "Pass auf, hier ist ein Kabel.", pl: "Uważaj, tu jest kabel.", question: "O co chodzi?", options: ["Uważaj, tu jest kabel", "Weź drabinę", "Idź na przerwę"], answer: 0),
+        ListenQ(de: "Die Lieferung kommt erst um zehn.", pl: "Dostawa przyjedzie dopiero o dziesiątej.", question: "Kiedy jest dostawa?", options: ["O siódmej", "Już stoi", "Dopiero o dziesiątej"], answer: 2),
+        ListenQ(de: "Kannst du den Transporter alleine beladen?", pl: "Czy możesz sam załadować busa?", question: "O co pyta?", options: ["Czy sam załadujesz busa", "Czy masz prawo jazdy na busa", "Czy bus jest zepsuty"], answer: 0),
+        ListenQ(de: "Ich bin krank und komme heute nicht.", pl: "Jestem chory i dziś nie przyjdę.", question: "Co mówi pracownik?", options: ["Jest chory i dziś nie przyjdzie", "Spóźni się 10 minut", "Skończył robotę"], answer: 0),
+        ListenQ(de: "Der Chef sagt, dass du morgen um sieben Uhr anfangen sollst.", pl: "Szef mówi, że masz jutro zacząć o siódmej.", question: "O której masz zacząć?", options: ["O 6:00", "O 7:00", "O 9:00"], answer: 1)
     ]
 
     static let build: [Line] = [
@@ -217,6 +218,8 @@ struct ListenView: View {
     @State private var speed: Float = 0.46
     @State private var voice = ""
     @State private var picked: Int?
+    @State private var showPL = false
+    @State private var saved = false
     @State private var voices: [(id: String, name: String)] = []
 
     private var item: CoachData.ListenQ { CoachData.listen[index % CoachData.listen.count] }
@@ -244,6 +247,8 @@ struct ListenView: View {
                 }
                 .buttonStyle(.glassProminent)
                 .tint(Ink.brass)
+                Button(showPL ? "Ukryj tłumaczenie" : "Tłumaczenie") { showPL.toggle() }
+                    .buttonStyle(.glass)
                 Text(item.question).font(.title3.bold())
                 ForEach(item.options.indices, id: \.self) { i in
                     Button { choose(i) } label: {
@@ -252,10 +257,35 @@ struct ListenView: View {
                     .buttonStyle(.glass)
                     .tint(color(i))
                 }
+                if picked != nil || showPL {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(item.de).font(.body.italic())
+                        Text(item.pl)
+                        Button {
+                            store.pinForReview(Word(
+                                de: item.de,
+                                pl: item.pl,
+                                ex: item.de,
+                                exPl: item.pl,
+                                topic: "Słuchanie",
+                                level: "A2"
+                            ))
+                            saved = true
+                        } label: {
+                            Label(saved ? "Jest w powtórkach" : "Nie rozumiem — dodaj do powtórek", systemImage: saved ? "checkmark" : "plus.rectangle.on.rectangle")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(.glass)
+                        .disabled(saved)
+                    }
+                    .padding(12)
+                    .liquidGlass(radius: 16)
+                }
                 if picked != nil {
-                    Text(item.de).font(.body.italic())
                     Button("Następne") {
                         picked = nil
+                        showPL = false
+                        saved = false
                         index += 1
                     }
                     .buttonStyle(.glassProminent)
