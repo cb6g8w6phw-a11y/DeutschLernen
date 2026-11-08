@@ -85,7 +85,7 @@ final class Mic: ObservableObject {
                 try startRecorder()
                 note = "Słucham. Stuknij jeszcze raz, żeby wysłać."
             } catch {
-                note = "Mikrofon: \(error.localizedDescription). Włącz go dla LiveContainer w ustawieniach iPhone."
+                note = "Mikrofon nie wstał (\(error.localizedDescription)). Zgoda jest włączona, więc to nie przełącznik."
                 listening = false
             }
         }
@@ -102,25 +102,27 @@ final class Mic: ObservableObject {
 
     private func openSession() throws {
         let session = AVAudioSession.sharedInstance()
+        try? session.setActive(false, options: .notifyOthersOnDeactivation)
         let attempts: [(AVAudioSession.Category, AVAudioSession.Mode, AVAudioSession.CategoryOptions)] = [
-            (.playAndRecord, .voiceChat, [.defaultToSpeaker, .allowBluetoothHFP]),
-            (.playAndRecord, .default, [.defaultToSpeaker, .mixWithOthers]),
+            (.playAndRecord, .default, [.defaultToSpeaker]),
             (.record, .default, []),
-            (.playAndRecord, .spokenAudio, [.defaultToSpeaker, .mixWithOthers])
+            (.playAndRecord, .default, [.defaultToSpeaker, .mixWithOthers, .allowBluetoothHFP])
         ]
         var last: Error?
         for (category, mode, options) in attempts {
             do {
                 try session.setCategory(category, mode: mode, options: options)
-                try session.setPreferredSampleRate(16000)
-                try session.setActive(true, options: [])
+                if let mic = session.availableInputs?.first(where: { $0.portType == .builtInMic }) {
+                    try? session.setPreferredInput(mic)
+                }
+                try session.setActive(true)
                 return
             } catch {
                 last = error
                 try? session.setActive(false, options: .notifyOthersOnDeactivation)
             }
         }
-        throw last ?? NSError(domain: "Mic", code: 1)
+        throw last ?? NSError(domain: "Mic", code: 1, userInfo: [NSLocalizedDescriptionKey: "sesja audio"])
     }
 
     private func startEngine() throws {
@@ -149,24 +151,55 @@ final class Mic: ObservableObject {
 
     private func startRecorder() throws {
         try openSession()
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("mowa.caf")
-        try? FileManager.default.removeItem(at: url)
-        let settings: [String: Any] = [
-            AVFormatIDKey: kAudioFormatLinearPCM,
-            AVSampleRateKey: 16_000,
-            AVNumberOfChannelsKey: 1,
-            AVLinearPCMBitDepthKey: 16,
-            AVLinearPCMIsFloatKey: false,
-            AVLinearPCMIsBigEndianKey: false
+        let folders = [
+            FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
+            FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+        ].compactMap { $0 }
+        let formats: [(String, [String: Any])] = [
+            ("mowa.m4a", [
+                AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+                AVSampleRateKey: 44_100,
+                AVNumberOfChannelsKey: 1,
+                AVEncoderAudioQualityKey: AVAudioQuality.medium.rawValue
+            ]),
+            ("mowa.caf", [
+                AVFormatIDKey: Int(kAudioFormatLinearPCM),
+                AVSampleRateKey: 44_100,
+                AVNumberOfChannelsKey: 1,
+                AVLinearPCMBitDepthKey: 16,
+                AVLinearPCMIsFloatKey: false,
+                AVLinearPCMIsBigEndianKey: false
+            ])
         ]
-        let rec = try AVAudioRecorder(url: url, settings: settings)
-        rec.isMeteringEnabled = true
-        guard rec.prepareToRecord(), rec.record() else {
-            throw NSError(domain: "Mic", code: 3, userInfo: [NSLocalizedDescriptionKey: "nagrywanie odrzucone"])
+        for folder in folders {
+            try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            for (name, settings) in formats {
+                let url = folder.appendingPathComponent(name)
+                try? FileManager.default.removeItem(at: url)
+                guard let rec = try? AVAudioRecorder(url: url, settings: settings) else { continue }
+                rec.prepareToRecord()
+                if rec.record() {
+                    recorder = rec
+                    recordURL = url
+                    listening = true
+                    return
+                }
+                Thread.sleep(forTimeInterval: 0.2)
+                if rec.record() {
+                    recorder = rec
+                    recordURL = url
+                    listening = true
+                    return
+                }
+            }
         }
-        recorder = rec
-        recordURL = url
-        listening = true
+        let session = AVAudioSession.sharedInstance()
+        let inputs = session.availableInputs?.map(\.portName).joined(separator: ", ")
+        throw NSError(
+            domain: "Mic",
+            code: 3,
+            userInfo: [NSLocalizedDescriptionKey: "brak wejścia (\(inputs?.isEmpty == false ? inputs! : "telefon nie podał mikrofonu"))"]
+        )
     }
 
     func stop() {
