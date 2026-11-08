@@ -1,3 +1,4 @@
+import AudioToolbox
 import AVFoundation
 import Speech
 import SwiftUI
@@ -36,6 +37,7 @@ final class Mic: ObservableObject {
     private var recorder: AVAudioRecorder?
     private var recordURL: URL?
     private var ear: CaptureEar?
+    private var queueEar: QueueEar?
     private var meter = Meter()
     private var generation = 0
     private var heardError: String?
@@ -88,28 +90,17 @@ final class Mic: ObservableObject {
         meter.peak = 0
         note = "Włączam mikrofon…"
         pickRecognizer()
-        do {
-            try openSession()
-            try startEngine()
-            listening = true
-            note = "Słucham…"
-            if await healthy(token) { return }
-            stopEngine()
-        } catch {
-            stopEngine()
-            heardError = error.localizedDescription
-        }
+        let allowed = await askMic()
+        try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
+        try? await Task.sleep(nanoseconds: 200_000_000)
         guard token == generation else { return }
+
         do {
-            try openSession()
             try await startCapture()
             listening = true
-            note = "Słucham drugą drogą…"
-            meter.peak = 0
-            if await healthy(token) { return }
-            ear?.stop()
-            ear = nil
-            stopEngine()
+            note = "Słucham…"
+            watch(token)
+            return
         } catch {
             ear?.stop()
             ear = nil
@@ -117,35 +108,73 @@ final class Mic: ObservableObject {
             heardError = error.localizedDescription
         }
         guard token == generation else { return }
+        try? await Task.sleep(nanoseconds: 250_000_000)
+
         do {
-            try openSession()
+            try calmSession()
+            try startQueue()
+            listening = true
+            note = "Słucham…"
+            watch(token)
+            return
+        } catch {
+            stopQueue()
+            heardError = error.localizedDescription
+        }
+        guard token == generation else { return }
+        try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
+        try? await Task.sleep(nanoseconds: 250_000_000)
+
+        do {
+            try calmSession()
             try startRecorder()
             listening = true
             note = "Nagrywam. Powiedz zdanie i stuknij kwadrat."
+            return
         } catch {
+            let prior = heardError.map { " \($0)" } ?? ""
+            if allowed {
+                note = "Nie mogę włączyć mikrofonu. Zamknij inne aplikacje w LiveContainer, odpal Deutsch samą, bez podziału ekranu, i stuknij jeszcze raz. (\(error.localizedDescription)\(prior))"
+            } else {
+                note = "Brak zgody. Ustawienia → Prywatność → Mikrofon → włącz LiveContainer."
+            }
             listening = false
-            let extra = heardError.map { " \($0)" } ?? ""
-            note = "Mikrofon nie wstał (\(error.localizedDescription)).\(extra)"
         }
     }
 
-    private func healthy(_ token: Int) async -> Bool {
-        for _ in 0..<7 {
-            try? await Task.sleep(nanoseconds: 200_000_000)
-            guard token == generation, listening else { return true }
-            level = Double(min(1, meter.peak * 8))
-            if !text.isEmpty {
-                note = "Słyszę…"
-                return true
+    private func watch(_ token: Int) {
+        Task { @MainActor in
+            while token == self.generation, self.listening {
+                try? await Task.sleep(nanoseconds: 200_000_000)
+                self.level = Double(min(1, self.meter.peak * 8))
+                if !self.text.isEmpty {
+                    self.note = "Słyszę…"
+                } else if self.meter.peak > 0.012 {
+                    self.note = "Słyszę głos…"
+                }
             }
         }
-        guard token == generation, listening else { return true }
-        if meter.peak > 0.012 {
-            note = heardError ?? "Słyszę głos. Mów całe zdanie po niemiecku."
-            return heardError == nil
+    }
+
+    private func askMic() async -> Bool {
+        switch AVAudioApplication.shared.recordPermission {
+        case .granted:
+            return true
+        case .denied:
+            return false
+        default:
+            return await withCheckedContinuation { cont in
+                AVAudioApplication.requestRecordPermission { ok in
+                    cont.resume(returning: ok)
+                }
+            }
         }
-        if let heardError { note = heardError }
-        return false
+    }
+
+    private func calmSession() throws {
+        let session = AVAudioSession.sharedInstance()
+        try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .mixWithOthers, .allowBluetoothHFP])
+        try session.setActive(true)
     }
 
     private func pickRecognizer() {
@@ -244,12 +273,50 @@ final class Mic: ObservableObject {
         ear.meter = meter
         try await ear.start()
         self.ear = ear
-        task = recognizer?.recognitionTask(with: request) { result, _ in
+        task = recognizer?.recognitionTask(with: request) { result, error in
             Task { @MainActor in
-                if let result { self.text = result.bestTranscription.formattedString }
-                if result?.isFinal == true { self.finishListen() }
+                if let result {
+                    let said = result.bestTranscription.formattedString
+                    if !said.isEmpty { self.text = said }
+                }
+                if let error, self.text.isEmpty {
+                    self.note = error.localizedDescription
+                }
+                if result?.isFinal == true, !self.text.isEmpty { self.finishListen() }
             }
         }
+    }
+
+    private func startQueue() throws {
+        let request = SFSpeechAudioBufferRecognitionRequest()
+        request.shouldReportPartialResults = true
+        request.requiresOnDeviceRecognition = false
+        request.taskHint = .dictation
+        self.request = request
+        let ear = QueueEar(request: request, meter: meter)
+        try ear.start()
+        queueEar = ear
+        task = recognizer?.recognitionTask(with: request) { result, error in
+            Task { @MainActor in
+                if let result {
+                    let said = result.bestTranscription.formattedString
+                    if !said.isEmpty { self.text = said }
+                }
+                if let error, self.text.isEmpty {
+                    self.note = error.localizedDescription
+                }
+                if result?.isFinal == true, !self.text.isEmpty { self.finishListen() }
+            }
+        }
+    }
+
+    private func stopQueue() {
+        queueEar?.stop()
+        queueEar = nil
+        request?.endAudio()
+        task?.cancel()
+        request = nil
+        task = nil
     }
 
     private func startRecorder() throws {
@@ -316,6 +383,7 @@ final class Mic: ObservableObject {
     private func finishListen() {
         ear?.stop()
         ear = nil
+        stopQueue()
         stopEngine()
         listening = false
     }
@@ -340,6 +408,7 @@ final class Mic: ObservableObject {
         recorder = nil
         ear?.stop()
         ear = nil
+        stopQueue()
         stopEngine()
         listening = false
     }
@@ -369,6 +438,81 @@ final class Mic: ObservableObject {
     }
 }
 
+final class QueueEar {
+    let request: SFSpeechAudioBufferRecognitionRequest
+    let meter: Meter
+    private var queue: AudioQueueRef?
+    private var rate: Double = 16_000
+
+    init(request: SFSpeechAudioBufferRecognitionRequest, meter: Meter) {
+        self.request = request
+        self.meter = meter
+    }
+
+    func start() throws {
+        let sessionRate = AVAudioSession.sharedInstance().sampleRate
+        rate = sessionRate > 8_000 ? sessionRate : 16_000
+        var desc = AudioStreamBasicDescription(
+            mSampleRate: rate,
+            mFormatID: kAudioFormatLinearPCM,
+            mFormatFlags: kLinearPCMFormatFlagIsSignedInteger | kLinearPCMFormatFlagIsPacked,
+            mBytesPerPacket: 2,
+            mFramesPerPacket: 1,
+            mBytesPerFrame: 2,
+            mChannelsPerFrame: 1,
+            mBitsPerChannel: 16,
+            mReserved: 0
+        )
+        let pointer = Unmanaged.passUnretained(self).toOpaque()
+        var created: AudioQueueRef?
+        let made = AudioQueueNewInput(&desc, { user, queue, buffer, _, _, _ in
+            guard let user else { return }
+            let ear = Unmanaged<QueueEar>.fromOpaque(user).takeUnretainedValue()
+            ear.consume(buffer)
+            AudioQueueEnqueueBuffer(queue, buffer, 0, nil)
+        }, pointer, nil, nil, 0, &created)
+        guard made == noErr, let created else {
+            throw NSError(domain: "Mic", code: 8, userInfo: [NSLocalizedDescriptionKey: "kolejka \(made)"])
+        }
+        queue = created
+        let bytes = UInt32(rate / 10) * 2
+        for _ in 0..<3 {
+            var buffer: AudioQueueBufferRef?
+            guard AudioQueueAllocateBuffer(created, bytes, &buffer) == noErr, let buffer else { continue }
+            AudioQueueEnqueueBuffer(created, buffer, 0, nil)
+        }
+        let started = AudioQueueStart(created, nil)
+        guard started == noErr else {
+            AudioQueueDispose(created, true)
+            queue = nil
+            throw NSError(domain: "Mic", code: 9, userInfo: [NSLocalizedDescriptionKey: "start kolejki \(started)"])
+        }
+    }
+
+    func stop() {
+        guard let queue else { return }
+        self.queue = nil
+        AudioQueueStop(queue, false)
+        AudioQueueDispose(queue, false)
+    }
+
+    private func consume(_ buffer: AudioQueueBufferRef) {
+        let bytes = Int(buffer.pointee.mAudioDataByteSize)
+        let frames = bytes / 2
+        guard frames > 0,
+              let format = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: rate, channels: 1, interleaved: false),
+              let pcm = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(frames)),
+              let dest = pcm.floatChannelData?[0] else { return }
+        let source = buffer.pointee.mAudioData.assumingMemoryBound(to: Int16.self)
+        pcm.frameLength = AVAudioFrameCount(frames)
+        for index in 0..<frames {
+            dest[index] = Float(source[index]) / 32768
+        }
+        request.append(pcm)
+        meter.eat(pcm)
+    }
+}
+
 final class CaptureEar: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
     var request: SFSpeechAudioBufferRecognitionRequest?
     var meter: Meter?
@@ -379,6 +523,7 @@ final class CaptureEar: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             queue.async {
                 do {
+                    self.session.usesApplicationAudioSession = false
                     self.session.beginConfiguration()
                     self.session.inputs.forEach { self.session.removeInput($0) }
                     self.session.outputs.forEach { self.session.removeOutput($0) }
