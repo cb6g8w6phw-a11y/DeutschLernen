@@ -42,7 +42,7 @@ struct StatsView: View {
                     Button {
                         Task { await generateLesson() }
                     } label: {
-                        if generating { ProgressView() } else { Text("Wygeneruj nowe słówka (Gemini)") }
+                        if generating { ProgressView() } else { Text("Wygeneruj nowe słówka") }
                     }
                     .disabled(generating)
                     if !message.isEmpty { Text(message).font(.footnote).foregroundStyle(.secondary) }
@@ -68,24 +68,61 @@ struct StatsView: View {
         Wygeneruj 10 NOWYCH, przydatnych słówek lub zwrotów (poziom A2–B1) do codziennego życia i pracy w Niemczech. \
         Skup się na tematach, w których uczeń ma najniższą skuteczność, oraz na tych samych trudnościach co słabe słowa. \
         Nie podawaj bardzo łatwych słów (powitania, liczby, kolory).
-        Zwróć TYLKO tablicę JSON obiektów z polami: "de" (z rodzajnikiem dla rzeczowników), "pl", "ex" (krótkie zdanie przykładowe po niemiecku), "exPl" (tłumaczenie zdania na polski), "topic" (krótka nazwa tematu po polsku).
+        Zwróć JSON obiektu {"items":[{"de":"","pl":"","ex":"","exPl":"","topic":""}]}. Nic poza JSON.
         """
         do {
             let text = try await Gemini.send(
                 messages: [GeminiMessage(role: "user", text: prompt)],
                 system: "Jesteś nauczycielem niemieckiego dla Polaka. Odpowiadasz wyłącznie poprawnym JSON-em.",
                 json: true)
-            let cleaned = text
-                .replacingOccurrences(of: "```json", with: "")
-                .replacingOccurrences(of: "```", with: "")
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            let items = try JSONDecoder().decode([AIWord].self, from: Data(cleaned.utf8))
+            let items = try WordJSON.decode(text)
             let added = store.addWords(items.map {
                 Word(de: $0.de, pl: $0.pl, ex: $0.ex, exPl: $0.exPl, topic: $0.topic)
             })
             message = "Dodano \(added) nowych słówek. Zobaczysz je w następnej sesji."
         } catch {
-            message = "⚠️ \(error.localizedDescription)"
+            message = "⚠️ Nie wyszła lista słówek. Stuknij jeszcze raz."
         }
+    }
+}
+
+enum WordJSON {
+    static func decode(_ text: String) throws -> [AIWord] {
+        let raw = jsonSlice(text)
+        let data = Data(raw.utf8)
+        if let items = try? JSONDecoder().decode([AIWord].self, from: data), !items.isEmpty { return items }
+        guard let obj = try? JSONSerialization.jsonObject(with: data) else { throw GeminiError.badResponse }
+        let rows: [[String: Any]]
+        if let arr = obj as? [[String: Any]] {
+            rows = arr
+        } else if let dict = obj as? [String: Any] {
+            rows = (dict["items"] ?? dict["words"] ?? dict["slowka"]) as? [[String: Any]] ?? []
+        } else {
+            rows = []
+        }
+        let words: [AIWord] = rows.compactMap { row in
+            func pick(_ keys: String...) -> String {
+                for key in keys {
+                    if let value = row[key] as? String {
+                        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if !trimmed.isEmpty { return trimmed }
+                    }
+                }
+                return ""
+            }
+            let de = pick("de", "german", "niemiecki")
+            guard !de.isEmpty else { return nil }
+            let pl = pick("pl", "polish", "polski")
+            let ex = pick("ex", "example", "sentence")
+            let topic = pick("topic", "temat")
+            return AIWord(
+                de: de,
+                pl: pl.isEmpty ? de : pl,
+                ex: ex.isEmpty ? de : ex,
+                exPl: pick("exPl", "examplePl", "tlumaczenie"),
+                topic: topic.isEmpty ? "Z życia" : topic)
+        }
+        if words.isEmpty { throw GeminiError.badResponse }
+        return words
     }
 }

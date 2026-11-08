@@ -37,7 +37,7 @@ enum Gemini {
             let listed = await groqModels(key: keys.groq)
             let models = listed.isEmpty ? ["openai/gpt-oss-20b", "openai/gpt-oss-120b"] : listed
             for model in models.prefix(2) {
-                do { return try await groqSend(key: keys.groq, model: model, messages: messages, system: system) }
+                do { return try await groqSend(key: keys.groq, model: model, messages: messages, system: system, json: json) }
                 catch let error as URLError where error.code == .timedOut {
                     last = GeminiError.http(408, "Groq/\(model): czas minął, model myślał za długo.")
                 } catch {
@@ -89,7 +89,7 @@ enum Gemini {
         return ordered
     }
 
-    private static func groqSend(key: String, model: String, messages: [GeminiMessage], system: String) async throws -> String {
+    private static func groqSend(key: String, model: String, messages: [GeminiMessage], system: String, json: Bool) async throws -> String {
         var req = URLRequest(url: URL(string: "https://api.groq.com/openai/v1/chat/completions")!)
         req.httpMethod = "POST"
         req.timeoutInterval = 25
@@ -100,8 +100,8 @@ enum Gemini {
         var body: [String: Any] = [
             "model": model,
             "messages": chat,
-            "temperature": 0.4,
-            "max_tokens": 450
+            "temperature": json ? 0.2 : 0.4,
+            "max_tokens": json ? 1400 : 500
         ]
         if model.contains("gpt-oss") { body["reasoning_effort"] = "low" }
         req.httpBody = try JSONSerialization.data(withJSONObject: body)

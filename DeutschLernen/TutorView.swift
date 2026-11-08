@@ -18,6 +18,8 @@ struct TutorView: View {
     @State private var typed = ""
     @State private var showType = false
     @State private var greeted = false
+    @State private var quiet: Task<Void, Never>?
+    @AppStorage("persona") private var persona = "Marek"
 
     private let purple = Color(red: 0.48, green: 0.32, blue: 0.92)
 
@@ -45,7 +47,7 @@ struct TutorView: View {
                 }
                 controls
             }
-            .navigationTitle("Rozmowa")
+            .navigationTitle(persona)
             .navigationBarTitleDisplayMode(.inline)
             .containerBackground(for: .navigation) { NightGlow() }
             .toolbarBackground(.hidden, for: .navigationBar)
@@ -61,15 +63,26 @@ struct TutorView: View {
             .onAppear {
                 guard !greeted else { return }
                 greeted = true
-                turns = [Turn(
-                    role: "model",
-                    german: "Was machst du heute auf der Arbeit?",
-                    polish: "Co dzisiaj robisz w pracy? Odpowiedz po niemiecku, nawet jeśli wyjdzie krzywo.",
-                    say: "Ich arbeite heute auf der Baustelle.")]
+                turns = [opener]
             }
             .onDisappear { mic.stop(); Talk.stop() }
+            .onChange(of: persona) { _, _ in
+                if !turns.contains(where: { $0.role == "user" }) {
+                    turns = [opener]
+                }
+            }
             .onChange(of: mic.listening) { was, now in
                 if was, !now { flushMic() }
+            }
+            .onChange(of: mic.text) { _, new in
+                quiet?.cancel()
+                let spoken = new.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard mic.listening, spoken.count > 1 else { return }
+                quiet = Task {
+                    try? await Task.sleep(nanoseconds: 1_200_000_000)
+                    guard !Task.isCancelled, mic.listening, mic.text == new else { return }
+                    mic.stop()
+                }
             }
             .sheet(isPresented: $showType) {
                 NavigationStack {
@@ -106,10 +119,16 @@ struct TutorView: View {
                     .frame(width: 92, height: 92)
                     .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             }
-            Text("Mówisz, on poprawia po polsku i jedzie dalej po niemiecku. Na końcu: Podsumuj, a zwroty wpadają do Nauki.")
+            Text("\(persona) gada z tobą jak człowiek. Mówisz, on odpowiada na głos. Jak zamilkniesz, zdanie samo idzie. Pod spodem jest sens po polsku.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+            Picker("Kto", selection: $persona) {
+                Text("Marek").tag("Marek")
+                Text("Lena").tag("Lena")
+                Text("Piotr").tag("Piotr")
+            }
+            .pickerStyle(.segmented)
         }
     }
 
@@ -140,9 +159,13 @@ struct TutorView: View {
     private var controls: some View {
         VStack(spacing: 8) {
             if !hint.isEmpty {
-                Text(hint).font(.footnote).padding(10)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16))
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Możesz powiedzieć").font(.caption).foregroundStyle(.secondary)
+                    ForEach(germanHints, id: \.self) { line in
+                        Button(line) { Task { await send(line) } }
+                            .buttonStyle(.glass)
+                    }
+                }
             }
             if !mic.note.isEmpty { Text(mic.note).font(.caption).foregroundStyle(.secondary) }
             if mic.listening {
@@ -241,16 +264,15 @@ struct TutorView: View {
         let prompt = """
         To jest cała rozmowa:
         \(log)
-        Wyciągnij od 5 do 10 najważniejszych słówek albo zwrotów, których uczeń użył albo w których zrobił błąd.
-        TYLKO JSON, tablica obiektów: de, pl, ex, exPl.
-        de = zwrot po niemiecku, pl = tłumaczenie, ex = krótkie zdanie z tej rozmowy, exPl = tłumaczenie zdania.
+        Wyciągnij od 5 do 10 najważniejszych zwrotów.
+        Zwróć JSON {"items":[{"de":"","pl":"","ex":"","exPl":"","topic":"Z rozmowy"}]}. Nic poza JSON.
         """
         do {
             let text = try await Gemini.send(
                 messages: [GeminiMessage(role: "user", text: prompt)],
                 system: "Odpowiadasz wyłącznie JSON-em.",
                 json: true)
-            let items = try JSONDecoder().decode([AIWord].self, from: Data(jsonSlice(text).utf8))
+            let items = try WordJSON.decode(text)
             let words = items.prefix(10).map {
                 Word(de: $0.de, pl: $0.pl, ex: $0.ex, exPl: $0.exPl, topic: "Z rozmowy", level: "A2")
             }
@@ -304,20 +326,48 @@ struct TutorView: View {
         return lines.joined(separator: " ")
     }
 
+    private var germanHints: [String] {
+        hint.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { line in
+                line.count > 2 && !line.contains(where: { "ąęśćźżńłóĄĘŚĆŹŻŃŁÓ".contains($0) })
+            }
+    }
+
+    private var opener: Turn {
+        switch persona {
+        case "Lena":
+            return Turn(role: "model", german: "Na, wie war dein Tag bisher?", polish: "No i jak ci minął dzień do tej pory?", say: "Ganz okay, ich komme gerade von der Arbeit.")
+        case "Piotr":
+            return Turn(role: "model", german: "Was ist mit dem Auto? Hörst du ein Geräusch?", polish: "Co z autem? Słyszysz jakiś dźwięk?", say: "Vorne klopft es, wenn ich über ein Schlagloch fahre.")
+        default:
+            return Turn(role: "model", german: "Na, was machst du heute auf der Baustelle?", polish: "No i co dzisiaj robisz na budowie?", say: "Ich montiere heute die Klimaanlage.")
+        }
+    }
+
     private func systemPrompt() -> String {
-        """
-        Jesteś osobistym, cierpliwym korepetytorem niemieckiego i partnerem do rozmowy.
-        Uczeń jest Polakiem. Cel: szybka nauka do życia i pracy (budowa, montaż, warsztat, klient, urząd), poziom około B1.
+        let who: String
+        switch persona {
+        case "Lena":
+            who = "Masz na imię Lena. Jesteś koleżanką z codziennego życia w Niemczech: urząd, sklep, mieszkanie, lekarz. Mówisz spokojnie i konkretnie."
+        case "Piotr":
+            who = "Masz na imię Piotr. Jesteś mechanikiem w warsztacie. Mówisz krótko, po ludzku, o aucie, częściach i terminie."
+        default:
+            who = "Masz na imię Marek. Pracujesz na budowie i przy montażu w Niemczech. Gadasz jak kolega na zmianie, nie jak nauczyciel."
+        }
+        return """
+        \(who)
+        Rozmówca jest Polakiem i chce mówić po niemiecku jak z żywym człowiekiem, poziom około B1, praca i codzienność.
         Zasady:
-        - Prowadź naturalną rozmowę. Krótko, jedno albo dwa zdania po niemiecku. Praktyczne zwroty, nie podręcznik.
-        - Jeśli jest błąd, popraw go krótko po polsku i podaj dobrą formę. Potem płynnie jedź dalej po niemiecku.
-        - Zawsze zostaw uczniowi jedno konkretne zdanie do powiedzenia.
-        - Nie używaj markdownu ani gwiazdek.
-        Format odpowiedzi, dokładnie te trzy linie:
-        DE: to, co mówisz po niemiecku
-        PL: korekta albo tłumaczenie po polsku
-        SAY: jedno zdanie, które uczeń ma teraz powtórzyć
-        Postępy ucznia: \(store.progressSummary())
+        - Odpowiadaj tak, jakbyś stał obok niego. Jedno albo dwa krótkie zdania. Potem pytanie.
+        - Nie wykładaj gramatyki i nie pisz list.
+        - Jak powie coś krzywo, w PL daj jedną krótką poprawkę po polsku. Jak jest dobrze, w PL przetłumacz tylko to, co sam powiedziałeś.
+        - SAY to jedno naturalne zdanie, które on może teraz powiedzieć.
+        Format, dokładnie trzy linie, bez markdownu:
+        DE: po niemiecku
+        PL: po polsku
+        SAY: zdanie dla niego
+        Postępy: \(store.progressSummary())
         """
     }
 }
