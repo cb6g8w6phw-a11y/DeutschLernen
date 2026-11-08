@@ -55,6 +55,14 @@ struct TutorView: View {
                 }
                 controls
             }
+            .overlay {
+                if mic.wantsPrompt {
+                    ZStack {
+                        Color.black.opacity(0.55).ignoresSafeArea()
+                        micAsk
+                    }
+                }
+            }
             .navigationTitle(persona)
             .navigationBarTitleDisplayMode(.inline)
             .containerBackground(for: .navigation) { NightGlow() }
@@ -219,6 +227,25 @@ struct TutorView: View {
             }
             if t.role == "model" { Spacer(minLength: 48) }
         }
+    }
+
+    private var micAsk: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Czy włączyć mikrofon?").font(.title3.bold())
+            Text(mic.note.isEmpty ? mic.permissionLine() : mic.note)
+                .font(.body)
+            Text("Na oknie iPhone'a może być napisane LiveContainer, nie Deutsch. Stuknij Pozwól. Jak okno się nie pojawi, decyzja jest już zapisana.")
+                .font(.footnote)
+                .foregroundStyle(Ink.muted)
+            Button("Zapytaj iPhone'a") { mic.allowPrompt() }
+                .buttonStyle(.glassProminent)
+                .tint(Ink.brass)
+            Button("Nie teraz") { mic.wantsPrompt = false }
+                .buttonStyle(.glass)
+        }
+        .padding(18)
+        .liquidGlass(radius: 22)
+        .padding(.horizontal, 20)
     }
 
     private var controls: some View {

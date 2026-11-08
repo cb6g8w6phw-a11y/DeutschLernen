@@ -7,6 +7,8 @@ enum Talk {
     static let synth = AVSpeechSynthesizer()
 
     static func de(_ text: String, rate: Float = 0.46, voice: String? = nil) {
+        try? AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .spokenAudio, options: [.defaultToSpeaker, .mixWithOthers, .allowBluetoothHFP])
+        try? AVAudioSession.sharedInstance().setActive(true)
         let clean = text.replacingOccurrences(of: "*", with: "")
         synth.stopSpeaking(at: .immediate)
         let u = AVSpeechUtterance(string: clean)
@@ -29,7 +31,6 @@ final class Mic: ObservableObject {
     @Published var note = ""
     @Published var level: Double = 0
     @Published var wantsPrompt = false
-    private var pendingMic = false
 
     private var recognizer = SFSpeechRecognizer(locale: Locale(identifier: "de-DE"))
     private var engine: AVAudioEngine?
@@ -45,47 +46,65 @@ final class Mic: ObservableObject {
     private var heardError: String?
 
     func toggle() {
-        if listening { stop() } else { ask() }
+        if listening {
+            stop()
+            return
+        }
+        note = permissionLine()
+        wantsPrompt = true
     }
 
     func allowPrompt() {
-        UserDefaults.standard.set(true, forKey: "micExplained")
-        afterMic(pendingMic)
-    }
-
-    private func ask() {
-        note = "Pytam o dostęp do mikrofonu…"
         let before = AVCaptureDevice.authorizationStatus(for: .audio)
+        note = "Wysyłam pytanie do iPhone'a…"
         AVCaptureDevice.requestAccess(for: .audio) { granted in
-            Task { @MainActor in
-                if before != .notDetermined, !UserDefaults.standard.bool(forKey: "micExplained") {
-                    self.pendingMic = granted
-                    self.wantsPrompt = true
-                    return
+            AVAudioApplication.requestRecordPermission { sessionOK in
+                SFSpeechRecognizer.requestAuthorization { speech in
+                    Task { @MainActor in
+                        let micOK = granted || sessionOK
+                        let window = before == .notDetermined
+                            ? "iPhone powinien pokazać pytanie."
+                            : "iPhone nie pokaże pytania drugi raz, decyzja już była."
+                        let speechOK = speech == .authorized
+                        self.note = "Mikrofon: \(micOK ? "tak" : "nie"). Rozpoznawanie mowy: \(speechOK ? "tak" : "nie"). \(window)"
+                        self.wantsPrompt = false
+                        guard micOK else { return }
+                        self.begin()
+                    }
                 }
-                self.afterMic(granted)
             }
         }
     }
 
-    private func afterMic(_ granted: Bool) {
-        AVAudioApplication.requestRecordPermission { sessionOK in
-            SFSpeechRecognizer.requestAuthorization { speech in
-                Task { @MainActor in
-                    guard granted || sessionOK else {
-                        self.note = "Brak zgody na mikrofon. Ustawienia → Prywatność → Mikrofon → LiveContainer."
-                        if let url = URL(string: UIApplication.openSettingsURLString) {
-                            UIApplication.shared.open(url)
-                        }
-                        return
-                    }
-                    if speech != .authorized {
-                        self.note = "Włącz też rozpoznawanie mowy: Ustawienia → Prywatność → Rozpoznawanie mowy → LiveContainer."
-                    }
-                    self.begin()
-                }
-            }
+    func permissionLine() -> String {
+        let audio: String
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .notDetermined: audio = "jeszcze niepytany"
+        case .authorized: audio = "zgoda jest"
+        case .denied: audio = "odmowa"
+        case .restricted: audio = "zablokowany"
+        @unknown default: audio = "nieznany"
         }
+        let speech: String
+        switch SFSpeechRecognizer.authorizationStatus() {
+        case .notDetermined: speech = "jeszcze niepytany"
+        case .authorized: speech = "zgoda jest"
+        case .denied: speech = "odmowa"
+        case .restricted: speech = "zablokowany"
+        @unknown default: speech = "nieznany"
+        }
+        return "Mikrofon: \(audio). Rozpoznawanie mowy: \(speech)."
+    }
+
+    static func plain(_ error: Error) -> String {
+        let raw = error.localizedDescription.lowercased()
+        if raw.contains("no speech") || raw.contains("nie wykryto") {
+            return "Nie słyszę mowy. Przesuń przełącznik z boku telefonu, żeby nie był wyciszony, i mów od razu po stuknięciu mikrofonu."
+        }
+        if raw.contains("denied") || raw.contains("not authorized") || raw.contains("niedozwol") {
+            return "Brak zgody. Ustawienia → Prywatność → Mikrofon i Rozpoznawanie mowy → LiveContainer."
+        }
+        return error.localizedDescription
     }
 
     private func begin() {
@@ -262,7 +281,7 @@ final class Mic: ObservableObject {
                         }
                         if let error {
                             self.heardError = error.localizedDescription
-                            self.note = error.localizedDescription
+                            self.note = Self.plain(error)
                         }
                         if result?.isFinal == true, !self.text.isEmpty { self.finishListen() }
                     }
@@ -293,7 +312,7 @@ final class Mic: ObservableObject {
                     if !said.isEmpty { self.text = said }
                 }
                 if let error, self.text.isEmpty {
-                    self.note = error.localizedDescription
+                    self.note = Self.plain(error)
                 }
                 if result?.isFinal == true, !self.text.isEmpty { self.finishListen() }
             }
@@ -316,7 +335,7 @@ final class Mic: ObservableObject {
                     if !said.isEmpty { self.text = said }
                 }
                 if let error, self.text.isEmpty {
-                    self.note = error.localizedDescription
+                    self.note = Self.plain(error)
                 }
                 if result?.isFinal == true, !self.text.isEmpty { self.finishListen() }
             }
