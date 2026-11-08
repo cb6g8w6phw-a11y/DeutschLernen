@@ -105,8 +105,6 @@ struct ScenesView: View {
         .opacity(locked ? 0.45 : 1)
     }
 }
-    }
-}
 
 struct SceneChatView: View {
     @EnvironmentObject var store: LearningStore
