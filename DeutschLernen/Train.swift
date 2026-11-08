@@ -256,7 +256,7 @@ struct PronounceView: View {
             }
             .buttonStyle(.glass)
             if !parts.isEmpty {
-                WrappingWords(parts: parts)
+                SaidWords(parts: parts)
             }
             if !mic.note.isEmpty { Text(mic.note).font(.caption).foregroundStyle(.secondary) }
             if mic.listening { Text(mic.text.isEmpty ? "Słucham…" : mic.text).font(.footnote) }
@@ -292,7 +292,7 @@ struct PronounceView: View {
     }
 }
 
-struct WrappingWords: View {
+struct SaidWords: View {
     let parts: [(word: String, ok: Bool)]
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
