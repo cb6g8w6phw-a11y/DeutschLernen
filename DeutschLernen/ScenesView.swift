@@ -49,7 +49,8 @@ struct ScenesView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Wybierz scenę. Druga strona mówi po niemiecku, pod spodem dostajesz krótką poprawkę po polsku.")
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 14, design: .rounded))
+                        .foregroundStyle(Theme.text2)
                     NavigationLink {
                         ChatView()
                     } label: {
@@ -73,8 +74,13 @@ struct ScenesView: View {
 
     private func row(_ title: String, _ text: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.headline)
-            Text(text).font(.footnote).foregroundStyle(.secondary).lineLimit(3)
+            Text(title)
+                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                .foregroundStyle(Theme.text)
+            Text(text)
+                .font(.system(size: 14, design: .rounded))
+                .foregroundStyle(Theme.text2)
+                .lineLimit(3)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)

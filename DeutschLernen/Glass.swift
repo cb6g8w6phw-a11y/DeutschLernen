@@ -69,37 +69,18 @@ final class LookStore: ObservableObject {
 }
 
 enum Ink {
-    static var bg: Color { LookStore.shared.bg }
-    static var card: Color { LookStore.shared.card }
-    static var accent: Color { LookStore.shared.accent }
-    static var brass: Color { accent }
-    static var pine: Color { LookStore.shared.pine }
-    static var clay: Color { LookStore.shared.clay }
-    static var muted: Color { LookStore.shared.muted }
+    static var bg: Color { Theme.bg }
+    static var card: Color { Theme.card }
+    static var accent: Color { Theme.accent }
+    static var brass: Color { Theme.accent }
+    static var pine: Color { Theme.orange }
+    static var clay: Color { Color(red: 1, green: 0.34, blue: 0.38) }
+    static var muted: Color { Theme.text2 }
 }
 
 struct NightGlow: View {
-    @ObservedObject private var look = LookStore.shared
     var body: some View {
-        ZStack {
-            look.bg
-            Circle()
-                .fill(look.accent.opacity(look.style == "glass" ? 0.55 : 0.16))
-                .frame(width: 320, height: 320)
-                .blur(radius: 90)
-                .offset(x: -120, y: -260)
-            Circle()
-                .fill(look.pine.opacity(look.style == "glass" ? 0.35 : 0.08))
-                .frame(width: 260, height: 260)
-                .blur(radius: 80)
-                .offset(x: 150, y: 40)
-            Circle()
-                .fill(Color.white.opacity(look.style == "glass" ? 0.08 : 0))
-                .frame(width: 180, height: 180)
-                .blur(radius: 50)
-                .offset(x: 40, y: 280)
-        }
-        .ignoresSafeArea()
+        Theme.background.ignoresSafeArea()
     }
 }
 
@@ -110,19 +91,7 @@ struct GlassCard: ViewModifier {
     var interactive: Bool
 
     func body(content: Content) -> some View {
-        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
-        let color = tint ?? look.accent
-        let glass = interactive
-            ? Glass.regular.interactive().tint(color.opacity(0.16))
-            : Glass.regular.tint(color.opacity(0.16))
-        if look.style == "glass" {
-            content.glassEffect(glass, in: shape)
-        } else {
-            content
-                .background(.ultraThinMaterial, in: shape)
-                .background(look.card.opacity(0.55), in: shape)
-                .overlay(shape.stroke(Color.white.opacity(0.14), lineWidth: 0.6))
-        }
+        content.themedCard(radius: radius)
     }
 }
 

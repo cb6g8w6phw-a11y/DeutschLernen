@@ -34,33 +34,27 @@ struct StatsView: View {
     }
 
     private var summary: some View {
-        let levels = store.levelCounts()
-        let maxLevel = max(levels.map(\.count).max() ?? 1, 1)
-        return HStack(alignment: .bottom, spacing: 16) {
+        HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("\(store.masteredCount + store.learningCount)")
-                    .font(.system(size: 48, weight: .bold))
-                Text("słów w nauce")
-                    .foregroundStyle(Ink.muted)
-                Text("Opanowane \(store.masteredCount)")
-                    .font(.footnote)
-                    .foregroundStyle(Ink.muted)
+                Text("\(store.learningCount)")
+                    .font(.system(size: 56, weight: .bold, design: .rounded))
+                    .foregroundStyle(Theme.text)
+                Text("słów w nauce, opanowane \(store.masteredCount)")
+                    .font(.system(size: 14, design: .rounded))
+                    .foregroundStyle(Theme.text2)
             }
             Spacer()
-            HStack(alignment: .bottom, spacing: 8) {
-                ForEach(levels, id: \.name) { level in
-                    VStack(spacing: 4) {
-                        Text("\(level.count)").font(.caption2).foregroundStyle(Ink.muted)
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Ink.accent)
-                            .frame(width: 18, height: max(8, 90 * CGFloat(level.count) / CGFloat(maxLevel)))
-                        Text(level.name).font(.caption2).foregroundStyle(Ink.muted)
-                    }
-                }
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(Theme.dni(store.streak))
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .foregroundStyle(Theme.text)
+                Text("Seria")
+                    .font(.system(size: 14, design: .rounded))
+                    .foregroundStyle(Theme.text2)
             }
         }
         .padding(16)
-        .liquidGlass(radius: 22)
+        .themedCard()
     }
 
     private var topics: some View {
@@ -78,11 +72,11 @@ struct StatsView: View {
                 }
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
-                        Capsule().fill(Color.white.opacity(0.08))
-                        Capsule().fill(Ink.accent).frame(width: geo.size.width * row.accuracy)
+                        Capsule().fill(Theme.track)
+                        Capsule().fill(Theme.gradient).frame(width: max(6, geo.size.width * row.accuracy))
                     }
                 }
-                .frame(height: 6)
+                .frame(height: 8)
             }
         }
         .padding(16)
@@ -93,12 +87,12 @@ struct StatsView: View {
         let days = store.recentActivity()
         let maxValue = max(days.map(\.value).max() ?? 1, 1)
         return VStack(alignment: .leading, spacing: 10) {
-            Text("Powtórki").font(.headline)
+            Text("Powtórki, 14 dni").font(.system(size: 17, weight: .semibold, design: .rounded))
             HStack(alignment: .bottom, spacing: 4) {
                 ForEach(Array(days.enumerated()), id: \.offset) { _, day in
                     VStack(spacing: 4) {
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(Ink.accent.opacity(day.value == 0 ? 0.2 : 1))
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(day.label == days.last?.label ? AnyShapeStyle(Theme.gradient) : AnyShapeStyle(Theme.accent.opacity(day.value == 0 ? 0.25 : 0.7)))
                             .frame(height: max(6, 70 * CGFloat(day.value) / CGFloat(maxValue)))
                         Text(day.label).font(.system(size: 8)).foregroundStyle(Ink.muted)
                     }

@@ -30,27 +30,37 @@ struct TutorView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                if mic.listening {
-                    listenStage
-                } else {
-                    ScrollViewReader { proxy in
-                        ScrollView {
-                            LazyVStack(spacing: 14) {
-                                peopleRow
-                                ForEach(turns) { t in
-                                    bubble(t).id(t.id)
-                                }
-                                if loading { ProgressView().padding() }
-                                if !note.isEmpty {
-                                    Text(note).font(.footnote).foregroundStyle(Ink.muted).padding(.horizontal)
-                                }
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(spacing: 14) {
+                            peopleRow
+                            ForEach(turns) { t in
+                                bubble(t).id(t.id)
                             }
-                            .padding()
+                            if let say = turns.last(where: { $0.role == "model" && !$0.say.isEmpty })?.say, !blind {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text("Twoje zadanie")
+                                        .font(.system(size: 14, design: .rounded))
+                                        .foregroundStyle(Theme.text2)
+                                    Text("Powiedz: \(say)")
+                                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                                        .foregroundStyle(Theme.text)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(16)
+                                .background(Theme.card2, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                            }
+                            if loading { ProgressView().padding() }
+                            if !note.isEmpty {
+                                Text(note).font(.footnote).foregroundStyle(Theme.text2)
+                            }
                         }
-                        .scrollDismissesKeyboard(.interactively)
-                        .onChange(of: turns.count) { _, _ in
-                            if let last = turns.last { proxy.scrollTo(last.id, anchor: .bottom) }
-                        }
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 12)
+                    }
+                    .scrollDismissesKeyboard(.interactively)
+                    .onChange(of: turns.count) { _, _ in
+                        if let last = turns.last { proxy.scrollTo(last.id, anchor: .bottom) }
                     }
                 }
                 controls
@@ -63,16 +73,23 @@ struct TutorView: View {
                     }
                 }
             }
-            .navigationTitle(persona)
             .navigationBarTitleDisplayMode(.inline)
             .containerBackground(for: .navigation) { NightGlow() }
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     NavigationLink("Pismo") { ChatView() }
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                }
+                ToolbarItem(placement: .principal) {
+                    VStack(spacing: 0) {
+                        Text(persona).font(.system(size: 17, weight: .bold, design: .rounded))
+                        Text("Scena, praca").font(.system(size: 12, design: .rounded)).foregroundStyle(Theme.text2)
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Podsumuj") { Task { await summarize() } }
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
                         .disabled(loading || turns.count < 2)
                 }
             }
@@ -197,9 +214,13 @@ struct TutorView: View {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(t.flag == "fix" ? Ink.pine : Ink.accent)
                 }
-                Text(t.german).font(.body)
+                Text(t.german)
+                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .foregroundStyle(Theme.text)
                 if !t.polish.isEmpty {
-                    Text(t.polish).font(.footnote).foregroundStyle(Ink.muted)
+                    Text(t.polish)
+                        .font(.system(size: 14, design: .rounded))
+                        .foregroundStyle(Theme.text2)
                 }
                 if !t.err.isEmpty {
                     Text(t.err).font(.footnote).foregroundStyle(Ink.pine)
@@ -209,22 +230,14 @@ struct TutorView: View {
                 }
                 if t.role == "model" {
                     Button { Talk.de(speech(t)) } label: {
-                        Image(systemName: "speaker.wave.2").foregroundStyle(Ink.accent)
+                        Text("Odtwórz").ghostButton()
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .padding(14)
-            .background(t.role == "user" ? Ink.accent.opacity(0.22) : Ink.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(alignment: .leading) {
-                if t.role == "model" {
-                    Capsule()
-                        .fill(t.flag == "fix" ? Ink.pine : Ink.accent)
-                        .frame(width: 3)
-                        .padding(.vertical, 12)
-                }
-            }
-            if t.role == "model" { Spacer(minLength: 48) }
+            .padding(16)
+            .background(t.role == "user" ? Theme.accent.opacity(0.35) : Theme.card2, in: UnevenRoundedRectangle(topLeadingRadius: 24, bottomLeadingRadius: t.role == "model" ? 8 : 24, bottomTrailingRadius: 24, topTrailingRadius: 24, style: .continuous))
+            if t.role == "model" { Spacer(minLength: 36) }
         }
     }
 
@@ -249,67 +262,67 @@ struct TutorView: View {
 
     private var controls: some View {
         VStack(spacing: 8) {
-            if !hint.isEmpty, !blind {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Możesz powiedzieć").font(.caption).foregroundStyle(.secondary)
-                    ForEach(germanHints, id: \.self) { line in
-                        Button(line) { Task { await send(line) } }
-                            .buttonStyle(.glass)
-                    }
-                }
-            }
-            if !mic.note.isEmpty { Text(mic.note).font(.caption).foregroundStyle(.secondary) }
-            if mic.listening {
-                Text(mic.text.isEmpty ? "Słucham…" : mic.text).font(.footnote)
-            }
-            if !blind {
-                Button("Nie znam odpowiedzi") { Task { await send("Nie znam odpowiedzi. Daj jedną podpowiedź po polsku i krótkie zdanie, które mam teraz powiedzieć.") } }
-                    .buttonStyle(.glass)
-                    .disabled(loading)
-            }
-            HStack(spacing: 16) {
+            Text(mic.listening ? (mic.text.isEmpty ? "Słucham…" : mic.text) : (mic.note.isEmpty ? " " : mic.note))
+                .font(.system(size: 14, design: .rounded))
+                .foregroundStyle(Theme.text2)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .frame(height: 36)
+            HStack(spacing: 18) {
                 Button { showType = true } label: {
                     Image(systemName: "plus")
+                        .font(.body.weight(.semibold))
                         .frame(width: 44, height: 44)
-                        .background(Color.white.opacity(0.06), in: Circle())
                 }
                 .buttonStyle(.plain)
-                WaveBars(on: mic.listening)
-                    .frame(maxWidth: .infinity)
+                .foregroundStyle(Theme.text)
+                Spacer(minLength: 0)
                 Button { mic.toggle() } label: {
-                    Image(systemName: mic.listening ? "stop.fill" : "mic.fill")
-                        .font(.title3)
-                        .foregroundStyle(.black)
-                        .frame(width: 58, height: 58)
-                        .background(Ink.accent, in: Circle())
+                    ZStack {
+                        Circle()
+                            .stroke(Theme.accent.opacity(0.28), lineWidth: 10)
+                            .frame(width: 118, height: 118)
+                        Circle()
+                            .stroke(Theme.orange.opacity(0.22), lineWidth: 8)
+                            .frame(width: 104, height: 104)
+                        Circle()
+                            .fill(Theme.gradient)
+                            .frame(width: 96, height: 96)
+                        Image(systemName: mic.listening ? "stop.fill" : "mic.fill")
+                            .font(.system(size: 28, weight: .semibold))
+                            .foregroundStyle(Theme.ink)
+                    }
+                    .frame(width: 120, height: 120)
                 }
                 .buttonStyle(.plain)
                 .disabled(loading)
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 4) {
-                        Circle().fill(mic.listening ? Ink.pine : Ink.muted).frame(width: 6, height: 6)
-                        Text(mic.listening ? "Na żywo" : "Mikrofon")
-                            .font(.caption2)
-                            .foregroundStyle(mic.listening ? Ink.pine : Ink.muted)
-                    }
-                    Text(mic.listening ? "Stuknij, koniec" : "Stuknij i mów")
-                        .font(.caption)
+                Spacer(minLength: 0)
+                Button { Task { await suggest() } } label: {
+                    Image(systemName: "lightbulb")
+                        .font(.body.weight(.semibold))
+                        .frame(width: 44, height: 44)
                 }
-                if !blind {
-                    Button { Task { await suggest() } } label: {
-                        Image(systemName: "lightbulb")
-                            .frame(width: 44, height: 44)
-                            .background(Color.white.opacity(0.06), in: Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(loading)
-                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Theme.text)
+                .opacity(blind ? 0 : 1)
+                .disabled(blind || loading)
             }
-            .padding(12)
-            .liquidGlass(radius: 28)
+            .padding(.horizontal, 8)
+            Text(mic.listening ? "Stuknij, koniec" : "Stuknij i mów po niemiecku")
+                .font(.system(size: 14, design: .rounded))
+                .foregroundStyle(Theme.text2)
+                .lineLimit(1)
+            if !hint.isEmpty, !blind {
+                Text(germanHints.first ?? "")
+                    .font(.caption)
+                    .foregroundStyle(Theme.text2)
+                    .lineLimit(1)
+            }
         }
-        .padding(.horizontal)
-        .padding(.bottom, 10)
+        .padding(.top, 4)
+        .padding(.bottom, 6)
+        .frame(maxWidth: .infinity)
     }
 
     private func speech(_ t: Turn) -> String {

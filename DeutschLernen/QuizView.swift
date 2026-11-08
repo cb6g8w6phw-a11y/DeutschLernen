@@ -296,7 +296,12 @@ struct QuizView: View {
     private func finish(_ ok: Bool, _ w: Word) {
         answered = true
         wasCorrect = ok
-        if ok { score += 1 }
+        if ok {
+            score += 1
+            Haptic.good()
+        } else {
+            Haptic.bad()
+        }
         if mic.listening { mic.stop() }
     }
 

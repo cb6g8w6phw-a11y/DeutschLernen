@@ -85,18 +85,26 @@ struct TodayView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    hero
-                    ThemePicker()
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                        tile("Opanowane", "\(store.masteredCount)", "checkmark.circle")
-                        tile("W nauce", "\(store.learningCount)", "book")
-                        tile("Do powtórki", "\(store.dueToday)", "clock")
-                        tile("Seria", "\(store.streak) dni", "flame")
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Dzień \(store.planDay) z 30")
+                        .font(.system(size: 14, design: .rounded))
+                        .foregroundStyle(Theme.text2)
+                    Text("Czas na 20 minut nauki")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundStyle(Theme.text)
+                    plan
+                    NavigationLink { QuizView(sessionSize: 10) } label: {
+                        Text("Zacznij naukę").primaryButton()
                     }
-                    goal
+                    .buttonStyle(.plain)
+                    HStack(spacing: 10) {
+                        stat("\(Theme.dni(store.streak))", "Seria")
+                        stat("\(store.learningCount)", "W nauce")
+                        stat("\(store.dueToday)", "Do powtórki")
+                    }
                     if let word = store.wordOfDay { wordCard(word) }
-                    Text("Trening").font(.headline)
+                    Text("Trening")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
                     NavigationLink { QuizView(sessionSize: 10) } label: { row("Powtórki", "Słówka, które już czas przypomnieć", "rectangle.stack") }
                     NavigationLink { WordsView() } label: { row("Moje słówka", "Lista i fiszka", "text.book.closed") }
                     NavigationLink { TutorView() } label: { row("Rozmowa", "Mówisz, dostajesz krótką poprawkę", "waveform") }
@@ -105,110 +113,96 @@ struct TodayView: View {
                     NavigationLink { SentenceView() } label: { row("Zdania", "Tłumaczysz sam", "text.badge.checkmark") }
                     NavigationLink { BuildView() } label: { row("Budowa", "Narzędzia i polecenia", "hammer") }
                 }
-                .padding()
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 28)
             }
-            .navigationTitle("Dziś")
-            .containerBackground(for: .navigation) { NightGlow() }
+            .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.hidden, for: .navigationBar)
+            .containerBackground(for: .navigation) { NightGlow() }
         }
     }
 
-    private var hero: some View {
-        HStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Dzień \(store.planDay) z 30")
-                    .font(.title2.bold())
+    private var plan: some View {
+        let done = min(store.reviewsToday, 20)
+        let progress = Double(done) / 20
+        return HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Plan na dziś")
+                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                Text("3 powtórki, 1 scena, dyktando")
+                    .font(.system(size: 14, design: .rounded))
+                    .foregroundStyle(Theme.text2)
                 Text(store.phaseTitle)
-                    .font(.footnote)
-                    .foregroundStyle(Ink.muted)
+                    .font(.system(size: 14, design: .rounded))
+                    .foregroundStyle(Theme.text2)
             }
-            Spacer()
-            ring
+            Spacer(minLength: 8)
+            ZStack {
+                Circle().stroke(Theme.track, lineWidth: 7)
+                Circle()
+                    .trim(from: 0, to: progress)
+                    .stroke(Theme.gradient, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .animation(.spring(duration: 0.5), value: progress)
+            }
+            .frame(width: 54, height: 54)
         }
         .padding(16)
-        .liquidGlass(radius: 22)
+        .themedCard()
     }
 
-    private var ring: some View {
-        let progress = Double(store.planDay) / 30
-        return ZStack {
-            Circle().stroke(Color.white.opacity(0.08), lineWidth: 8)
-            Circle()
-                .trim(from: 0, to: progress)
-                .stroke(Ink.accent, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-            Text("\(Int(progress * 100))%")
-                .font(.subheadline.bold())
-        }
-        .frame(width: 78, height: 78)
-    }
-
-    private func tile(_ title: String, _ value: String, _ icon: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Image(systemName: icon).foregroundStyle(Ink.accent)
-            Text(value).font(.title3.bold())
-            Text(title).font(.caption).foregroundStyle(Ink.muted)
+    private func stat(_ value: String, _ title: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(value)
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundStyle(Theme.text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text(title)
+                .font(.system(size: 13, design: .rounded))
+                .foregroundStyle(Theme.text2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
-        .liquidGlass(radius: 18)
-    }
-
-    private var goal: some View {
-        let done = min(store.reviewsToday, 20)
-        return VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Dzisiejszy cel").font(.headline)
-                Spacer()
-                Text("\(done)/20").foregroundStyle(Ink.accent).font(.headline)
-            }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Color.white.opacity(0.08))
-                    Capsule().fill(Ink.accent).frame(width: geo.size.width * CGFloat(done) / 20)
-                }
-            }
-            .frame(height: 8)
-            Text("Do powtórki dzisiaj: \(store.dueToday)")
-                .font(.footnote)
-                .foregroundStyle(Ink.muted)
-        }
-        .padding(16)
-        .liquidGlass(radius: 20)
+        .themedCard(radius: 20)
     }
 
     private func wordCard(_ word: Word) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Zdanie na dziś").font(.caption).foregroundStyle(Ink.muted)
-            Text(word.de).font(.title3.bold())
-            Text(word.pl).foregroundStyle(Ink.muted)
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Zdanie na dziś")
+                .font(.system(size: 14, design: .rounded))
+                .foregroundStyle(Theme.text2)
+            Text(word.de)
+                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .foregroundStyle(Theme.text)
+            Text(word.pl)
+                .font(.system(size: 14, design: .rounded))
+                .foregroundStyle(Theme.text2)
             Button { Talk.de(word.ex) } label: {
-                Label("Odtwórz", systemImage: "speaker.wave.2")
+                Text("Odtwórz").ghostButton()
             }
             .buttonStyle(.plain)
-            .foregroundStyle(Ink.accent)
-            .font(.footnote)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .liquidGlass(radius: 20)
+        .themedCard()
     }
 
     private func row(_ title: String, _ text: String, _ icon: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .frame(width: 36, height: 36)
-                .background(Ink.accent.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
-                .foregroundStyle(Ink.accent)
+                .foregroundStyle(Theme.accent)
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.headline)
-                Text(text).font(.footnote).foregroundStyle(Ink.muted)
+                Text(title).font(.system(size: 17, weight: .semibold, design: .rounded)).foregroundStyle(Theme.text)
+                Text(text).font(.system(size: 14, design: .rounded)).foregroundStyle(Theme.text2)
             }
             Spacer()
-            Image(systemName: "chevron.right").font(.caption).foregroundStyle(Ink.muted)
+            Image(systemName: "chevron.right").font(.caption).foregroundStyle(Theme.text2)
         }
         .padding(14)
-        .liquidGlass(radius: 18)
+        .themedCard(radius: 20)
     }
 }
 
