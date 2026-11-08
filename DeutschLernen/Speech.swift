@@ -69,18 +69,19 @@ final class Mic: ObservableObject {
         Talk.stop()
         text = ""
         note = ""
-        engine = AVAudioEngine()
         pickRecognizer()
         do {
             try openSession()
+            engine = AVAudioEngine()
             try startEngine()
             if recognizer == nil || recognizer?.isAvailable != true {
                 note = "Słucham, ale brakuje niemieckiego dyktowania. Ustawienia → Ogólne → Klawiatura → Dyktowanie."
             } else {
-                note = "Słucham. Stuknij mikrofon jeszcze raz, gdy skończysz."
+                note = "Słucham. Jak skończysz zdanie, samo pójdzie."
             }
         } catch {
             stopEngine()
+            engine = AVAudioEngine()
             do {
                 try startRecorder()
                 note = "Słucham. Stuknij jeszcze raz, żeby wysłać."
@@ -130,9 +131,13 @@ final class Mic: ObservableObject {
         request.shouldReportPartialResults = true
         self.request = request
         let input = engine.inputNode
-        let hw = input.outputFormat(forBus: 0)
-        guard hw.sampleRate > 0, hw.channelCount > 0 else {
-            throw NSError(domain: "Mic", code: 2, userInfo: [NSLocalizedDescriptionKey: "brak wejścia audio"])
+        let output = input.outputFormat(forBus: 0)
+        let incoming = input.inputFormat(forBus: 0)
+        let hw: AVAudioFormat
+        if output.sampleRate > 0, output.channelCount > 0 { hw = output }
+        else if incoming.sampleRate > 0, incoming.channelCount > 0 { hw = incoming }
+        else {
+            throw NSError(domain: "Mic", code: 2, userInfo: [NSLocalizedDescriptionKey: "brak formatu mikrofonu"])
         }
         input.installTap(onBus: 0, bufferSize: 1024, format: hw) { buffer, _ in
             request.append(buffer)
