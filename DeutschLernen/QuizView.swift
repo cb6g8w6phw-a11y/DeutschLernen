@@ -145,21 +145,14 @@ struct QuizView: View {
 
                 if answered {
                     VStack(spacing: 6) {
-                        Text(wasCorrect ? "Dobrze!" : "Poprawnie: \(expected)")
+                        Text(wasCorrect ? "Dobrze. Słówko jest opanowane." : "Poprawnie: \(expected)")
                             .font(.headline).foregroundStyle(wasCorrect ? .green : .red)
                         Text(w.ex).italic()
                         Text(w.exPl).font(.footnote).foregroundStyle(.secondary)
                     }
-                    Text("Kiedy powtórzyć?")
-                        .font(.caption).foregroundStyle(.secondary)
-                    HStack {
-                        Button("Trudne\n10 min") { apply(.hard, w) }
-                        Button("Średnie\n1 dzień") { apply(.mid, w) }
-                        Button("Łatwe\n4 dni") { apply(.easy, w) }
-                    }
-                    .buttonStyle(.glass)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
+                    Button("Następne") { next() }
+                        .buttonStyle(.glassProminent)
+                        .tint(Ink.brass)
                 }
             }
         }
@@ -303,12 +296,7 @@ struct QuizView: View {
             Haptic.bad()
         }
         if mic.listening { mic.stop() }
-    }
-
-    private func apply(_ g: Grade, _ w: Word) {
-        store.grade(w, g)
-        if g == .hard { queue.append(w) }
-        next()
+        store.grade(w, ok ? .easy : .hard)
     }
 
     private func next() {

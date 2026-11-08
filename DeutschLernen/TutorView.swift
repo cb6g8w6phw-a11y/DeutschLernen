@@ -21,6 +21,7 @@ struct TutorView: View {
     @State private var showType = false
     @State private var greeted = false
     @State private var quiet: Task<Void, Never>?
+    @State private var openPL: Set<UUID> = []
     @State private var tick = Date()
     @AppStorage("persona") private var persona = "Marek"
 
@@ -33,10 +34,33 @@ struct TutorView: View {
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(spacing: 14) {
+                            HStack {
+                                Spacer()
+                                tutorFace
+                            }
                             peopleRow
                             ForEach(turns) { t in
                                 bubble(t).id(t.id)
                             }
+                            if !hint.isEmpty {
+                                Text(hint)
+                                    .font(.system(size: 15, design: .rounded))
+                                    .foregroundStyle(Theme.text)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(14)
+                                    .background(Theme.card2, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                            }
+                            Button { Task { await suggest() } } label: {
+                                Label("Co powiedzieć?", systemImage: "lightbulb.fill")
+                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 10)
+                                    .background(Theme.accent, in: Capsule())
+                                    .foregroundStyle(.white)
+                            }
+                            .buttonStyle(.plain)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .disabled(loading || blind)
                             if let say = turns.last(where: { $0.role == "model" && !$0.say.isEmpty })?.say, !blind {
                                 VStack(alignment: .leading, spacing: 6) {
                                     Text("Twoje zadanie")
@@ -217,27 +241,74 @@ struct TutorView: View {
                 Text(t.german)
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
                     .foregroundStyle(Theme.text)
-                if !t.polish.isEmpty {
-                    Text(t.polish)
-                        .font(.system(size: 14, design: .rounded))
+                HStack(spacing: 16) {
+                    Button { Talk.de(speech(t)) } label: {
+                        Image(systemName: "speaker.wave.2.fill")
+                    }
+                    .buttonStyle(.plain)
+                    Button { Task { await reveal(t) } } label: {
+                        Image(systemName: openPL.contains(t.id) ? "character.book.closed.fill" : "character.book.closed")
+                    }
+                    .buttonStyle(.plain)
+                }
+                .font(.body)
+                .foregroundStyle(Theme.accent)
+                if openPL.contains(t.id) {
+                    Text(String(repeating: "· ", count: 16))
+                        .font(.caption2)
+                        .foregroundStyle(Theme.text2.opacity(0.7))
+                        .lineLimit(1)
+                    Text(t.polish.isEmpty ? "Tłumaczę…" : t.polish)
+                        .font(.system(size: 16, design: .rounded))
                         .foregroundStyle(Theme.text2)
                 }
                 if !t.err.isEmpty {
                     Text(t.err).font(.footnote).foregroundStyle(Ink.pine)
                 }
-                if !t.say.isEmpty, !blind {
+                if !t.say.isEmpty, !blind, openPL.contains(t.id) {
                     Text("Powiedz: \(t.say)").font(.footnote.weight(.semibold))
-                }
-                if t.role == "model" {
-                    Button { Talk.de(speech(t)) } label: {
-                        Text("Odtwórz").ghostButton()
-                    }
-                    .buttonStyle(.plain)
                 }
             }
             .padding(16)
             .background(t.role == "user" ? Theme.accent.opacity(0.35) : Theme.card2, in: UnevenRoundedRectangle(topLeadingRadius: 24, bottomLeadingRadius: t.role == "model" ? 8 : 24, bottomTrailingRadius: 24, topTrailingRadius: 24, style: .continuous))
             if t.role == "model" { Spacer(minLength: 36) }
+        }
+    }
+
+    private var tutorFace: some View {
+        Group {
+            if let ui = UIImage(named: "Tutor") {
+                Image(uiImage: ui).resizable().scaledToFill()
+            } else {
+                Image(systemName: "person.crop.circle.fill")
+                    .resizable()
+                    .padding(28)
+                    .foregroundStyle(Theme.accent)
+            }
+        }
+        .frame(width: 168, height: 112)
+        .background(Theme.card2)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private func reveal(_ t: Turn) async {
+        if openPL.contains(t.id) {
+            openPL.remove(t.id)
+            return
+        }
+        openPL.insert(t.id)
+        guard t.polish.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        do {
+            let pl = try await Gemini.send(
+                messages: [GeminiMessage(role: "user", text: t.german)],
+                system: "Przetłumacz na polski. Oddaj tylko tłumaczenie, bez cudzysłowu i bez komentarza.")
+            if let i = turns.firstIndex(where: { $0.id == t.id }) {
+                turns[i].polish = pl.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+        } catch {
+            if let i = turns.firstIndex(where: { $0.id == t.id }) {
+                turns[i].polish = "Nie udało się przetłumaczyć. Sprawdź klucz w Ustawieniach."
+            }
         }
     }
 
@@ -298,15 +369,14 @@ struct TutorView: View {
                 .buttonStyle(.plain)
                 .disabled(loading)
                 Spacer(minLength: 0)
-                Button { Task { await suggest() } } label: {
-                    Image(systemName: "lightbulb")
+                NavigationLink { WordsView() } label: {
+                    Image(systemName: "book.closed")
                         .font(.body.weight(.semibold))
+                        .foregroundStyle(Theme.text)
                         .frame(width: 44, height: 44)
+                        .background(Circle().stroke(Theme.accent.opacity(0.45), lineWidth: 1))
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(Theme.text)
-                .opacity(blind ? 0 : 1)
-                .disabled(blind || loading)
             }
             .padding(.horizontal, 8)
             Text(mic.listening ? "Stuknij, koniec" : "Stuknij i mów po niemiecku")

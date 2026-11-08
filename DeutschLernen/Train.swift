@@ -614,7 +614,7 @@ struct WordsView: View {
                                 Text(word.pl).font(.footnote).foregroundStyle(Ink.muted)
                             }
                             Spacer()
-                            Image(systemName: (store.stats[word.de]?.box ?? 0) >= 4 ? "star.fill" : "star")
+                            Image(systemName: (store.stats[word.de]?.box ?? 0) >= 3 ? "star.fill" : "star")
                                 .foregroundStyle(Ink.accent.opacity((store.stats[word.de]?.box ?? 0) >= 4 ? 1 : 0.35))
                         }
                         .padding(12)

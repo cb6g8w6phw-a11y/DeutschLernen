@@ -167,6 +167,16 @@ final class LearningStore: ObservableObject {
            let saved = try? JSONDecoder().decode(Journal.self, from: data) {
             journal = saved
         }
+        var promoted = false
+        for key in stats.keys {
+            var stat = stats[key]!
+            if stat.correct >= 1, stat.box < 3 {
+                stat.box = 3
+                stats[key] = stat
+                promoted = true
+            }
+        }
+        if promoted { save() }
         roll()
     }
 
@@ -200,15 +210,15 @@ final class LearningStore: ObservableObject {
         switch g {
         case .hard:
             s.wrong += 1
-            s.box = 0
+            if s.box < 3 { s.box = 0 }
             s.due = Date().addingTimeInterval(10 * 60)
         case .mid:
             s.correct += 1
-            s.box = min(s.box + 1, 4)
+            s.box = min(s.box + 2, 5)
             s.due = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
         case .easy:
             s.correct += 1
-            s.box = min(max(s.box, 2) + 1, 5)
+            s.box = 5
             s.due = Calendar.current.date(byAdding: .day, value: 4, to: Date()) ?? Date()
         }
         stats[w.de] = s
@@ -268,8 +278,8 @@ final class LearningStore: ObservableObject {
 
     // MARK: statystyki
 
-    var masteredCount: Int { stats.values.filter { $0.box >= 4 }.count }
-    var learningCount: Int { stats.values.filter { $0.box < 4 }.count }
+    var masteredCount: Int { stats.values.filter { $0.box >= 3 }.count }
+    var learningCount: Int { stats.values.filter { $0.box < 3 }.count }
     var newCount: Int { words.count - stats.count }
 
     var weakWords: [Word] {
