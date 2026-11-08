@@ -456,6 +456,7 @@ enum Week {
         var date: Date
     }
 
+    @MainActor
     static func days(_ store: LearningStore) -> [Day] {
         let cal = Calendar.current
         let today = Date()
