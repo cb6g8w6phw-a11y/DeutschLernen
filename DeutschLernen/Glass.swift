@@ -1,6 +1,5 @@
 import SwiftUI
 
-@MainActor
 final class LookStore: ObservableObject {
     static let shared = LookStore()
 
