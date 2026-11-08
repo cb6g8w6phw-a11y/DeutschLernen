@@ -26,6 +26,7 @@ final class Mic: ObservableObject {
     @Published var text = ""
     @Published var listening = false
     @Published var note = ""
+    @Published var level: Double = 0
 
     private var recognizer = SFSpeechRecognizer(locale: Locale(identifier: "de-DE"))
     private var engine: AVAudioEngine?
@@ -35,6 +36,9 @@ final class Mic: ObservableObject {
     private var recorder: AVAudioRecorder?
     private var recordURL: URL?
     private var ear: CaptureEar?
+    private var meter = Meter()
+    private var generation = 0
+    private var heardError: String?
 
     func toggle() {
         if listening { stop() } else { ask() }
@@ -75,42 +79,73 @@ final class Mic: ObservableObject {
 
     private func boot() async {
         stopAll()
+        generation += 1
+        let token = generation
         Talk.stop()
         text = ""
+        level = 0
+        heardError = nil
+        meter.peak = 0
         note = "Włączam mikrofon…"
         pickRecognizer()
         do {
             try openSession()
             try startEngine()
             listening = true
-            note = recognizer?.isAvailable == true ? "Słucham…" : "Słucham, ale brakuje niemieckiego dyktowania."
-            return
+            note = "Słucham…"
+            if await healthy(token) { return }
+            stopEngine()
         } catch {
             stopEngine()
+            heardError = error.localizedDescription
         }
+        guard token == generation else { return }
         do {
             try openSession()
             try await startCapture()
             listening = true
-            note = "Słucham…"
-            return
+            note = "Słucham drugą drogą…"
+            meter.peak = 0
+            if await healthy(token) { return }
+            ear?.stop()
+            ear = nil
+            stopEngine()
         } catch {
             ear?.stop()
             ear = nil
-            request?.endAudio()
-            task?.cancel()
-            request = nil
-            task = nil
+            stopEngine()
+            heardError = error.localizedDescription
         }
+        guard token == generation else { return }
         do {
             try openSession()
             try startRecorder()
             listening = true
-            note = "Słucham. Stuknij jeszcze raz, żeby wysłać."
+            note = "Nagrywam. Powiedz zdanie i stuknij kwadrat."
         } catch {
             listening = false
-            note = "Mikrofon nie wstał (\(error.localizedDescription))."
+            let extra = heardError.map { " \($0)" } ?? ""
+            note = "Mikrofon nie wstał (\(error.localizedDescription)).\(extra)"
         }
+    }
+
+    private func healthy(_ token: Int) async -> Bool {
+        for _ in 0..<7 {
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            guard token == generation, listening else { return true }
+            level = Double(min(1, meter.peak * 8))
+            if !text.isEmpty {
+                note = "Słyszę…"
+                return true
+            }
+        }
+        guard token == generation, listening else { return true }
+        if meter.peak > 0.012 {
+            note = heardError ?? "Słyszę głos. Mów całe zdanie po niemiecku."
+            return heardError == nil
+        }
+        if let heardError { note = heardError }
+        return false
     }
 
     private func pickRecognizer() {
@@ -151,7 +186,10 @@ final class Mic: ObservableObject {
     private func startEngine() throws {
         let request = SFSpeechAudioBufferRecognitionRequest()
         request.shouldReportPartialResults = true
+        request.requiresOnDeviceRecognition = false
+        request.taskHint = .dictation
         self.request = request
+        meter.peak = 0
         var last = "brak formatu"
         for attempt in 0..<3 {
             let engine = AVAudioEngine()
@@ -164,16 +202,27 @@ final class Mic: ObservableObject {
             else if incoming.sampleRate > 0, incoming.channelCount > 0 { hw = incoming }
             else { hw = nil }
             if let hw {
+                let meter = self.meter
+                try? engine.connect(input, to: engine.mainMixerNode, format: hw)
+                engine.mainMixerNode.outputVolume = 0
                 input.installTap(onBus: 0, bufferSize: 1024, format: hw) { buffer, _ in
                     request.append(buffer)
+                    meter.eat(buffer)
                 }
                 tapped = true
                 engine.prepare()
                 try engine.start()
-                task = recognizer?.recognitionTask(with: request) { result, _ in
+                task = recognizer?.recognitionTask(with: request) { result, error in
                     Task { @MainActor in
-                        if let result { self.text = result.bestTranscription.formattedString }
-                        if result?.isFinal == true { self.finishListen() }
+                        if let result {
+                            let said = result.bestTranscription.formattedString
+                            if !said.isEmpty { self.text = said }
+                        }
+                        if let error {
+                            self.heardError = error.localizedDescription
+                            self.note = error.localizedDescription
+                        }
+                        if result?.isFinal == true, !self.text.isEmpty { self.finishListen() }
                     }
                 }
                 return
@@ -192,6 +241,7 @@ final class Mic: ObservableObject {
         self.request = request
         let ear = CaptureEar()
         ear.request = request
+        ear.meter = meter
         try await ear.start()
         self.ear = ear
         task = recognizer?.recognitionTask(with: request) { result, _ in
@@ -321,6 +371,7 @@ final class Mic: ObservableObject {
 
 final class CaptureEar: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
     var request: SFSpeechAudioBufferRecognitionRequest?
+    var meter: Meter?
     private let session = AVCaptureSession()
     private let queue = DispatchQueue(label: "deutsch.capture")
 
@@ -372,6 +423,7 @@ final class CaptureEar: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let buffer = Self.pcm(sampleBuffer) else { return }
         request?.append(buffer)
+        meter?.eat(buffer)
     }
 
     private static func pcm(_ sampleBuffer: CMSampleBuffer) -> AVAudioPCMBuffer? {
@@ -401,6 +453,31 @@ final class CaptureEar: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
             return nil
         }
         return dst
+    }
+}
+
+final class Meter: @unchecked Sendable {
+    var peak: Float = 0
+
+    func eat(_ buffer: AVAudioPCMBuffer) {
+        let count = Int(buffer.frameLength)
+        guard count > 0 else { return }
+        var energy: Float = 0
+        if let channel = buffer.floatChannelData?[0] {
+            for index in 0..<count {
+                let sample = channel[index]
+                energy += sample * sample
+            }
+        } else if let channel = buffer.int16ChannelData?[0] {
+            for index in 0..<count {
+                let sample = Float(channel[index]) / 32768
+                energy += sample * sample
+            }
+        } else {
+            return
+        }
+        let rms = sqrt(energy / Float(count))
+        peak = max(peak * 0.85, rms)
     }
 }
 

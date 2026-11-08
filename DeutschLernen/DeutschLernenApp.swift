@@ -12,9 +12,11 @@ struct DeutschLernenApp: App {
 }
 
 struct RootView: View {
+    @ObservedObject private var look = LookStore.shared
+
     var body: some View {
         ZStack {
-            NightGlow()
+            look.bg.ignoresSafeArea()
             TabView {
                 Tab("Dziś", systemImage: "sun.max") { TodayView() }
                 Tab("Czat", systemImage: "bubble.left.and.bubble.right") { TutorView() }
@@ -22,7 +24,8 @@ struct RootView: View {
                 Tab("Sceny", systemImage: "person.2") { ScenesView() }
                 Tab("Więcej", systemImage: "ellipsis.circle") { MoreView() }
             }
-            .tint(Ink.brass)
+            .tint(look.accent)
+            .id(look.palette + look.style)
         }
     }
 }

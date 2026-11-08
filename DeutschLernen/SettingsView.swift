@@ -11,6 +11,11 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section("Wygląd") {
+                    ThemePicker()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
                 Section {
                     SecureField("Klucz Groq", text: $groq)
                         .textInputAutocapitalization(.never)

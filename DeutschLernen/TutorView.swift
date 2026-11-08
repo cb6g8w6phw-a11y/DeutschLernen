@@ -138,35 +138,37 @@ struct TutorView: View {
     }
 
     private var listenStage: some View {
-        VStack(spacing: 22) {
-            Text("Słucham…")
+        VStack(spacing: 18) {
+            Text(mic.note.isEmpty ? "Słucham…" : mic.note)
                 .font(.subheadline)
                 .foregroundStyle(Ink.muted)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
             ZStack {
                 Circle()
-                    .stroke(Ink.accent.opacity(0.18), lineWidth: 22)
-                    .frame(width: 250, height: 250)
-                Circle()
-                    .stroke(Ink.accent.opacity(0.35), lineWidth: 10)
-                    .frame(width: 210, height: 210)
+                    .stroke(Ink.accent.opacity(0.22), lineWidth: 18)
+                    .frame(width: 230, height: 230)
+                    .scaleEffect(1 + mic.level * 1.4)
                 Circle()
                     .fill(Ink.accent)
-                    .frame(width: 168, height: 168)
+                    .frame(width: 150, height: 150)
                 Image(systemName: "waveform")
-                    .font(.system(size: 42, weight: .semibold))
+                    .font(.system(size: 40, weight: .semibold))
                     .foregroundStyle(.black)
             }
+            .animation(.easeOut(duration: 0.15), value: mic.level)
             Text(mic.text.isEmpty ? "Mów po niemiecku" : mic.text)
                 .font(.title3.bold())
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 28)
-            if !mic.note.isEmpty {
-                Text(mic.note).font(.caption).foregroundStyle(Ink.muted).multilineTextAlignment(.center).padding(.horizontal)
-            }
+            Capsule()
+                .fill(Ink.accent)
+                .frame(width: max(12, 160 * mic.level * 8), height: 6)
             Spacer()
         }
-        .padding(.top, 24)
+        .padding(.top, 28)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Ink.bg)
     }
 
     private func bubble(_ t: Turn) -> some View {

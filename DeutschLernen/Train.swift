@@ -86,6 +86,7 @@ struct TodayView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     hero
+                    ThemePicker()
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
                         tile("Opanowane", "\(store.masteredCount)", "checkmark.circle")
                         tile("W nauce", "\(store.learningCount)", "book")
