@@ -5,7 +5,7 @@ struct TutorAvatar: View {
 
     var body: some View {
         Group {
-            if let ui = UIImage(named: "Tutor") {
+            if let ui = UIImage(named: "Tutor") ?? UIImage(named: "Tutor.jpg") {
                 Image(uiImage: ui).resizable().scaledToFill()
             } else {
                 Image(systemName: "person.crop.circle.fill")

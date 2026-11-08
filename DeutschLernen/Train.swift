@@ -86,6 +86,9 @@ struct TodayView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    Text("Czas na 20 minut nauki")
+                        .font(.largeTitle.bold())
+                        .foregroundStyle(Theme.text)
                     Text("Dzień \(store.planDay) z 30")
                         .font(.subheadline)
                         .foregroundStyle(Theme.text2)
@@ -120,18 +123,10 @@ struct TodayView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
+                .padding(.bottom, 120)
             }
-            .safeAreaPadding(.bottom, 90)
-            .safeAreaInset(edge: .top, spacing: 0) {
-                Color.clear
-                    .frame(height: 0)
-                    .background(.ultraThinMaterial)
-                    .ignoresSafeArea(edges: .top)
-            }
-            .navigationTitle("Czas na 20 minut nauki")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
             .containerBackground(for: .navigation) { NightGlow() }
         }
     }
