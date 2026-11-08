@@ -229,81 +229,120 @@ struct ListenView: View {
     @State private var saved = false
     @State private var voices: [(id: String, name: String)] = []
 
-    private var item: CoachData.ListenQ { CoachData.listen[index % CoachData.listen.count] }
+    private var item: CoachData.ListenQ { CoachData.listen[min(index, CoachData.listen.count - 1)] }
+    private var finished: Bool { index >= CoachData.listen.count }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text("Posłuchaj polecenia. Potem odpowiedz, co z niego wynika. Nie musisz znać każdego słowa.")
-                    .font(.footnote).foregroundStyle(.secondary)
-                Picker("Tempo", selection: $speed) {
-                    Text("Wolno").tag(Float(0.35))
-                    Text("Normalnie").tag(Float(0.46))
-                    Text("Szybko").tag(Float(0.56))
-                }
-                .pickerStyle(.segmented)
-                if voices.count > 1 {
-                    Picker("Głos", selection: $voice) {
-                        Text("Domyślny").tag("")
-                        ForEach(voices, id: \.id) { v in Text(v.name).tag(v.id) }
-                    }
-                }
-                Button { Talk.de(item.de, rate: speed, voice: voice.isEmpty ? nil : voice) } label: {
-                    Label("Odtwórz", systemImage: "speaker.wave.2.fill")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.glassProminent)
-                .tint(Ink.brass)
-                Button(showPL ? "Ukryj tłumaczenie" : "Tłumaczenie") { showPL.toggle() }
-                    .buttonStyle(.glass)
-                Text(item.question).font(.title3.bold())
-                ForEach(item.options.indices, id: \.self) { i in
-                    Button { choose(i) } label: {
-                        Text(item.options[i]).frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .buttonStyle(.glass)
-                    .tint(color(i))
-                }
-                if picked != nil || showPL {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(item.de).font(.body.italic())
-                        Text(item.pl)
-                        Button {
-                            store.pinForReview(Word(
-                                de: item.de,
-                                pl: item.pl,
-                                ex: item.de,
-                                exPl: item.pl,
-                                topic: "Słuchanie",
-                                level: "A2"
-                            ))
-                            saved = true
-                        } label: {
-                            Label(saved ? "Jest w powtórkach" : "Nie rozumiem — dodaj do powtórek", systemImage: saved ? "checkmark" : "plus.rectangle.on.rectangle")
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .buttonStyle(.glass)
-                        .disabled(saved)
-                    }
-                    .padding(12)
-                    .liquidGlass(radius: 16)
-                }
-                if picked != nil {
-                    Button("Następne") {
+                if finished {
+                    Text("Gotowe")
+                        .font(.largeTitle.bold())
+                    Text("Trafione: \(store.journal.listenOk) z \(store.journal.listenTries)")
+                        .font(.title3)
+                    Text("Możesz odsłuchać zestaw jeszcze raz.")
+                        .font(.body)
+                        .foregroundStyle(Theme.text2)
+                    Button {
+                        index = 0
                         picked = nil
                         showPL = false
                         saved = false
-                        index += 1
+                    } label: {
+                        Text("Jeszcze raz").primaryButton()
                     }
-                    .buttonStyle(.glassProminent)
-                    .tint(Ink.brass)
-                }
-                if store.journal.listenTries > 0 {
-                    Text("Trafione: \(store.journal.listenOk) z \(store.journal.listenTries)")
-                        .font(.footnote).foregroundStyle(.secondary)
+                    .buttonStyle(.plain)
+                } else {
+                    Text("Posłuchaj polecenia. Potem odpowiedz, co z niego wynika. Nie musisz znać każdego słowa.")
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.text2)
+                    Text("\(index + 1) z \(CoachData.listen.count)")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.text2)
+                    Picker("Tempo", selection: $speed) {
+                        Text("Wolno").tag(Float(0.35))
+                        Text("Normalnie").tag(Float(0.46))
+                        Text("Szybko").tag(Float(0.56))
+                    }
+                    .pickerStyle(.segmented)
+                    if voices.count > 1 {
+                        Picker("Głos", selection: $voice) {
+                            Text("Domyślny").tag("")
+                            ForEach(voices, id: \.id) { v in Text(v.name).tag(v.id) }
+                        }
+                    }
+                    Button { Talk.de(item.de, rate: speed, voice: voice.isEmpty ? nil : voice) } label: {
+                        Label("Odtwórz", systemImage: "speaker.wave.2.fill")
+                            .font(.body.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                            .frame(minHeight: 52)
+                            .background(Theme.gradient, in: Capsule())
+                            .foregroundStyle(Theme.ink)
+                    }
+                    .buttonStyle(.plain)
+                    Button(showPL ? "Ukryj tłumaczenie" : "Tłumaczenie") { showPL.toggle() }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(Theme.text)
+                        .frame(minHeight: 44)
+                    Text(item.question)
+                        .font(.title3.bold())
+                        .foregroundStyle(Theme.text)
+                    ForEach(item.options.indices, id: \.self) { i in
+                        Button { choose(i) } label: {
+                            Text(item.options[i])
+                                .font(.body.weight(.semibold))
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 16)
+                                .frame(minHeight: 56)
+                                .background(fill(i), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.25), lineWidth: 1.5))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    if picked != nil || showPL {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(picked == item.answer ? "Dobrze." : "Poprawnie: \(item.options[item.answer])")
+                                .font(.headline)
+                                .foregroundStyle(picked == item.answer ? Theme.ok : Theme.bad)
+                            Text(item.de).font(.body)
+                            Text(item.pl).foregroundStyle(Theme.text2)
+                            Button {
+                                store.pinForReview(Word(
+                                    de: item.de,
+                                    pl: item.pl,
+                                    ex: item.de,
+                                    exPl: item.pl,
+                                    topic: "Słuchanie",
+                                    level: "A2"
+                                ))
+                                saved = true
+                            } label: {
+                                Label(saved ? "Jest w powtórkach" : "Nie rozumiem — dodaj do powtórek", systemImage: saved ? "checkmark" : "plus.rectangle.on.rectangle")
+                                    .frame(maxWidth: .infinity, minHeight: 44)
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(saved)
+                        }
+                        .padding(12)
+                        .themedCard(radius: 16)
+                    }
+                    if picked != nil {
+                        Button { advance() } label: {
+                            Text(index + 1 >= CoachData.listen.count ? "Zakończ" : "Dalej").primaryButton()
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    if store.journal.listenTries > 0 {
+                        Text("Trafione: \(store.journal.listenOk) z \(store.journal.listenTries)")
+                            .font(.footnote)
+                            .foregroundStyle(Theme.text2)
+                    }
                 }
             }
-            .padding()
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+            .padding(.bottom, 120)
         }
         .navigationTitle("Słuchanie")
         .containerBackground(for: .navigation) { NightGlow() }
@@ -318,14 +357,23 @@ struct ListenView: View {
     private func choose(_ i: Int) {
         guard picked == nil else { return }
         picked = i
-        store.noteListen(ok: i == item.answer)
+        let ok = i == item.answer
+        if ok { Haptic.good() } else { Haptic.bad() }
+        store.noteListen(ok: ok)
     }
 
-    private func color(_ i: Int) -> Color {
-        guard let picked else { return Ink.brass }
-        if i == item.answer { return Ink.pine }
-        if i == picked { return Ink.clay }
-        return .gray
+    private func advance() {
+        picked = nil
+        showPL = false
+        saved = false
+        index += 1
+    }
+
+    private func fill(_ i: Int) -> Color {
+        guard let picked else { return Color.white.opacity(0.08) }
+        if i == item.answer { return Theme.ok.opacity(0.85) }
+        if i == picked { return Theme.bad.opacity(0.85) }
+        return Color.white.opacity(0.05)
     }
 }
 
