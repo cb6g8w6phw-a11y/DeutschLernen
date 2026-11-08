@@ -112,9 +112,10 @@ struct GlassCard: ViewModifier {
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
         let color = tint ?? look.accent
+        let glass = interactive
+            ? Glass.regular.interactive().tint(color.opacity(0.16))
+            : Glass.regular.tint(color.opacity(0.16))
         if look.style == "glass" {
-            var glass = Glass.regular.tint(color.opacity(0.14))
-            if interactive { glass = glass.interactive() }
             content.glassEffect(glass, in: shape)
         } else {
             content
