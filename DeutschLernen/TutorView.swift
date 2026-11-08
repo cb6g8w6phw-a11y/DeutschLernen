@@ -86,6 +86,7 @@ struct TutorView: View {
             .onChange(of: mic.listening) { was, now in
                 if was, !now { flushMic() }
             }
+            .micPrompt(mic)
             .onChange(of: mic.text) { _, new in
                 quiet?.cancel()
                 let spoken = new.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -28,6 +28,8 @@ final class Mic: ObservableObject {
     @Published var listening = false
     @Published var note = ""
     @Published var level: Double = 0
+    @Published var wantsPrompt = false
+    private var pendingMic = false
 
     private var recognizer = SFSpeechRecognizer(locale: Locale(identifier: "de-DE"))
     private var engine: AVAudioEngine?
@@ -46,31 +48,42 @@ final class Mic: ObservableObject {
         if listening { stop() } else { ask() }
     }
 
+    func allowPrompt() {
+        UserDefaults.standard.set(true, forKey: "micExplained")
+        afterMic(pendingMic)
+    }
+
     private func ask() {
-        SFSpeechRecognizer.requestAuthorization { status in
+        note = "Pytam o dostęp do mikrofonu…"
+        let before = AVCaptureDevice.authorizationStatus(for: .audio)
+        AVCaptureDevice.requestAccess(for: .audio) { granted in
             Task { @MainActor in
-                guard status == .authorized else {
-                    self.note = "Włącz rozpoznawanie mowy dla LiveContainer: Ustawienia → Prywatność → Rozpoznawanie mowy."
+                if before != .notDetermined, !UserDefaults.standard.bool(forKey: "micExplained") {
+                    self.pendingMic = granted
+                    self.wantsPrompt = true
                     return
                 }
-                self.askMic()
+                self.afterMic(granted)
             }
         }
     }
 
-    private func askMic() {
-        let session = AVAudioSession.sharedInstance()
-        if session.recordPermission == .granted {
-            begin()
-            return
-        }
-        session.requestRecordPermission { ok in
-            Task { @MainActor in
-                guard ok else {
-                    self.note = "Brak mikrofonu. Ustawienia → Prywatność → Mikrofon → LiveContainer."
-                    return
+    private func afterMic(_ granted: Bool) {
+        AVAudioApplication.requestRecordPermission { sessionOK in
+            SFSpeechRecognizer.requestAuthorization { speech in
+                Task { @MainActor in
+                    guard granted || sessionOK else {
+                        self.note = "Brak zgody na mikrofon. Ustawienia → Prywatność → Mikrofon → LiveContainer."
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
+                        return
+                    }
+                    if speech != .authorized {
+                        self.note = "Włącz też rozpoznawanie mowy: Ustawienia → Prywatność → Rozpoznawanie mowy → LiveContainer."
+                    }
+                    self.begin()
                 }
-                self.begin()
             }
         }
     }
@@ -634,6 +647,25 @@ enum Heard {
             let key = Normalizer.clean(token).filter(\.isLetter)
             let ok = key.count > 1 && bag.contains(where: { $0 == key || $0.contains(key) || key.contains($0) })
             return (token, ok)
+        }
+    }
+}
+
+extension View {
+    func micPrompt(_ mic: Mic) -> some View {
+        modifier(MicPrompt(mic: mic))
+    }
+}
+
+private struct MicPrompt: ViewModifier {
+    @ObservedObject var mic: Mic
+
+    func body(content: Content) -> some View {
+        content.alert("Dostęp do mikrofonu", isPresented: $mic.wantsPrompt) {
+            Button("Pozwól") { mic.allowPrompt() }
+            Button("Nie teraz", role: .cancel) {}
+        } message: {
+            Text("Aplikacja chce dostępu do mikrofonu, żeby słyszeć, jak mówisz po niemiecku.")
         }
     }
 }
