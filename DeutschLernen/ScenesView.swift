@@ -208,6 +208,8 @@ struct SceneChatView: View {
             let history = messages.map { GeminiMessage(role: $0.role, text: $0.text) }
             let reply = try await Gemini.send(messages: history, system: systemPrompt())
             messages.append(ChatMsg(role: "model", text: reply))
+            let mine = messages.filter { $0.role == "user" }.count
+            if mine >= 2 { store.markScene(scenario.id) }
             Talk.de(firstGerman(reply))
         } catch {
             messages.append(ChatMsg(role: "model", text: error.localizedDescription))

@@ -6,6 +6,8 @@ private struct Turn: Identifiable {
     var german: String
     var polish: String
     var say: String = ""
+    var err: String = ""
+    var flag: String = ""
 }
 
 struct TutorView: View {
@@ -19,9 +21,12 @@ struct TutorView: View {
     @State private var showType = false
     @State private var greeted = false
     @State private var quiet: Task<Void, Never>?
+    @State private var tick = Date()
     @AppStorage("persona") private var persona = "Marek"
 
     private let purple = Color(red: 0.48, green: 0.32, blue: 0.92)
+    private let people = ["Marek", "Lena", "Piotr", "Kierownik", "Sklep", "Telefon", "Lekarz", "Agencja"]
+    private var blind: Bool { persona == "Telefon" || persona == "Agencja" }
 
     var body: some View {
         NavigationStack {
@@ -65,7 +70,11 @@ struct TutorView: View {
                 greeted = true
                 turns = [opener]
             }
-            .onDisappear { mic.stop(); Talk.stop() }
+            .onDisappear {
+                tickTalk()
+                mic.stop()
+                Talk.stop()
+            }
             .onChange(of: persona) { _, _ in
                 if !turns.contains(where: { $0.role == "user" }) {
                     turns = [opener]
@@ -119,16 +128,19 @@ struct TutorView: View {
                     .frame(width: 92, height: 92)
                     .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             }
-            Text("\(persona) gada z tobą jak człowiek. Mówisz, on odpowiada na głos. Jak zamilkniesz, zdanie samo idzie. Pod spodem jest sens po polsku.")
+            Text("Mówisz po niemiecku. On odpowiada na głos. Jak zamilkniesz, zdanie samo idzie. Pod spodem jest sens po polsku, a błąd ląduje w Postępie.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            Picker("Kto", selection: $persona) {
-                Text("Marek").tag("Marek")
-                Text("Lena").tag("Lena")
-                Text("Piotr").tag("Piotr")
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack {
+                    ForEach(people, id: \.self) { name in
+                        Button(name) { persona = name }
+                            .buttonStyle(.glass)
+                            .tint(persona == name ? Ink.brass : .gray)
+                    }
+                }
             }
-            .pickerStyle(.segmented)
         }
     }
 
@@ -141,8 +153,10 @@ struct TutorView: View {
                 .frame(maxWidth: .infinity, alignment: t.role == "user" ? .trailing : .leading)
             if t.role == "model" {
                 VStack(alignment: .leading, spacing: 8) {
+                    if t.flag == "ok" { Text("Dobrze.").foregroundStyle(Ink.pine) }
                     if !t.polish.isEmpty { Text(t.polish).foregroundStyle(.secondary) }
-                    if !t.say.isEmpty { Text("Powiedz teraz: „\(t.say)”").fontWeight(.semibold) }
+                    if !t.err.isEmpty { Text(t.err).foregroundStyle(Ink.clay) }
+                    if !t.say.isEmpty, !blind { Text("Powiedz teraz: „\(t.say)”").fontWeight(.semibold) }
                     HStack {
                         Button { Talk.de(speech(t)) } label: { Image(systemName: "speaker.wave.2") }
                             .buttonStyle(.plain)
@@ -158,7 +172,7 @@ struct TutorView: View {
 
     private var controls: some View {
         VStack(spacing: 8) {
-            if !hint.isEmpty {
+            if !hint.isEmpty, !blind {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Możesz powiedzieć").font(.caption).foregroundStyle(.secondary)
                     ForEach(germanHints, id: \.self) { line in
@@ -170,6 +184,11 @@ struct TutorView: View {
             if !mic.note.isEmpty { Text(mic.note).font(.caption).foregroundStyle(.secondary) }
             if mic.listening {
                 Text(mic.text.isEmpty ? "Słucham…" : mic.text).font(.footnote)
+            }
+            if !blind {
+                Button("Nie znam odpowiedzi") { Task { await send("Nie znam odpowiedzi. Daj jedną podpowiedź po polsku i krótkie zdanie, które mam teraz powiedzieć.") } }
+                    .buttonStyle(.glass)
+                    .disabled(loading)
             }
             HStack(spacing: 16) {
                 Button { showType = true } label: {
@@ -183,20 +202,22 @@ struct TutorView: View {
                         .font(.title2)
                         .foregroundStyle(.white)
                         .frame(width: 72, height: 72)
-                        .background(purple, in: Circle())
+                        .background(mic.listening ? Color(red: 0.18, green: 0.82, blue: 0.42) : purple, in: Circle())
                 }
                 .buttonStyle(.plain)
                 .disabled(loading)
-                Button { Task { await suggest() } } label: {
-                    Label("Co powiedzieć?", systemImage: "lightbulb.fill")
-                        .font(.subheadline.bold())
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
-                        .background(purple.opacity(0.85), in: Capsule())
-                        .foregroundStyle(.white)
+                if !blind {
+                    Button { Task { await suggest() } } label: {
+                        Label("Co powiedzieć?", systemImage: "lightbulb.fill")
+                            .font(.subheadline.bold())
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .background(purple.opacity(0.85), in: Capsule())
+                            .foregroundStyle(.white)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(loading)
                 }
-                .buttonStyle(.plain)
-                .disabled(loading)
             }
         }
         .padding(.horizontal)
@@ -204,7 +225,8 @@ struct TutorView: View {
     }
 
     private func speech(_ t: Turn) -> String {
-        t.say.isEmpty ? t.german : "\(t.german) Sag jetzt: \(t.say)"
+        if blind || t.say.isEmpty { return t.german }
+        return "\(t.german) Sag jetzt: \(t.say)"
     }
 
     private func flushMic() {
@@ -229,7 +251,9 @@ struct TutorView: View {
         do {
             let reply = try await Gemini.send(messages: history, system: systemPrompt())
             let turn = parse(reply)
+            if !turn.err.isEmpty { store.addMistake(turn.err) }
             turns.append(turn)
+            tickTalk()
             Talk.de(speech(turn))
         } catch {
             turns.append(Turn(role: "model", german: error.localizedDescription, polish: ""))
@@ -277,6 +301,7 @@ struct TutorView: View {
                 Word(de: $0.de, pl: $0.pl, ex: $0.ex, exPl: $0.exPl, topic: "Z rozmowy", level: "A2")
             }
             let added = store.addWords(Array(words))
+            store.markScene(persona)
             let list = words.map { "\($0.de) – \($0.pl)" }.joined(separator: "\n")
             note = "Do Nauki doszło \(added). Razem w bazie: \(store.words.count)."
             turns.append(Turn(
@@ -304,7 +329,9 @@ struct TutorView: View {
         if de.isEmpty {
             return Turn(role: "model", german: text.trimmingCharacters(in: .whitespacesAndNewlines), polish: "")
         }
-        return Turn(role: "model", german: de, polish: pl, say: say)
+        let err = field(text, "ERR")
+        let flag = err.isEmpty ? "ok" : "fix"
+        return Turn(role: "model", german: de, polish: pl, say: say, err: err, flag: flag)
     }
 
     private func field(_ text: String, _ name: String) -> String {
@@ -319,7 +346,7 @@ struct TutorView: View {
             }
             if hit {
                 let up = t.uppercased()
-                if up.hasPrefix("DE:") || up.hasPrefix("PL:") || up.hasPrefix("SAY:") { break }
+                if up.hasPrefix("DE:") || up.hasPrefix("PL:") || up.hasPrefix("SAY:") || up.hasPrefix("ERR:") { break }
                 if !t.isEmpty { lines.append(t) }
             }
         }
@@ -340,6 +367,16 @@ struct TutorView: View {
             return Turn(role: "model", german: "Na, wie war dein Tag bisher?", polish: "No i jak ci minął dzień do tej pory?", say: "Ganz okay, ich komme gerade von der Arbeit.")
         case "Piotr":
             return Turn(role: "model", german: "Was ist mit dem Auto? Hörst du ein Geräusch?", polish: "Co z autem? Słyszysz jakiś dźwięk?", say: "Vorne klopft es, wenn ich über ein Schlagloch fahre.")
+        case "Kierownik":
+            return Turn(role: "model", german: "Kacper, wann kannst du morgen mit der Arbeit anfangen?", polish: "Kacper, kiedy możesz jutro zacząć pracę?", say: "Ich kann morgen um sechs Uhr anfangen.")
+        case "Sklep":
+            return Turn(role: "model", german: "Kann ich Ihnen helfen?", polish: "W czym mogę pomóc?", say: "Ich möchte das umtauschen. Ich habe den Bon.")
+        case "Telefon":
+            return Turn(role: "model", german: "Hallo? Spreche ich mit Kacper? Hier ist der Vermieter.", polish: "Halo? Czy to Kacper? Tu wynajmujący.", say: "Ja, hier ist Kacper. Die Heizung geht nicht.")
+        case "Lekarz":
+            return Turn(role: "model", german: "Guten Tag. Was fehlt Ihnen denn?", polish: "Dzień dobry. Co panu dolega?", say: "Mir tut der Hals weh und ich brauche eine Krankschreibung.")
+        case "Agencja":
+            return Turn(role: "model", german: "Guten Tag, hier ist die Zeitarbeitsfirma. Können Sie morgen anfangen?", polish: "Dzień dobry, tu agencja pracy. Może pan jutro zacząć?", say: "Ja, ich kann morgen um sechs Uhr anfangen.")
         default:
             return Turn(role: "model", german: "Na, was machst du heute auf der Baustelle?", polish: "No i co dzisiaj robisz na budowie?", say: "Ich montiere heute die Klimaanlage.")
         }
@@ -352,6 +389,16 @@ struct TutorView: View {
             who = "Masz na imię Lena. Jesteś koleżanką z codziennego życia w Niemczech: urząd, sklep, mieszkanie, lekarz. Mówisz spokojnie i konkretnie."
         case "Piotr":
             who = "Masz na imię Piotr. Jesteś mechanikiem w warsztacie. Mówisz krótko, po ludzku, o aucie, częściach i terminie."
+        case "Kierownik":
+            who = "Jesteś kierownikiem budowy. Wydajesz krótkie, jasne polecenia. Mówisz prostym niemieckim, poziom A2."
+        case "Sklep":
+            who = "Jesteś sprzedawcą w sklepie w Niemczech. Mówisz uprzejmie i krótko."
+        case "Telefon":
+            who = "Dzwonisz do ucznia. To rozmowa telefoniczna bez podpowiedzi na ekranie, które zdradzałyby odpowiedź wcześniej. Mówisz jak prawdziwy rozmówca: wynajmujący, kierownik albo urząd."
+        case "Lekarz":
+            who = "Jesteś lekarzem. Pytasz krótko o objawy i o to, czy potrzebuje zwolnienia."
+        case "Agencja":
+            who = "Dzwonisz z agencji pracy. Pytasz o termin, doświadczenie i czy może zacząć jutro."
         default:
             who = "Masz na imię Marek. Pracujesz na budowie i przy montażu w Niemczech. Gadasz jak kolega na zmianie, nie jak nauczyciel."
         }
@@ -361,13 +408,22 @@ struct TutorView: View {
         Zasady:
         - Odpowiadaj tak, jakbyś stał obok niego. Jedno albo dwa krótkie zdania. Potem pytanie.
         - Nie wykładaj gramatyki i nie pisz list.
-        - Jak powie coś krzywo, w PL daj jedną krótką poprawkę po polsku. Jak jest dobrze, w PL przetłumacz tylko to, co sam powiedziałeś.
+        - Jak powie coś krzywo, w PL daj jedną krótką poprawkę po polsku i dodaj linię ERR. Jak jest dobrze, w PL przetłumacz tylko to, co sam powiedziałeś, i NIE dodawaj ERR.
+        - Jak napisze po polsku, że nie zna odpowiedzi, daj jedną podpowiedź w PL i jedno krótkie zdanie w SAY. Nie wykładaj.
         - SAY to jedno naturalne zdanie, które on może teraz powiedzieć.
-        Format, dokładnie trzy linie, bez markdownu:
+        Format, bez markdownu:
         DE: po niemiecku
         PL: po polsku
         SAY: zdanie dla niego
+        ERR: krótki błąd po polsku | poprawne zdanie
+        ERR tylko wtedy, gdy uczeń powiedział coś źle.
         Postępy: \(store.progressSummary())
         """
+    }
+
+    private func tickTalk() {
+        let seconds = Int(Date().timeIntervalSince(tick))
+        tick = Date()
+        if seconds > 2 { store.addTalk(seconds) }
     }
 }

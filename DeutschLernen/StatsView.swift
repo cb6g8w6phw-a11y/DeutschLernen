@@ -20,6 +20,25 @@ struct StatsView: View {
                     LabeledContent("Opanowane", value: "\(store.masteredCount)")
                     LabeledContent("W nauce", value: "\(store.learningCount)")
                     LabeledContent("Nowe", value: "\(store.newCount)")
+                    LabeledContent("Dzień planu", value: "\(store.planDay)/30")
+                    LabeledContent("Rozmowa w tym miesiącu", value: store.talkLabel)
+                    LabeledContent("Słuchanie", value: store.journal.listenTries == 0 ? "jeszcze nic" : "\(store.journal.listenOk)/\(store.journal.listenTries)")
+                    LabeledContent("Zdania na głos", value: "\(store.journal.said)")
+                    LabeledContent("Sceny", value: "\(store.journal.scenes.count)/\(Scenarios.all.count)")
+                }
+                Section("Błędy") {
+                    let slips = store.mistakesToday.isEmpty ? Array(store.journal.mistakes.prefix(8)) : store.mistakesToday
+                    if slips.isEmpty {
+                        Text("Jak w rozmowie powiesz coś krzywo, wpadnie to tutaj.").foregroundStyle(.secondary)
+                    }
+                    ForEach(slips) { slip in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(slip.text)
+                            if !slip.fix.isEmpty {
+                                Text(slip.fix).font(.footnote).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
                 }
                 Section("Skuteczność wg tematów") {
                     let topics = store.topicAccuracy()

@@ -5,12 +5,16 @@ import SwiftUI
 enum Talk {
     static let synth = AVSpeechSynthesizer()
 
-    static func de(_ text: String) {
+    static func de(_ text: String, rate: Float = 0.46, voice: String? = nil) {
         let clean = text.replacingOccurrences(of: "*", with: "")
         synth.stopSpeaking(at: .immediate)
         let u = AVSpeechUtterance(string: clean)
-        u.voice = AVSpeechSynthesisVoice(language: "de-DE")
-        u.rate = 0.46
+        if let voice, let picked = AVSpeechSynthesisVoice(identifier: voice) {
+            u.voice = picked
+        } else {
+            u.voice = AVSpeechSynthesisVoice(language: "de-DE")
+        }
+        u.rate = rate
         synth.speak(u)
     }
 

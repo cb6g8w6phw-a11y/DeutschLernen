@@ -17,6 +17,8 @@ struct QuizView: View {
     @State private var wasCorrect = false
     @AppStorage("drill") private var drill = "slowa"
     @AppStorage("band") private var band = "A1"
+    var sessionSize: Int = 8
+    @StateObject private var mic = Mic()
 
     private var current: Word? { index < queue.count ? queue[index] : nil }
 
@@ -40,6 +42,13 @@ struct QuizView: View {
                     Button("Wróć") { started = false }.buttonStyle(.glass)
                 }
             }
+            .onDisappear { mic.stop() }
+            .onChange(of: mic.listening) { was, now in
+                guard was, !now, !answered, drill == "luki", let w = current else { return }
+                let heard = mic.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !heard.isEmpty else { return }
+                finish(hears(w, heard), w)
+            }
         }
     }
 
@@ -49,6 +58,16 @@ struct QuizView: View {
             Text("Słówek w bazie: \(store.words.count)").font(.headline)
             Text("Opanowane: \(store.masteredCount) · W nauce: \(store.learningCount) · Nowe: \(store.newCount)")
                 .font(.subheadline).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Do powtórki dzisiaj: \(store.dueToday)").font(.headline)
+                let done = min(store.reviewsToday, 20)
+                ProgressView(value: Double(done), total: 20).tint(Ink.brass)
+                Text("Dzisiejszy cel: \(done)/20 słówek")
+                    .font(.footnote).foregroundStyle(.secondary)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .liquidGlass(radius: 18)
             Picker("Poziom", selection: $band) {
                 Text("A1").tag("A1")
                 Text("A2").tag("A2")
@@ -78,14 +97,29 @@ struct QuizView: View {
             VStack(spacing: 16) {
                 Text("\(min(index + 1, queue.count)) / \(queue.count)")
                     .font(.caption).foregroundStyle(.secondary)
-                Text("\(w.level) · \(w.topic)").font(.caption).padding(.horizontal, 10).padding(.vertical, 6)
+                Text(topicMark(w.topic)).font(.caption).padding(.horizontal, 10).padding(.vertical, 6)
                     .liquidGlass(radius: 20)
                 Text(prompt)
                     .font(drill == "slowa" ? .largeTitle.bold() : .title3.bold())
                     .multilineTextAlignment(.center)
                     .padding(.vertical, 8)
+                if let s = store.stats[w.de], s.wrong >= 3 {
+                    Text("To słowo często ci ucieka. Zostaje w powtórkach, aż siądzie.")
+                        .font(.footnote).foregroundStyle(Ink.clay)
+                        .multilineTextAlignment(.center)
+                }
                 Text(hint)
                     .font(.footnote).foregroundStyle(.secondary)
+                if drill == "luki", !answered {
+                    Button { mic.toggle() } label: {
+                        Label(mic.listening ? "Stop" : "Powiedz brakujące słowo", systemImage: "mic.fill")
+                    }
+                    .buttonStyle(.glass)
+                    if mic.listening {
+                        Text(mic.text.isEmpty ? "Słucham…" : mic.text).font(.footnote)
+                    }
+                    if !mic.note.isEmpty { Text(mic.note).font(.caption).foregroundStyle(.secondary) }
+                }
 
                 if typing {
                     TextField("Odpowiedź", text: $typed)
@@ -150,7 +184,7 @@ struct QuizView: View {
     private var drillHint: String {
         switch drill {
         case "zdania": return "Widzisz polskie zdanie. Wybierz, jak to powiedzieć po niemiecku."
-        case "luki": return "W zdaniu brakuje słowa. Wybierz to, które pasuje."
+        case "luki": return "W zdaniu brakuje słowa. Możesz je stuknąć albo powiedzieć do mikrofonu."
         default: return "Słówka i krótkie zwroty z życia i z pracy. Bez „dzień dobry”."
         }
     }
@@ -181,14 +215,39 @@ struct QuizView: View {
     }
 
     private func cloze(_ w: Word) -> String {
-        var token = w.de
-        for a in ["der ", "die ", "das ", "sich "] where token.lowercased().hasPrefix(a) {
-            token = String(token.dropFirst(a.count))
-        }
+        let token = bare(w.de)
         if let r = w.ex.range(of: token) {
             return w.ex.replacingCharacters(in: r, with: "______")
         }
         return "______  ·  \(w.exPl)"
+    }
+
+    private func bare(_ de: String) -> String {
+        var token = de
+        for a in ["der ", "die ", "das ", "sich "] where token.lowercased().hasPrefix(a) {
+            token = String(token.dropFirst(a.count))
+        }
+        return token
+    }
+
+    private func hears(_ w: Word, _ heard: String) -> Bool {
+        let key = Normalizer.clean(bare(w.de)).filter(\.isLetter)
+        let said = Normalizer.clean(heard)
+        guard key.count > 1 else { return false }
+        return said.contains(key)
+    }
+
+    private func topicMark(_ topic: String) -> String {
+        let s = topic.lowercased()
+        let mark: String
+        if s.contains("warsztat") || s.contains("auto") { mark = "🔧" }
+        else if s.contains("budow") { mark = "🧱" }
+        else if s.contains("magaz") { mark = "📦" }
+        else if s.contains("lekar") || s.contains("zdrow") { mark = "🩺" }
+        else if s.contains("miesz") || s.contains("dom") { mark = "🏠" }
+        else if s.contains("sklep") { mark = "🛒" }
+        else { mark = "💬" }
+        return "\(mark) \(topic)"
     }
 
     private func choice(_ item: Word) -> String {
@@ -207,7 +266,7 @@ struct QuizView: View {
     }
 
     private func start() {
-        queue = store.nextSession(level: band)
+        queue = store.nextSession(size: sessionSize, level: band)
         index = 0
         score = 0
         started = true
@@ -238,6 +297,7 @@ struct QuizView: View {
         answered = true
         wasCorrect = ok
         if ok { score += 1 }
+        if mic.listening { mic.stop() }
     }
 
     private func apply(_ g: Grade, _ w: Word) {

@@ -16,7 +16,7 @@ struct RootView: View {
         ZStack {
             NightGlow()
             TabView {
-                Tab("Nauka", systemImage: "book") { QuizView() }
+                Tab("Dziś", systemImage: "sun.max") { TodayView() }
                 Tab("Czat", systemImage: "bubble.left.and.bubble.right") { TutorView() }
                 Tab("Postęp", systemImage: "chart.bar") { StatsView() }
                 Tab("Sceny", systemImage: "person.2") { ScenesView() }
@@ -31,6 +31,26 @@ struct MoreView: View {
     var body: some View {
         NavigationStack {
             List {
+                NavigationLink {
+                    BuildView()
+                } label: {
+                    Label("Niemiecki na budowie", systemImage: "hammer")
+                }
+                NavigationLink {
+                    ListenView()
+                } label: {
+                    Label("Słuchanie", systemImage: "ear")
+                }
+                NavigationLink {
+                    SentenceView()
+                } label: {
+                    Label("Generator zdań", systemImage: "text.badge.checkmark")
+                }
+                NavigationLink {
+                    ClipView()
+                } label: {
+                    Label("Słówka z filmu", systemImage: "play.rectangle")
+                }
                 NavigationLink {
                     LifeView()
                 } label: {

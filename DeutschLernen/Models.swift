@@ -50,6 +50,60 @@ struct WordStat: Codable {
     var due: Date = .distantPast
 }
 
+struct StoredMistake: Codable, Identifiable, Hashable {
+    var id: String
+    var text: String
+    var fix: String
+    var day: String
+}
+
+struct Journal: Codable {
+    var startDay: String = ""
+    var day: String = ""
+    var reviews: Int = 0
+    var month: String = ""
+    var monthSeconds: Int = 0
+    var listenOk: Int = 0
+    var listenTries: Int = 0
+    var said: Int = 0
+    var scenes: [String] = []
+    var mistakes: [StoredMistake] = []
+
+    private enum CodingKeys: String, CodingKey {
+        case startDay, day, reviews, month, monthSeconds, listenOk, listenTries, said, scenes, mistakes
+    }
+
+    init() {}
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        startDay = try c.decodeIfPresent(String.self, forKey: .startDay) ?? ""
+        day = try c.decodeIfPresent(String.self, forKey: .day) ?? ""
+        reviews = try c.decodeIfPresent(Int.self, forKey: .reviews) ?? 0
+        month = try c.decodeIfPresent(String.self, forKey: .month) ?? ""
+        monthSeconds = try c.decodeIfPresent(Int.self, forKey: .monthSeconds) ?? 0
+        listenOk = try c.decodeIfPresent(Int.self, forKey: .listenOk) ?? 0
+        listenTries = try c.decodeIfPresent(Int.self, forKey: .listenTries) ?? 0
+        said = try c.decodeIfPresent(Int.self, forKey: .said) ?? 0
+        scenes = try c.decodeIfPresent([String].self, forKey: .scenes) ?? []
+        mistakes = try c.decodeIfPresent([StoredMistake].self, forKey: .mistakes) ?? []
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(startDay, forKey: .startDay)
+        try c.encode(day, forKey: .day)
+        try c.encode(reviews, forKey: .reviews)
+        try c.encode(month, forKey: .month)
+        try c.encode(monthSeconds, forKey: .monthSeconds)
+        try c.encode(listenOk, forKey: .listenOk)
+        try c.encode(listenTries, forKey: .listenTries)
+        try c.encode(said, forKey: .said)
+        try c.encode(scenes, forKey: .scenes)
+        try c.encode(mistakes, forKey: .mistakes)
+    }
+}
+
 enum Grade { case hard, mid, easy }
 
 enum Normalizer {
@@ -71,6 +125,7 @@ enum Normalizer {
 final class LearningStore: ObservableObject {
     @Published var words: [Word]
     @Published var stats: [String: WordStat]
+    @Published var journal = Journal()
 
     private struct Saved: Codable {
         var words: [Word]
@@ -78,11 +133,13 @@ final class LearningStore: ObservableObject {
     }
 
     private let url: URL
+    private let journalURL: URL
     private let intervalsDays: [Int] = [0, 1, 2, 4, 8, 16]
 
     init() {
         let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         url = dir.appendingPathComponent("progress.json")
+        journalURL = dir.appendingPathComponent("journal.json")
         if let data = try? Data(contentsOf: url),
            let saved = try? JSONDecoder().decode(Saved.self, from: data) {
             words = saved.words
@@ -97,6 +154,11 @@ final class LearningStore: ObservableObject {
             words = SeedContent.words
             stats = [:]
         }
+        if let data = try? Data(contentsOf: journalURL),
+           let saved = try? JSONDecoder().decode(Journal.self, from: data) {
+            journal = saved
+        }
+        roll()
     }
 
     private func save() {
@@ -120,6 +182,7 @@ final class LearningStore: ObservableObject {
             ? Calendar.current.date(byAdding: .day, value: days, to: Date()) ?? Date()
             : Date()
         stats[w.de] = s
+        noteReview()
         save()
     }
 
@@ -140,6 +203,7 @@ final class LearningStore: ObservableObject {
             s.due = Calendar.current.date(byAdding: .day, value: 4, to: Date()) ?? Date()
         }
         stats[w.de] = s
+        noteReview()
         save()
     }
 
@@ -215,6 +279,132 @@ final class LearningStore: ObservableObject {
         Opanowane słowa: \(masteredCount), w trakcie nauki: \(learningCount), nowe: \(newCount).
         Najsłabsze słowa: \(weak.isEmpty ? "brak danych" : weak).
         Skuteczność wg tematów: \(topics.isEmpty ? "brak danych" : topics).
+        Ostatnie błędy: \(journal.mistakes.prefix(5).map { $0.fix.isEmpty ? $0.text : "\($0.text) → \($0.fix)" }.joined(separator: "; ").ifEmpty("brak")).
         """
     }
+
+    var dueToday: Int {
+        let now = Date()
+        return words.filter { stats[$0.de]?.due ?? .distantFuture <= now }.count
+    }
+
+    var reviewsToday: Int { journal.day == Self.dayKey() ? journal.reviews : 0 }
+    var monthTalkSeconds: Int {
+        journal.month == String(Self.dayKey().prefix(7)) ? journal.monthSeconds : 0
+    }
+    var talkLabel: String {
+        let s = monthTalkSeconds
+        if s < 60 { return "\(s) s" }
+        if s < 3600 { return "\(s / 60) min" }
+        return String(format: "%.1f h", Double(s) / 3600)
+    }
+    var planDay: Int {
+        let f = DateFormatter()
+        f.calendar = Calendar(identifier: .gregorian)
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = .current
+        f.dateFormat = "yyyy-MM-dd"
+        guard let start = f.date(from: journal.startDay.isEmpty ? Self.dayKey() : journal.startDay) else { return 1 }
+        let days = Calendar.current.dateComponents([.day], from: start, to: Date()).day ?? 0
+        return min(30, max(1, days + 1))
+    }
+    var phaseTitle: String {
+        switch planDay {
+        case 1...7: return "Dni 1–7: zdania, pytania i odpowiedzi"
+        case 8...14: return "Dni 8–14: praca, polecenia, słuchanie"
+        case 15...21: return "Dni 15–21: rozmowa bez podpowiedzi"
+        default: return "Dni 22–30: prawdziwe rozmowy"
+        }
+    }
+    var wordOfDay: Word? {
+        guard !words.isEmpty else { return nil }
+        let day = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1
+        return words[day % words.count]
+    }
+    var mistakesToday: [StoredMistake] {
+        let day = Self.dayKey()
+        return journal.mistakes.filter { $0.day == day }
+    }
+
+    func addTalk(_ seconds: Int) {
+        guard seconds > 0 else { return }
+        roll()
+        journal.monthSeconds += min(seconds, 3600)
+        publishJournal()
+    }
+
+    func addMistake(_ raw: String) {
+        let parts = raw.split(separator: "|", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        let text = parts.first ?? ""
+        guard text.count > 2 else { return }
+        let fix = parts.count > 1 ? parts[1] : ""
+        roll()
+        if journal.mistakes.contains(where: { $0.day == journal.day && $0.text == text }) { return }
+        journal.mistakes.insert(StoredMistake(id: UUID().uuidString, text: text, fix: fix, day: journal.day), at: 0)
+        if journal.mistakes.count > 40 { journal.mistakes = Array(journal.mistakes.prefix(40)) }
+        publishJournal()
+    }
+
+    func markScene(_ id: String) {
+        roll()
+        if !journal.scenes.contains(id) { journal.scenes.append(id) }
+        publishJournal()
+    }
+
+    func noteListen(ok: Bool) {
+        roll()
+        journal.listenTries += 1
+        if ok { journal.listenOk += 1 }
+        publishJournal()
+    }
+
+    func noteSaid() {
+        roll()
+        journal.said += 1
+        publishJournal()
+    }
+
+    private func noteReview() {
+        roll()
+        journal.reviews += 1
+        publishJournal()
+    }
+
+    private func publishJournal() {
+        journal = journal
+        if let data = try? JSONEncoder().encode(journal) {
+            try? data.write(to: journalURL, options: .atomic)
+        }
+    }
+
+    private func roll() {
+        let day = Self.dayKey()
+        let month = String(day.prefix(7))
+        var changed = false
+        if journal.startDay.isEmpty { journal.startDay = day; changed = true }
+        if journal.day != day {
+            journal.day = day
+            journal.reviews = 0
+            changed = true
+        }
+        if journal.month != month {
+            journal.month = month
+            journal.monthSeconds = 0
+            changed = true
+        }
+        if changed { publishJournal() }
+    }
+
+    static func dayKey(_ date: Date = Date()) -> String {
+        let f = DateFormatter()
+        f.calendar = Calendar(identifier: .gregorian)
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = .current
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: date)
+    }
+}
+
+private extension String {
+    func ifEmpty(_ fallback: String) -> String { isEmpty ? fallback : self }
 }
