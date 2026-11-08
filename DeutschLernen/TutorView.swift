@@ -24,30 +24,33 @@ struct TutorView: View {
     @State private var tick = Date()
     @AppStorage("persona") private var persona = "Marek"
 
-    private let purple = Color(red: 0.48, green: 0.32, blue: 0.92)
     private let people = ["Marek", "Lena", "Piotr", "Kierownik", "Sklep", "Telefon", "Lekarz", "Agencja"]
     private var blind: Bool { persona == "Telefon" || persona == "Agencja" }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(spacing: 14) {
-                            avatar
-                            ForEach(turns) { t in
-                                bubble(t).id(t.id)
+                if mic.listening {
+                    listenStage
+                } else {
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(spacing: 14) {
+                                peopleRow
+                                ForEach(turns) { t in
+                                    bubble(t).id(t.id)
+                                }
+                                if loading { ProgressView().padding() }
+                                if !note.isEmpty {
+                                    Text(note).font(.footnote).foregroundStyle(Ink.muted).padding(.horizontal)
+                                }
                             }
-                            if loading { ProgressView().padding() }
-                            if !note.isEmpty {
-                                Text(note).font(.footnote).foregroundStyle(.secondary).padding(.horizontal)
-                            }
+                            .padding()
                         }
-                        .padding()
-                    }
-                    .scrollDismissesKeyboard(.interactively)
-                    .onChange(of: turns.count) { _, _ in
-                        if let last = turns.last { proxy.scrollTo(last.id, anchor: .bottom) }
+                        .scrollDismissesKeyboard(.interactively)
+                        .onChange(of: turns.count) { _, _ in
+                            if let last = turns.last { proxy.scrollTo(last.id, anchor: .bottom) }
+                        }
                     }
                 }
                 controls
@@ -119,54 +122,99 @@ struct TutorView: View {
         }
     }
 
-    private var avatar: some View {
-        VStack(spacing: 8) {
-            if let img = UIImage(named: "Tutor") {
-                Image(uiImage: img)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 92, height: 92)
-                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-            }
-            Text("Mówisz po niemiecku. On odpowiada na głos. Jak zamilkniesz, zdanie samo idzie. Pod spodem jest sens po polsku, a błąd ląduje w Postępie.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack {
-                    ForEach(people, id: \.self) { name in
-                        Button(name) { persona = name }
-                            .buttonStyle(.glass)
-                            .tint(persona == name ? Ink.brass : .gray)
-                    }
+    private var peopleRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack {
+                ForEach(people, id: \.self) { name in
+                    Button(name) { persona = name }
+                        .font(.subheadline.weight(persona == name ? .bold : .regular))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(persona == name ? Ink.accent : Ink.card, in: Capsule())
+                        .foregroundStyle(persona == name ? Color.black : Color.white)
                 }
             }
         }
     }
 
-    private func bubble(_ t: Turn) -> some View {
-        VStack(alignment: t.role == "user" ? .trailing : .leading, spacing: 6) {
-            Text(t.german)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(t.role == "user" ? purple : Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .frame(maxWidth: .infinity, alignment: t.role == "user" ? .trailing : .leading)
-            if t.role == "model" {
-                VStack(alignment: .leading, spacing: 8) {
-                    if t.flag == "ok" { Text("Dobrze.").foregroundStyle(Ink.pine) }
-                    if !t.polish.isEmpty { Text(t.polish).foregroundStyle(.secondary) }
-                    if !t.err.isEmpty { Text(t.err).foregroundStyle(Ink.clay) }
-                    if !t.say.isEmpty, !blind { Text("Powiedz teraz: „\(t.say)”").fontWeight(.semibold) }
-                    HStack {
-                        Button { Talk.de(speech(t)) } label: { Image(systemName: "speaker.wave.2") }
-                            .buttonStyle(.plain)
-                    }
-                }
+    private var listenStage: some View {
+        VStack(spacing: 22) {
+            Text("Słucham…")
                 .font(.subheadline)
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .foregroundStyle(Ink.muted)
+            ZStack {
+                Circle()
+                    .stroke(Ink.accent.opacity(0.18), lineWidth: 22)
+                    .frame(width: 250, height: 250)
+                Circle()
+                    .stroke(Ink.accent.opacity(0.35), lineWidth: 10)
+                    .frame(width: 210, height: 210)
+                Circle()
+                    .fill(Ink.accent)
+                    .frame(width: 168, height: 168)
+                Image(systemName: "waveform")
+                    .font(.system(size: 42, weight: .semibold))
+                    .foregroundStyle(.black)
             }
+            Text(mic.text.isEmpty ? "Mów po niemiecku" : mic.text)
+                .font(.title3.bold())
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 28)
+            if !mic.note.isEmpty {
+                Text(mic.note).font(.caption).foregroundStyle(Ink.muted).multilineTextAlignment(.center).padding(.horizontal)
+            }
+            Spacer()
+        }
+        .padding(.top, 24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func bubble(_ t: Turn) -> some View {
+        HStack {
+            if t.role == "user" { Spacer(minLength: 48) }
+            VStack(alignment: .leading, spacing: 6) {
+                if t.role == "model" {
+                    HStack(spacing: 6) {
+                        Text(persona).font(.caption).foregroundStyle(Ink.muted)
+                        if t.flag == "fix" {
+                            Image(systemName: "checkmark")
+                            Text("Poprawka")
+                        } else if t.flag == "ok" {
+                            Image(systemName: "checkmark")
+                            Text("Dobrze")
+                        }
+                    }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(t.flag == "fix" ? Ink.pine : Ink.accent)
+                }
+                Text(t.german).font(.body)
+                if !t.polish.isEmpty {
+                    Text(t.polish).font(.footnote).foregroundStyle(Ink.muted)
+                }
+                if !t.err.isEmpty {
+                    Text(t.err).font(.footnote).foregroundStyle(Ink.pine)
+                }
+                if !t.say.isEmpty, !blind {
+                    Text("Powiedz: \(t.say)").font(.footnote.weight(.semibold))
+                }
+                if t.role == "model" {
+                    Button { Talk.de(speech(t)) } label: {
+                        Image(systemName: "speaker.wave.2").foregroundStyle(Ink.accent)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(14)
+            .background(t.role == "user" ? Ink.accent.opacity(0.22) : Ink.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(alignment: .leading) {
+                if t.role == "model" {
+                    Capsule()
+                        .fill(t.flag == "fix" ? Ink.pine : Ink.accent)
+                        .frame(width: 3)
+                        .padding(.vertical, 12)
+                }
+            }
+            if t.role == "model" { Spacer(minLength: 48) }
         }
     }
 
@@ -193,32 +241,43 @@ struct TutorView: View {
             HStack(spacing: 16) {
                 Button { showType = true } label: {
                     Image(systemName: "plus")
-                        .frame(width: 52, height: 52)
-                        .background(Color.white.opacity(0.08), in: Circle())
+                        .frame(width: 44, height: 44)
+                        .background(Color.white.opacity(0.06), in: Circle())
                 }
                 .buttonStyle(.plain)
+                WaveBars(on: mic.listening)
+                    .frame(maxWidth: .infinity)
                 Button { mic.toggle() } label: {
                     Image(systemName: mic.listening ? "stop.fill" : "mic.fill")
-                        .font(.title2)
-                        .foregroundStyle(.white)
-                        .frame(width: 72, height: 72)
-                        .background(mic.listening ? Color(red: 0.18, green: 0.82, blue: 0.42) : purple, in: Circle())
+                        .font(.title3)
+                        .foregroundStyle(.black)
+                        .frame(width: 58, height: 58)
+                        .background(Ink.accent, in: Circle())
                 }
                 .buttonStyle(.plain)
                 .disabled(loading)
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 4) {
+                        Circle().fill(mic.listening ? Ink.pine : Ink.muted).frame(width: 6, height: 6)
+                        Text(mic.listening ? "Na żywo" : "Mikrofon")
+                            .font(.caption2)
+                            .foregroundStyle(mic.listening ? Ink.pine : Ink.muted)
+                    }
+                    Text(mic.listening ? "Stuknij, koniec" : "Stuknij i mów")
+                        .font(.caption)
+                }
                 if !blind {
                     Button { Task { await suggest() } } label: {
-                        Label("Co powiedzieć?", systemImage: "lightbulb.fill")
-                            .font(.subheadline.bold())
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 10)
-                            .background(purple.opacity(0.85), in: Capsule())
-                            .foregroundStyle(.white)
+                        Image(systemName: "lightbulb")
+                            .frame(width: 44, height: 44)
+                            .background(Color.white.opacity(0.06), in: Circle())
                     }
                     .buttonStyle(.plain)
                     .disabled(loading)
                 }
             }
+            .padding(12)
+            .liquidGlass(radius: 28)
         }
         .padding(.horizontal)
         .padding(.bottom, 10)
@@ -425,5 +484,23 @@ struct TutorView: View {
         let seconds = Int(Date().timeIntervalSince(tick))
         tick = Date()
         if seconds > 2 { store.addTalk(seconds) }
+    }
+}
+
+struct WaveBars: View {
+    var on: Bool
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 0.08, paused: !on)) { timeline in
+            let time = timeline.date.timeIntervalSinceReferenceDate
+            HStack(alignment: .center, spacing: 3) {
+                ForEach(0..<8, id: \.self) { index in
+                    Capsule()
+                        .fill(Ink.accent.opacity(on ? 0.95 : 0.28))
+                        .frame(width: 4, height: on ? 8 + 18 * abs(sin(time * 5 + Double(index) * 0.7)) : 8)
+                }
+            }
+            .frame(height: 28)
+        }
     }
 }

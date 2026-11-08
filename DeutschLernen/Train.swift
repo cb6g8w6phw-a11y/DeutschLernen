@@ -85,23 +85,23 @@ struct TodayView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-                    Text("Dzień \(store.planDay) z 30")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Ink.brass)
-                    Text(store.phaseTitle)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                    hero
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                        tile("Opanowane", "\(store.masteredCount)", "checkmark.circle")
+                        tile("W nauce", "\(store.learningCount)", "book")
+                        tile("Do powtórki", "\(store.dueToday)", "clock")
+                        tile("Seria", "\(store.streak) dni", "flame")
+                    }
                     goal
                     if let word = store.wordOfDay { wordCard(word) }
-                    Text("Plan na dziś")
-                        .font(.headline)
-                    NavigationLink { QuizView(sessionSize: 10) } label: { row("Powtórki", "10 min · słówka, które już czas przypomnieć", "rectangle.stack") }
-                    NavigationLink { TutorView() } label: { row("Rozmowa", "15 min · mówisz, dostajesz krótką poprawkę", "waveform") }
-                    NavigationLink { ListenView() } label: { row("Słuchanie", "10 min · wolno, normalnie albo szybko", "ear") }
-                    NavigationLink { PronounceView() } label: { row("Wymowa", "10 min · powtarzasz zdanie na głos", "mic") }
-                    NavigationLink { SentenceView() } label: { row("Zdania", "10 min · tłumaczysz sam, bez ściągi", "text.badge.checkmark") }
-                    NavigationLink { QuizView(sessionSize: 5) } label: { row("Test", "5 min · pięć słówek na koniec", "checkmark.circle") }
-                    NavigationLink { BuildView() } label: { row("Budowa", "Narzędzia, wymiary, polecenia kierownika", "hammer") }
+                    Text("Trening").font(.headline)
+                    NavigationLink { QuizView(sessionSize: 10) } label: { row("Powtórki", "Słówka, które już czas przypomnieć", "rectangle.stack") }
+                    NavigationLink { WordsView() } label: { row("Moje słówka", "Lista i fiszka", "text.book.closed") }
+                    NavigationLink { TutorView() } label: { row("Rozmowa", "Mówisz, dostajesz krótką poprawkę", "waveform") }
+                    NavigationLink { ListenView() } label: { row("Słuchanie", "Wolno, normalnie albo szybko", "ear") }
+                    NavigationLink { PronounceView() } label: { row("Wymowa", "Powtarzasz zdanie na głos", "mic") }
+                    NavigationLink { SentenceView() } label: { row("Zdania", "Tłumaczysz sam", "text.badge.checkmark") }
+                    NavigationLink { BuildView() } label: { row("Budowa", "Narzędzia i polecenia", "hammer") }
                 }
                 .padding()
             }
@@ -111,50 +111,102 @@ struct TodayView: View {
         }
     }
 
-    private var goal: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Do powtórki dzisiaj: \(store.dueToday)")
-                .font(.headline)
-            let done = min(store.reviewsToday, 20)
-            ProgressView(value: Double(done), total: 20)
-                .tint(Ink.brass)
-            Text("Dzisiejszy cel: \(done)/20 słówek")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+    private var hero: some View {
+        HStack(alignment: .center, spacing: 16) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Dzień \(store.planDay) z 30")
+                    .font(.title2.bold())
+                Text(store.phaseTitle)
+                    .font(.footnote)
+                    .foregroundStyle(Ink.muted)
+            }
+            Spacer()
+            ring
         }
-        .padding(14)
+        .padding(16)
+        .liquidGlass(radius: 22)
+    }
+
+    private var ring: some View {
+        let progress = Double(store.planDay) / 30
+        return ZStack {
+            Circle().stroke(Color.white.opacity(0.08), lineWidth: 8)
+            Circle()
+                .trim(from: 0, to: progress)
+                .stroke(Ink.accent, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            Text("\(Int(progress * 100))%")
+                .font(.subheadline.bold())
+        }
+        .frame(width: 78, height: 78)
+    }
+
+    private func tile(_ title: String, _ value: String, _ icon: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Image(systemName: icon).foregroundStyle(Ink.accent)
+            Text(value).font(.title3.bold())
+            Text(title).font(.caption).foregroundStyle(Ink.muted)
+        }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .liquidGlass(radius: 18)
+    }
+
+    private var goal: some View {
+        let done = min(store.reviewsToday, 20)
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Dzisiejszy cel").font(.headline)
+                Spacer()
+                Text("\(done)/20").foregroundStyle(Ink.accent).font(.headline)
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.white.opacity(0.08))
+                    Capsule().fill(Ink.accent).frame(width: geo.size.width * CGFloat(done) / 20)
+                }
+            }
+            .frame(height: 8)
+            Text("Do powtórki dzisiaj: \(store.dueToday)")
+                .font(.footnote)
+                .foregroundStyle(Ink.muted)
+        }
+        .padding(16)
         .liquidGlass(radius: 20)
     }
 
     private func wordCard(_ word: Word) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Zdanie na dziś").font(.caption).foregroundStyle(.secondary)
+            Text("Zdanie na dziś").font(.caption).foregroundStyle(Ink.muted)
             Text(word.de).font(.title3.bold())
-            Text(word.pl).foregroundStyle(.secondary)
+            Text(word.pl).foregroundStyle(Ink.muted)
             Button { Talk.de(word.ex) } label: {
-                Label(word.ex, systemImage: "speaker.wave.2")
+                Label("Odtwórz", systemImage: "speaker.wave.2")
             }
             .buttonStyle(.plain)
+            .foregroundStyle(Ink.accent)
             .font(.footnote)
         }
-        .padding(14)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .liquidGlass(radius: 20)
     }
 
     private func row(_ title: String, _ text: String, _ icon: String) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: icon).frame(width: 28).foregroundStyle(Ink.brass)
+            Image(systemName: icon)
+                .frame(width: 36, height: 36)
+                .background(Ink.accent.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
+                .foregroundStyle(Ink.accent)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.headline)
-                Text(text).font(.footnote).foregroundStyle(.secondary)
+                Text(text).font(.footnote).foregroundStyle(Ink.muted)
             }
             Spacer()
-            Image(systemName: "chevron.right").font(.caption).foregroundStyle(.secondary)
+            Image(systemName: "chevron.right").font(.caption).foregroundStyle(Ink.muted)
         }
         .padding(14)
-        .liquidGlass(radius: 20)
+        .liquidGlass(radius: 18)
     }
 }
 
@@ -481,5 +533,150 @@ struct ClipView: View {
         } catch {
             note = error.localizedDescription
         }
+    }
+}
+
+struct WordsView: View {
+    @EnvironmentObject var store: LearningStore
+    @State private var query = ""
+    @State private var band = "Wszystkie"
+    @State private var deck = false
+
+    private var filtered: [Word] {
+        store.words.filter { word in
+            let bandOK: Bool
+            switch band {
+            case "A1": bandOK = word.level == "A1"
+            case "A2": bandOK = word.level == "A2"
+            case "Powtórka": bandOK = (store.stats[word.de]?.due ?? .distantFuture) <= Date()
+            default: bandOK = true
+            }
+            let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
+            let textOK = q.isEmpty || word.de.localizedCaseInsensitiveContains(q) || word.pl.localizedCaseInsensitiveContains(q)
+            return bandOK && textOK
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            TextField("Szukaj słowa", text: $query)
+                .textFieldStyle(.roundedBorder)
+            Picker("Filtr", selection: $band) {
+                Text("Wszystkie").tag("Wszystkie")
+                Text("A1").tag("A1")
+                Text("A2").tag("A2")
+                Text("Powtórka").tag("Powtórka")
+            }
+            .pickerStyle(.segmented)
+            HStack {
+                Text("\(filtered.count) słówek").font(.footnote).foregroundStyle(Ink.muted)
+                Spacer()
+                Button("Fiszki") { deck = true }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Ink.accent)
+                    .disabled(filtered.isEmpty)
+            }
+            ScrollView {
+                LazyVStack(spacing: 8) {
+                    ForEach(filtered) { word in
+                        HStack(spacing: 12) {
+                            Button { Talk.de(word.de) } label: {
+                                Image(systemName: "speaker.wave.2.fill").foregroundStyle(Ink.accent)
+                            }
+                            .buttonStyle(.plain)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(word.de).font(.headline)
+                                Text(word.pl).font(.footnote).foregroundStyle(Ink.muted)
+                            }
+                            Spacer()
+                            Image(systemName: (store.stats[word.de]?.box ?? 0) >= 4 ? "star.fill" : "star")
+                                .foregroundStyle(Ink.accent.opacity((store.stats[word.de]?.box ?? 0) >= 4 ? 1 : 0.35))
+                        }
+                        .padding(12)
+                        .liquidGlass(radius: 16)
+                    }
+                }
+            }
+        }
+        .padding()
+        .navigationTitle("Słówka")
+        .containerBackground(for: .navigation) { NightGlow() }
+        .fullScreenCover(isPresented: $deck) {
+            FlashDeck(words: filtered)
+        }
+    }
+}
+
+struct FlashDeck: View {
+    @EnvironmentObject var store: LearningStore
+    @Environment(\.dismiss) private var dismiss
+    let words: [Word]
+    @State private var index = 0
+    @State private var revealed = false
+
+    private var word: Word? { words.isEmpty ? nil : words[index % words.count] }
+
+    var body: some View {
+        VStack(spacing: 20) {
+            HStack {
+                Button { dismiss() } label: { Image(systemName: "xmark") }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.white)
+                Spacer()
+                Text("\(min(index + 1, max(words.count, 1))) / \(words.count)")
+                    .foregroundStyle(Ink.muted)
+            }
+            GeometryReader { geo in
+                Capsule().fill(Color.white.opacity(0.08))
+                    .overlay(alignment: .leading) {
+                        Capsule().fill(Ink.accent)
+                            .frame(width: words.isEmpty ? 0 : geo.size.width * CGFloat(index + 1) / CGFloat(words.count))
+                    }
+            }
+            .frame(height: 4)
+            Spacer()
+            if let word {
+                VStack(spacing: 12) {
+                    Text(word.level).font(.caption).foregroundStyle(Ink.accent)
+                    Text(word.de).font(.system(size: 36, weight: .bold)).multilineTextAlignment(.center)
+                    Text(revealed ? word.pl : "Stuknij, żeby odwrócić")
+                        .font(revealed ? .title3 : .footnote)
+                        .foregroundStyle(revealed ? .white : Ink.muted)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(28)
+                .frame(maxWidth: .infinity, minHeight: 280)
+                .liquidGlass(radius: 28)
+                .onTapGesture { revealed.toggle() }
+            }
+            Spacer()
+            HStack(spacing: 28) {
+                Button { grade(.hard) } label: {
+                    Image(systemName: "xmark").font(.title2).frame(width: 64, height: 64)
+                        .background(Ink.clay, in: Circle())
+                }
+                .buttonStyle(.plain)
+                Button { if let word { Talk.de(word.de) } } label: {
+                    Image(systemName: "speaker.wave.2").font(.title3).frame(width: 56, height: 56)
+                        .background(Ink.card, in: Circle())
+                }
+                .buttonStyle(.plain)
+                Button { grade(.easy) } label: {
+                    Image(systemName: "checkmark").font(.title2).frame(width: 64, height: 64)
+                        .background(Ink.pine, in: Circle())
+                }
+                .buttonStyle(.plain)
+            }
+            .foregroundStyle(.white)
+        }
+        .padding()
+        .background(Ink.bg.ignoresSafeArea())
+    }
+
+    private func grade(_ g: Grade) {
+        guard let word else { return }
+        store.grade(word, g)
+        revealed = false
+        if index + 1 >= words.count { dismiss() } else { index += 1 }
     }
 }

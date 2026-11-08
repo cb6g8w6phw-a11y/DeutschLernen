@@ -68,9 +68,12 @@ struct Journal: Codable {
     var said: Int = 0
     var scenes: [String] = []
     var mistakes: [StoredMistake] = []
+    var streak: Int = 0
+    var lastActive: String = ""
+    var history: [String: Int] = [:]
 
     private enum CodingKeys: String, CodingKey {
-        case startDay, day, reviews, month, monthSeconds, listenOk, listenTries, said, scenes, mistakes
+        case startDay, day, reviews, month, monthSeconds, listenOk, listenTries, said, scenes, mistakes, streak, lastActive, history
     }
 
     init() {}
@@ -87,6 +90,9 @@ struct Journal: Codable {
         said = try c.decodeIfPresent(Int.self, forKey: .said) ?? 0
         scenes = try c.decodeIfPresent([String].self, forKey: .scenes) ?? []
         mistakes = try c.decodeIfPresent([StoredMistake].self, forKey: .mistakes) ?? []
+        streak = try c.decodeIfPresent(Int.self, forKey: .streak) ?? 0
+        lastActive = try c.decodeIfPresent(String.self, forKey: .lastActive) ?? ""
+        history = try c.decodeIfPresent([String: Int].self, forKey: .history) ?? [:]
     }
 
     func encode(to encoder: Encoder) throws {
@@ -101,6 +107,9 @@ struct Journal: Codable {
         try c.encode(said, forKey: .said)
         try c.encode(scenes, forKey: .scenes)
         try c.encode(mistakes, forKey: .mistakes)
+        try c.encode(streak, forKey: .streak)
+        try c.encode(lastActive, forKey: .lastActive)
+        try c.encode(history, forKey: .history)
     }
 }
 
@@ -316,6 +325,26 @@ final class LearningStore: ObservableObject {
         default: return "Dni 22–30: prawdziwe rozmowy"
         }
     }
+    var streak: Int {
+        let today = Self.dayKey()
+        let yesterday = Self.dayKey(Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date())
+        if journal.lastActive == today || journal.lastActive == yesterday { return journal.streak }
+        return 0
+    }
+
+    func recentActivity(_ count: Int = 14) -> [(label: String, value: Int)] {
+        let cal = Calendar.current
+        return (0..<count).reversed().compactMap { offset in
+            guard let date = cal.date(byAdding: .day, value: -offset, to: Date()) else { return nil }
+            return ("\(cal.component(.day, from: date))", journal.history[Self.dayKey(date)] ?? 0)
+        }
+    }
+
+    func levelCounts() -> [(name: String, count: Int)] {
+        let a1 = words.filter { $0.level == "A1" }.count
+        let a2 = words.filter { $0.level == "A2" }.count
+        return [("A1", a1), ("A2", a2), ("Inne", max(0, words.count - a1 - a2))]
+    }
     var wordOfDay: Word? {
         guard !words.isEmpty else { return nil }
         let day = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1
@@ -367,6 +396,17 @@ final class LearningStore: ObservableObject {
     private func noteReview() {
         roll()
         journal.reviews += 1
+        let day = journal.day
+        journal.history[day, default: 0] += 1
+        if journal.history.count > 40 {
+            let keep = Set(journal.history.keys.sorted().suffix(40))
+            journal.history = journal.history.filter { keep.contains($0.key) }
+        }
+        if journal.lastActive != day {
+            let yesterday = Self.dayKey(Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date())
+            journal.streak = journal.lastActive == yesterday ? journal.streak + 1 : 1
+            journal.lastActive = day
+        }
         publishJournal()
     }
 

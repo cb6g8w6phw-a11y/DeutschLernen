@@ -28,12 +28,13 @@ final class Mic: ObservableObject {
     @Published var note = ""
 
     private var recognizer = SFSpeechRecognizer(locale: Locale(identifier: "de-DE"))
-    private var engine = AVAudioEngine()
+    private var engine: AVAudioEngine?
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var task: SFSpeechRecognitionTask?
     private var tapped = false
     private var recorder: AVAudioRecorder?
     private var recordURL: URL?
+    private var ear: CaptureEar?
 
     func toggle() {
         if listening { stop() } else { ask() }
@@ -43,7 +44,7 @@ final class Mic: ObservableObject {
         SFSpeechRecognizer.requestAuthorization { status in
             Task { @MainActor in
                 guard status == .authorized else {
-                    self.note = "Włącz rozpoznawanie mowy dla LiveContainer: Ustawienia iPhone → Prywatność → Rozpoznawanie mowy."
+                    self.note = "Włącz rozpoznawanie mowy dla LiveContainer: Ustawienia → Prywatność → Rozpoznawanie mowy."
                     return
                 }
                 self.askMic()
@@ -60,7 +61,7 @@ final class Mic: ObservableObject {
         session.requestRecordPermission { ok in
             Task { @MainActor in
                 guard ok else {
-                    self.note = "Brak mikrofonu. Ustawienia iPhone → Prywatność → Mikrofon → włącz LiveContainer."
+                    self.note = "Brak mikrofonu. Ustawienia → Prywatność → Mikrofon → LiveContainer."
                     return
                 }
                 self.begin()
@@ -69,30 +70,46 @@ final class Mic: ObservableObject {
     }
 
     private func begin() {
-        stopEngine()
+        Task { await boot() }
+    }
+
+    private func boot() async {
+        stopAll()
         Talk.stop()
         text = ""
-        note = ""
+        note = "Włączam mikrofon…"
         pickRecognizer()
         do {
             try openSession()
-            engine = AVAudioEngine()
             try startEngine()
-            if recognizer == nil || recognizer?.isAvailable != true {
-                note = "Słucham, ale brakuje niemieckiego dyktowania. Ustawienia → Ogólne → Klawiatura → Dyktowanie."
-            } else {
-                note = "Słucham. Jak skończysz zdanie, samo pójdzie."
-            }
+            listening = true
+            note = recognizer?.isAvailable == true ? "Słucham…" : "Słucham, ale brakuje niemieckiego dyktowania."
+            return
         } catch {
             stopEngine()
-            engine = AVAudioEngine()
-            do {
-                try startRecorder()
-                note = "Słucham. Stuknij jeszcze raz, żeby wysłać."
-            } catch {
-                note = "Mikrofon nie wstał (\(error.localizedDescription)). Zgoda jest włączona, więc to nie przełącznik."
-                listening = false
-            }
+        }
+        do {
+            try openSession()
+            try await startCapture()
+            listening = true
+            note = "Słucham…"
+            return
+        } catch {
+            ear?.stop()
+            ear = nil
+            request?.endAudio()
+            task?.cancel()
+            request = nil
+            task = nil
+        }
+        do {
+            try openSession()
+            try startRecorder()
+            listening = true
+            note = "Słucham. Stuknij jeszcze raz, żeby wysłać."
+        } catch {
+            listening = false
+            note = "Mikrofon nie wstał (\(error.localizedDescription))."
         }
     }
 
@@ -107,24 +124,25 @@ final class Mic: ObservableObject {
 
     private func openSession() throws {
         let session = AVAudioSession.sharedInstance()
-        try? session.setActive(false, options: .notifyOthersOnDeactivation)
         let attempts: [(AVAudioSession.Category, AVAudioSession.Mode, AVAudioSession.CategoryOptions)] = [
-            (.playAndRecord, .default, [.defaultToSpeaker]),
-            (.record, .default, []),
-            (.playAndRecord, .default, [.defaultToSpeaker, .mixWithOthers, .allowBluetoothHFP])
+            (.playAndRecord, .spokenAudio, [.defaultToSpeaker, .allowBluetoothHFP]),
+            (.playAndRecord, .voiceChat, [.defaultToSpeaker, .allowBluetoothHFP]),
+            (.record, .measurement, []),
+            (.playAndRecord, .default, [.defaultToSpeaker, .mixWithOthers])
         ]
         var last: Error?
         for (category, mode, options) in attempts {
             do {
                 try session.setCategory(category, mode: mode, options: options)
-                if let mic = session.availableInputs?.first(where: { $0.portType == .builtInMic }) {
-                    try? session.setPreferredInput(mic)
-                }
+                try? session.setPreferredSampleRate(44_100)
                 try session.setActive(true)
+                if session.currentRoute.inputs.isEmpty, let mic = session.availableInputs?.first(where: { $0.portType == .builtInMic }) {
+                    try? session.setPreferredInput(mic)
+                    try? session.setActive(true)
+                }
                 return
             } catch {
                 last = error
-                try? session.setActive(false, options: .notifyOthersOnDeactivation)
             }
         }
         throw last ?? NSError(domain: "Mic", code: 1, userInfo: [NSLocalizedDescriptionKey: "sesja audio"])
@@ -134,54 +152,84 @@ final class Mic: ObservableObject {
         let request = SFSpeechAudioBufferRecognitionRequest()
         request.shouldReportPartialResults = true
         self.request = request
-        let input = engine.inputNode
-        let output = input.outputFormat(forBus: 0)
-        let incoming = input.inputFormat(forBus: 0)
-        let hw: AVAudioFormat
-        if output.sampleRate > 0, output.channelCount > 0 { hw = output }
-        else if incoming.sampleRate > 0, incoming.channelCount > 0 { hw = incoming }
-        else {
-            throw NSError(domain: "Mic", code: 2, userInfo: [NSLocalizedDescriptionKey: "brak formatu mikrofonu"])
+        var last = "brak formatu"
+        for attempt in 0..<3 {
+            let engine = AVAudioEngine()
+            self.engine = engine
+            let input = engine.inputNode
+            let output = input.outputFormat(forBus: 0)
+            let incoming = input.inputFormat(forBus: 0)
+            let hw: AVAudioFormat?
+            if output.sampleRate > 0, output.channelCount > 0 { hw = output }
+            else if incoming.sampleRate > 0, incoming.channelCount > 0 { hw = incoming }
+            else { hw = nil }
+            if let hw {
+                input.installTap(onBus: 0, bufferSize: 1024, format: hw) { buffer, _ in
+                    request.append(buffer)
+                }
+                tapped = true
+                engine.prepare()
+                try engine.start()
+                task = recognizer?.recognitionTask(with: request) { result, _ in
+                    Task { @MainActor in
+                        if let result { self.text = result.bestTranscription.formattedString }
+                        if result?.isFinal == true { self.finishListen() }
+                    }
+                }
+                return
+            }
+            engine.stop()
+            self.engine = nil
+            last = "format 0, próba \(attempt + 1)"
+            Thread.sleep(forTimeInterval: 0.12)
         }
-        input.installTap(onBus: 0, bufferSize: 1024, format: hw) { buffer, _ in
-            request.append(buffer)
-        }
-        tapped = true
-        engine.prepare()
-        try engine.start()
-        listening = true
+        throw NSError(domain: "Mic", code: 2, userInfo: [NSLocalizedDescriptionKey: last])
+    }
+
+    private func startCapture() async throws {
+        let request = SFSpeechAudioBufferRecognitionRequest()
+        request.shouldReportPartialResults = true
+        self.request = request
+        let ear = CaptureEar()
+        ear.request = request
+        try await ear.start()
+        self.ear = ear
         task = recognizer?.recognitionTask(with: request) { result, _ in
             Task { @MainActor in
                 if let result { self.text = result.bestTranscription.formattedString }
-                if result?.isFinal == true { self.finishEngine() }
+                if result?.isFinal == true { self.finishListen() }
             }
         }
     }
 
     private func startRecorder() throws {
-        try openSession()
         let folders = [
-            FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first,
-            FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+            URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true),
+            FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first,
+            FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
         ].compactMap { $0 }
+        let rate = AVAudioSession.sharedInstance().sampleRate > 0 ? AVAudioSession.sharedInstance().sampleRate : 16_000
         let formats: [(String, [String: Any])] = [
+            ("mowa.caf", [
+                AVFormatIDKey: Int(kAudioFormatLinearPCM),
+                AVSampleRateKey: rate,
+                AVNumberOfChannelsKey: 1,
+                AVLinearPCMBitDepthKey: 16,
+                AVLinearPCMIsFloatKey: false,
+                AVLinearPCMIsBigEndianKey: false
+            ]),
             ("mowa.m4a", [
                 AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
                 AVSampleRateKey: 44_100,
                 AVNumberOfChannelsKey: 1,
                 AVEncoderAudioQualityKey: AVAudioQuality.medium.rawValue
-            ]),
-            ("mowa.caf", [
-                AVFormatIDKey: Int(kAudioFormatLinearPCM),
-                AVSampleRateKey: 44_100,
-                AVNumberOfChannelsKey: 1,
-                AVLinearPCMBitDepthKey: 16,
-                AVLinearPCMIsFloatKey: false,
-                AVLinearPCMIsBigEndianKey: false
             ])
         ]
+        var writable = 0
         for folder in folders {
             try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let probe = folder.appendingPathComponent("probe.txt")
+            if (try? Data("x".utf8).write(to: probe)) != nil { writable += 1 }
             for (name, settings) in formats {
                 let url = folder.appendingPathComponent(name)
                 try? FileManager.default.removeItem(at: url)
@@ -190,24 +238,17 @@ final class Mic: ObservableObject {
                 if rec.record() {
                     recorder = rec
                     recordURL = url
-                    listening = true
-                    return
-                }
-                Thread.sleep(forTimeInterval: 0.2)
-                if rec.record() {
-                    recorder = rec
-                    recordURL = url
-                    listening = true
                     return
                 }
             }
         }
         let session = AVAudioSession.sharedInstance()
-        let inputs = session.availableInputs?.map(\.portName).joined(separator: ", ")
+        let inputs = session.currentRoute.inputs.map(\.portName).joined(separator: ", ")
+        let seen = session.availableInputs?.map(\.portName).joined(separator: ", ") ?? ""
         throw NSError(
             domain: "Mic",
             code: 3,
-            userInfo: [NSLocalizedDescriptionKey: "brak wejścia (\(inputs?.isEmpty == false ? inputs! : "telefon nie podał mikrofonu"))"]
+            userInfo: [NSLocalizedDescriptionKey: "zapis \(writable), trasa \(inputs.isEmpty ? "pusta" : inputs), widzi \(seen.isEmpty ? "nic" : seen)"]
         )
     }
 
@@ -219,24 +260,38 @@ final class Mic: ObservableObject {
             recognizeFile()
             return
         }
-        finishEngine()
+        finishListen()
     }
 
-    private func finishEngine() {
+    private func finishListen() {
+        ear?.stop()
+        ear = nil
         stopEngine()
         listening = false
     }
 
     private func stopEngine() {
-        if engine.isRunning { engine.stop() }
-        if tapped {
-            engine.inputNode.removeTap(onBus: 0)
-            tapped = false
+        if let engine {
+            if tapped {
+                engine.inputNode.removeTap(onBus: 0)
+                tapped = false
+            }
+            if engine.isRunning { engine.stop() }
         }
+        engine = nil
         request?.endAudio()
         task?.cancel()
         request = nil
         task = nil
+    }
+
+    private func stopAll() {
+        recorder?.stop()
+        recorder = nil
+        ear?.stop()
+        ear = nil
+        stopEngine()
+        listening = false
     }
 
     private func recognizeFile() {
@@ -261,6 +316,91 @@ final class Mic: ObservableObject {
                 }
             }
         }
+    }
+}
+
+final class CaptureEar: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
+    var request: SFSpeechAudioBufferRecognitionRequest?
+    private let session = AVCaptureSession()
+    private let queue = DispatchQueue(label: "deutsch.capture")
+
+    func start() async throws {
+        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+            queue.async {
+                do {
+                    self.session.beginConfiguration()
+                    self.session.inputs.forEach { self.session.removeInput($0) }
+                    self.session.outputs.forEach { self.session.removeOutput($0) }
+                    guard let device = AVCaptureDevice.default(for: .audio) else {
+                        throw NSError(domain: "Mic", code: 4, userInfo: [NSLocalizedDescriptionKey: "brak urządzenia audio"])
+                    }
+                    let input = try AVCaptureDeviceInput(device: device)
+                    guard self.session.canAddInput(input) else {
+                        throw NSError(domain: "Mic", code: 5, userInfo: [NSLocalizedDescriptionKey: "nie mogę podłączyć mikrofonu"])
+                    }
+                    self.session.addInput(input)
+                    let output = AVCaptureAudioDataOutput()
+                    output.setSampleBufferDelegate(self, queue: self.queue)
+                    guard self.session.canAddOutput(output) else {
+                        throw NSError(domain: "Mic", code: 6, userInfo: [NSLocalizedDescriptionKey: "brak wyjścia audio"])
+                    }
+                    self.session.addOutput(output)
+                    self.session.commitConfiguration()
+                    self.session.startRunning()
+                    if self.session.isRunning {
+                        cont.resume()
+                    } else {
+                        cont.resume(throwing: NSError(domain: "Mic", code: 7, userInfo: [NSLocalizedDescriptionKey: "sesja kamery-audio nie ruszyła"]))
+                    }
+                } catch {
+                    cont.resume(throwing: error)
+                }
+            }
+        }
+    }
+
+    func stop() {
+        queue.async {
+            if self.session.isRunning { self.session.stopRunning() }
+        }
+    }
+
+    deinit {
+        if session.isRunning { session.stopRunning() }
+    }
+
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        guard let buffer = Self.pcm(sampleBuffer) else { return }
+        request?.append(buffer)
+    }
+
+    private static func pcm(_ sampleBuffer: CMSampleBuffer) -> AVAudioPCMBuffer? {
+        guard let formatDesc = CMSampleBufferGetFormatDescription(sampleBuffer),
+              let asbdPtr = CMAudioFormatDescriptionGetStreamBasicDescription(formatDesc) else { return nil }
+        var asbd = asbdPtr.pointee
+        guard let src = AVAudioFormat(streamDescription: &asbd) else { return nil }
+        let frames = AVAudioFrameCount(CMSampleBufferGetNumSamples(sampleBuffer))
+        guard frames > 0, let dst = AVAudioPCMBuffer(pcmFormat: src, frameCapacity: frames) else { return nil }
+        dst.frameLength = frames
+        guard let block = CMSampleBufferGetDataBuffer(sampleBuffer) else { return nil }
+        var length = 0
+        var dataPointer: UnsafeMutablePointer<Int8>?
+        guard CMBlockBufferGetDataPointer(block, atOffset: 0, lengthAtOffsetOut: nil, totalLengthOut: &length, dataPointerOut: &dataPointer) == kCMBlockBufferNoErr,
+              let dataPointer else { return nil }
+        let bytes = Int(frames) * Int(asbd.mBytesPerFrame == 0 ? asbd.mBitsPerChannel / 8 : asbd.mBytesPerFrame)
+        guard bytes > 0, length >= bytes else { return nil }
+        if let channels = dst.floatChannelData {
+            dataPointer.withMemoryRebound(to: Float.self, capacity: Int(frames)) { ptr in
+                channels[0].update(from: ptr, count: Int(frames))
+            }
+        } else if let channels = dst.int16ChannelData {
+            dataPointer.withMemoryRebound(to: Int16.self, capacity: Int(frames)) { ptr in
+                channels[0].update(from: ptr, count: Int(frames))
+            }
+        } else {
+            return nil
+        }
+        return dst
     }
 }
 

@@ -15,61 +15,182 @@ struct StatsView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Section("Podsumowanie") {
-                    LabeledContent("Opanowane", value: "\(store.masteredCount)")
-                    LabeledContent("W nauce", value: "\(store.learningCount)")
-                    LabeledContent("Nowe", value: "\(store.newCount)")
-                    LabeledContent("Dzień planu", value: "\(store.planDay)/30")
-                    LabeledContent("Rozmowa w tym miesiącu", value: store.talkLabel)
-                    LabeledContent("Słuchanie", value: store.journal.listenTries == 0 ? "jeszcze nic" : "\(store.journal.listenOk)/\(store.journal.listenTries)")
-                    LabeledContent("Zdania na głos", value: "\(store.journal.said)")
-                    LabeledContent("Sceny", value: "\(store.journal.scenes.count)/\(Scenarios.all.count)")
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    summary
+                    topics
+                    activity
+                    skills
+                    mistakes
+                    weak
+                    lesson
                 }
-                Section("Błędy") {
-                    let slips = store.mistakesToday.isEmpty ? Array(store.journal.mistakes.prefix(8)) : store.mistakesToday
-                    if slips.isEmpty {
-                        Text("Jak w rozmowie powiesz coś krzywo, wpadnie to tutaj.").foregroundStyle(.secondary)
+                .padding()
+            }
+            .navigationTitle("Postęp")
+            .containerBackground(for: .navigation) { NightGlow() }
+            .toolbarBackground(.hidden, for: .navigationBar)
+        }
+    }
+
+    private var summary: some View {
+        let levels = store.levelCounts()
+        let maxLevel = max(levels.map(\.count).max() ?? 1, 1)
+        return HStack(alignment: .bottom, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("\(store.masteredCount + store.learningCount)")
+                    .font(.system(size: 48, weight: .bold))
+                Text("słów w nauce")
+                    .foregroundStyle(Ink.muted)
+                Text("Opanowane \(store.masteredCount)")
+                    .font(.footnote)
+                    .foregroundStyle(Ink.muted)
+            }
+            Spacer()
+            HStack(alignment: .bottom, spacing: 8) {
+                ForEach(levels, id: \.name) { level in
+                    VStack(spacing: 4) {
+                        Text("\(level.count)").font(.caption2).foregroundStyle(Ink.muted)
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Ink.accent)
+                            .frame(width: 18, height: max(8, 90 * CGFloat(level.count) / CGFloat(maxLevel)))
+                        Text(level.name).font(.caption2).foregroundStyle(Ink.muted)
                     }
-                    ForEach(slips) { slip in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(slip.text)
-                            if !slip.fix.isEmpty {
-                                Text(slip.fix).font(.footnote).foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                }
-                Section("Skuteczność wg tematów") {
-                    let topics = store.topicAccuracy()
-                    if topics.isEmpty { Text("Brak danych – zrób pierwszą sesję.").foregroundStyle(.secondary) }
-                    ForEach(topics, id: \.topic) { t in
-                        VStack(alignment: .leading) {
-                            HStack { Text(t.topic); Spacer(); Text("\(Int(t.accuracy * 100))%") }
-                            ProgressView(value: t.accuracy)
-                        }
-                    }
-                }
-                Section("Do poprawy") {
-                    let weak = store.weakWords.prefix(10)
-                    if weak.isEmpty { Text("Na razie nic.").foregroundStyle(.secondary) }
-                    ForEach(Array(weak)) { w in
-                        HStack { Text(w.de); Spacer(); Text(w.pl).foregroundStyle(.secondary) }
-                    }
-                }
-                Section("Lekcja od AI") {
-                    Button {
-                        Task { await generateLesson() }
-                    } label: {
-                        if generating { ProgressView() } else { Text("Wygeneruj nowe słówka") }
-                    }
-                    .disabled(generating)
-                    if !message.isEmpty { Text(message).font(.footnote).foregroundStyle(.secondary) }
                 }
             }
-            .navigationTitle("Postępy")
-            .scrollContentBackground(.hidden)
-            .containerBackground(for: .navigation) { NightGlow() }
+        }
+        .padding(16)
+        .liquidGlass(radius: 22)
+    }
+
+    private var topics: some View {
+        let rows = store.topicAccuracy().prefix(6)
+        return VStack(alignment: .leading, spacing: 10) {
+            Text("Tematy").font(.headline)
+            if rows.isEmpty {
+                Text("Po pierwszej sesji zobaczysz, co już siedzi.").foregroundStyle(Ink.muted)
+            }
+            ForEach(Array(rows), id: \.topic) { row in
+                HStack {
+                    Text(row.topic).font(.subheadline)
+                    Spacer()
+                    Text("\(Int(row.accuracy * 100))%").font(.caption).foregroundStyle(Ink.muted)
+                }
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color.white.opacity(0.08))
+                        Capsule().fill(Ink.accent).frame(width: geo.size.width * row.accuracy)
+                    }
+                }
+                .frame(height: 6)
+            }
+        }
+        .padding(16)
+        .liquidGlass(radius: 22)
+    }
+
+    private var activity: some View {
+        let days = store.recentActivity()
+        let maxValue = max(days.map(\.value).max() ?? 1, 1)
+        return VStack(alignment: .leading, spacing: 10) {
+            Text("Powtórki").font(.headline)
+            HStack(alignment: .bottom, spacing: 4) {
+                ForEach(Array(days.enumerated()), id: \.offset) { _, day in
+                    VStack(spacing: 4) {
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(Ink.accent.opacity(day.value == 0 ? 0.2 : 1))
+                            .frame(height: max(6, 70 * CGFloat(day.value) / CGFloat(maxValue)))
+                        Text(day.label).font(.system(size: 8)).foregroundStyle(Ink.muted)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .frame(height: 96, alignment: .bottom)
+        }
+        .padding(16)
+        .liquidGlass(radius: 22)
+    }
+
+    private var skills: some View {
+        let words = store.words.isEmpty ? 0 : Double(store.masteredCount) / Double(store.words.count)
+        let listen = store.journal.listenTries == 0 ? 0 : Double(store.journal.listenOk) / Double(store.journal.listenTries)
+        let talk = min(1, Double(store.monthTalkSeconds) / 1800)
+        let scenes = Scenarios.all.isEmpty ? 0 : Double(store.journal.scenes.count) / Double(Scenarios.all.count)
+        let rows: [(String, Double)] = [("Słówka", words), ("Słuchanie", listen), ("Rozmowa", talk), ("Sceny", scenes)]
+        return VStack(alignment: .leading, spacing: 10) {
+            Text("Umiejętności").font(.headline)
+            ForEach(rows, id: \.0) { name, value in
+                HStack {
+                    Text(name).frame(width: 90, alignment: .leading).font(.subheadline)
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Color.white.opacity(0.08))
+                            Capsule().fill(Ink.accent).frame(width: geo.size.width * value)
+                        }
+                    }
+                    .frame(height: 8)
+                }
+            }
+            Text("Rozmowa w tym miesiącu: \(store.talkLabel) · Dzień \(store.planDay)/30")
+                .font(.footnote)
+                .foregroundStyle(Ink.muted)
+        }
+        .padding(16)
+        .liquidGlass(radius: 22)
+    }
+
+    private var mistakes: some View {
+        let slips = store.mistakesToday.isEmpty ? Array(store.journal.mistakes.prefix(6)) : store.mistakesToday
+        return VStack(alignment: .leading, spacing: 8) {
+            Text("Błędy").font(.headline)
+            if slips.isEmpty {
+                Text("Jak w rozmowie powiesz coś krzywo, wpadnie to tutaj.").foregroundStyle(Ink.muted)
+            }
+            ForEach(slips) { slip in
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(slip.text)
+                    if !slip.fix.isEmpty { Text(slip.fix).font(.footnote).foregroundStyle(Ink.muted) }
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .liquidGlass(radius: 22)
+    }
+
+    private var weak: some View {
+        let weak = Array(store.weakWords.prefix(6))
+        return VStack(alignment: .leading, spacing: 8) {
+            Text("Do poprawy").font(.headline)
+            if weak.isEmpty { Text("Na razie nic.").foregroundStyle(Ink.muted) }
+            ForEach(weak) { word in
+                HStack {
+                    Text(word.de)
+                    Spacer()
+                    Text(word.pl).foregroundStyle(Ink.muted)
+                }
+                .font(.subheadline)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .liquidGlass(radius: 22)
+    }
+
+    private var lesson: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button {
+                Task { await generateLesson() }
+            } label: {
+                Text(generating ? "Chwilę…" : "Wygeneruj nowe słówka")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.plain)
+            .padding(.vertical, 12)
+            .background(Ink.accent, in: RoundedRectangle(cornerRadius: 14))
+            .foregroundStyle(.black)
+            .disabled(generating)
+            if !message.isEmpty { Text(message).font(.footnote).foregroundStyle(Ink.muted) }
         }
     }
 

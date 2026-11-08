@@ -32,6 +32,11 @@ struct MoreView: View {
         NavigationStack {
             List {
                 NavigationLink {
+                    WordsView()
+                } label: {
+                    Label("Moje słówka", systemImage: "text.book.closed")
+                }
+                NavigationLink {
                     BuildView()
                 } label: {
                     Label("Niemiecki na budowie", systemImage: "hammer")
