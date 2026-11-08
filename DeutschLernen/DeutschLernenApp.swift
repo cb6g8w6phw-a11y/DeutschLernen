@@ -17,7 +17,7 @@ struct RootView: View {
             NightGlow()
             TabView {
                 Tab("Nauka", systemImage: "book") { QuizView() }
-                Tab("Czat", systemImage: "bubble.left.and.bubble.right") { ChatView() }
+                Tab("Czat", systemImage: "bubble.left.and.bubble.right") { TutorView() }
                 Tab("Postęp", systemImage: "chart.bar") { StatsView() }
                 Tab("Sceny", systemImage: "person.2") { ScenesView() }
                 Tab("Więcej", systemImage: "ellipsis.circle") { MoreView() }
