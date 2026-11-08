@@ -12,7 +12,12 @@ final class LookStore: ObservableObject {
 
     init() {
         style = UserDefaults.standard.string(forKey: "lookStyle") ?? "glass"
-        palette = UserDefaults.standard.string(forKey: "lookPalette") ?? "mieta"
+        palette = UserDefaults.standard.string(forKey: "lookPalette") ?? "blekit"
+        if UserDefaults.standard.string(forKey: "lookGlass2") == nil {
+            style = "glass"
+            UserDefaults.standard.set("glass", forKey: "lookStyle")
+            UserDefaults.standard.set("1", forKey: "lookGlass2")
+        }
     }
 
     var accent: Color { Self.spec(palette).accent }
@@ -76,7 +81,25 @@ enum Ink {
 struct NightGlow: View {
     @ObservedObject private var look = LookStore.shared
     var body: some View {
-        look.bg.ignoresSafeArea()
+        ZStack {
+            look.bg
+            Circle()
+                .fill(look.accent.opacity(look.style == "glass" ? 0.55 : 0.16))
+                .frame(width: 320, height: 320)
+                .blur(radius: 90)
+                .offset(x: -120, y: -260)
+            Circle()
+                .fill(look.pine.opacity(look.style == "glass" ? 0.35 : 0.08))
+                .frame(width: 260, height: 260)
+                .blur(radius: 80)
+                .offset(x: 150, y: 40)
+            Circle()
+                .fill(Color.white.opacity(look.style == "glass" ? 0.08 : 0))
+                .frame(width: 180, height: 180)
+                .blur(radius: 50)
+                .offset(x: 40, y: 280)
+        }
+        .ignoresSafeArea()
     }
 }
 
@@ -84,24 +107,27 @@ struct GlassCard: ViewModifier {
     @ObservedObject private var look = LookStore.shared
     var radius: CGFloat
     var tint: Color?
+    var interactive: Bool
 
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
         let color = tint ?? look.accent
         if look.style == "glass" {
-            let glass = Glass.regular.tint(color.opacity(0.55))
+            var glass = Glass.regular.tint(color.opacity(0.14))
+            if interactive { glass = glass.interactive() }
             content.glassEffect(glass, in: shape)
         } else {
             content
-                .background(look.card, in: shape)
-                .overlay(shape.stroke(color.opacity(0.55), lineWidth: 1))
+                .background(.ultraThinMaterial, in: shape)
+                .background(look.card.opacity(0.55), in: shape)
+                .overlay(shape.stroke(Color.white.opacity(0.14), lineWidth: 0.6))
         }
     }
 }
 
 extension View {
-    func liquidGlass(radius: CGFloat = 22, interactive: Bool = false, tint: Color? = nil) -> some View {
-        modifier(GlassCard(radius: radius, tint: tint))
+    func liquidGlass(radius: CGFloat = 26, interactive: Bool = true, tint: Color? = nil) -> some View {
+        modifier(GlassCard(radius: radius, tint: tint, interactive: interactive))
     }
 }
 

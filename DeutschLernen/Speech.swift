@@ -50,6 +50,12 @@ final class Mic: ObservableObject {
             stop()
             return
         }
+        let audio = AVCaptureDevice.authorizationStatus(for: .audio)
+        let speech = SFSpeechRecognizer.authorizationStatus()
+        if audio == .authorized, speech == .authorized {
+            begin()
+            return
+        }
         note = permissionLine()
         wantsPrompt = true
     }
@@ -99,7 +105,7 @@ final class Mic: ObservableObject {
     static func plain(_ error: Error) -> String {
         let raw = error.localizedDescription.lowercased()
         if raw.contains("no speech") || raw.contains("nie wykryto") {
-            return "Nie słyszę mowy. Przesuń przełącznik z boku telefonu, żeby nie był wyciszony, i mów od razu po stuknięciu mikrofonu."
+            return "Słucham dalej. Powiedz całe zdanie, nie pojedyncze słowo."
         }
         if raw.contains("denied") || raw.contains("not authorized") || raw.contains("niedozwol") {
             return "Brak zgody. Ustawienia → Prywatność → Mikrofon i Rozpoznawanie mowy → LiveContainer."
@@ -120,17 +126,29 @@ final class Mic: ObservableObject {
         level = 0
         heardError = nil
         meter.peak = 0
+        rearmCount = 0
         note = "Włączam mikrofon…"
         pickRecognizer()
         let allowed = await askMic()
-        try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
-        try? await Task.sleep(nanoseconds: 200_000_000)
+        guard token == generation else { return }
+
+        do {
+            try calmSession()
+            try startQueue()
+            listening = true
+            note = "Słucham. Mów całe zdanie."
+            watch(token)
+            return
+        } catch {
+            stopQueue()
+            heardError = error.localizedDescription
+        }
         guard token == generation else { return }
 
         do {
             try await startCapture()
             listening = true
-            note = "Słucham…"
+            note = "Słucham. Mów całe zdanie."
             watch(token)
             return
         } catch {
@@ -140,22 +158,6 @@ final class Mic: ObservableObject {
             heardError = error.localizedDescription
         }
         guard token == generation else { return }
-        try? await Task.sleep(nanoseconds: 250_000_000)
-
-        do {
-            try calmSession()
-            try startQueue()
-            listening = true
-            note = "Słucham…"
-            watch(token)
-            return
-        } catch {
-            stopQueue()
-            heardError = error.localizedDescription
-        }
-        guard token == generation else { return }
-        try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
-        try? await Task.sleep(nanoseconds: 250_000_000)
 
         do {
             try calmSession()
@@ -218,30 +220,55 @@ final class Mic: ObservableObject {
         }
     }
 
-    private func openSession() throws {
-        let session = AVAudioSession.sharedInstance()
-        let attempts: [(AVAudioSession.Category, AVAudioSession.Mode, AVAudioSession.CategoryOptions)] = [
-            (.playAndRecord, .spokenAudio, [.defaultToSpeaker, .allowBluetoothHFP]),
-            (.playAndRecord, .voiceChat, [.defaultToSpeaker, .allowBluetoothHFP]),
-            (.record, .measurement, []),
-            (.playAndRecord, .default, [.defaultToSpeaker, .mixWithOthers])
-        ]
-        var last: Error?
-        for (category, mode, options) in attempts {
-            do {
-                try session.setCategory(category, mode: mode, options: options)
-                try? session.setPreferredSampleRate(44_100)
-                try session.setActive(true)
-                if session.currentRoute.inputs.isEmpty, let mic = session.availableInputs?.first(where: { $0.portType == .builtInMic }) {
-                    try? session.setPreferredInput(mic)
-                    try? session.setActive(true)
-                }
-                return
-            } catch {
-                last = error
+    private var rearmCount = 0
+
+    private func handleSpeech(_ result: SFSpeechRecognitionResult?, _ error: Error?) {
+        if let result {
+            let said = result.bestTranscription.formattedString
+            if !said.isEmpty { text = said }
+        }
+        if result?.isFinal == true, !text.isEmpty {
+            finishListen()
+            return
+        }
+        guard let error, text.isEmpty, listening else { return }
+        let raw = error.localizedDescription.lowercased()
+        if raw.contains("no speech") || raw.contains("nie wykryto"), rearmCount < 5 {
+            rearmCount += 1
+            note = meter.peak > 0.012 ? "Słyszę głos. Mów całe zdanie." : "Słucham. Mów bliżej dolnej krawędzi telefonu."
+            rearm()
+            return
+        }
+        note = Self.plain(error)
+    }
+
+    private func rearm() {
+        task?.cancel()
+        let request = makeRequest()
+        self.request = request
+        ear?.request = request
+        queueEar?.request = request
+        task = recognizer?.recognitionTask(with: request) { result, error in
+            Task { @MainActor in
+                self.handleSpeech(result, error)
             }
         }
-        throw last ?? NSError(domain: "Mic", code: 1, userInfo: [NSLocalizedDescriptionKey: "sesja audio"])
+    }
+
+    private func makeRequest() -> SFSpeechAudioBufferRecognitionRequest {
+        let request = SFSpeechAudioBufferRecognitionRequest()
+        request.shouldReportPartialResults = true
+        request.requiresOnDeviceRecognition = false
+        request.taskHint = .dictation
+        return request
+    }
+
+    private func listen(to request: SFSpeechAudioBufferRecognitionRequest) {
+        task = recognizer?.recognitionTask(with: request) { result, error in
+            Task { @MainActor in
+                self.handleSpeech(result, error)
+            }
+        }
     }
 
     private func startEngine() throws {
@@ -305,18 +332,7 @@ final class Mic: ObservableObject {
         ear.meter = meter
         try await ear.start()
         self.ear = ear
-        task = recognizer?.recognitionTask(with: request) { result, error in
-            Task { @MainActor in
-                if let result {
-                    let said = result.bestTranscription.formattedString
-                    if !said.isEmpty { self.text = said }
-                }
-                if let error, self.text.isEmpty {
-                    self.note = Self.plain(error)
-                }
-                if result?.isFinal == true, !self.text.isEmpty { self.finishListen() }
-            }
-        }
+        listen(to: request)
     }
 
     private func startQueue() throws {
@@ -328,18 +344,7 @@ final class Mic: ObservableObject {
         let ear = QueueEar(request: request, meter: meter)
         try ear.start()
         queueEar = ear
-        task = recognizer?.recognitionTask(with: request) { result, error in
-            Task { @MainActor in
-                if let result {
-                    let said = result.bestTranscription.formattedString
-                    if !said.isEmpty { self.text = said }
-                }
-                if let error, self.text.isEmpty {
-                    self.note = Self.plain(error)
-                }
-                if result?.isFinal == true, !self.text.isEmpty { self.finishListen() }
-            }
-        }
+        listen(to: request)
     }
 
     private func stopQueue() {
@@ -471,8 +476,8 @@ final class Mic: ObservableObject {
 }
 
 final class QueueEar {
-    let request: SFSpeechAudioBufferRecognitionRequest
     let meter: Meter
+    var request: SFSpeechAudioBufferRecognitionRequest
     private var queue: AudioQueueRef?
     private var rate: Double = 16_000
 
