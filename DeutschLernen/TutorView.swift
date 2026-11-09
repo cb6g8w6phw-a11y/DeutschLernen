@@ -34,6 +34,10 @@ struct TutorView: View {
     @State private var openPL: Set<UUID> = []
     @State private var tick = Date()
     @AppStorage("persona") private var persona = "Marek"
+    @AppStorage("deVoice") private var deVoice = ""
+    @ObservedObject private var speaker = Speaker.shared
+    @State private var popped = false
+    @State private var showVoices = false
     var launch: TalkLaunch? = nil
 
     private let people = ["Marek", "Lena", "Piotr", "Kierownik", "Sklep", "Telefon", "Lekarz", "Agencja"]
@@ -45,9 +49,9 @@ struct TutorView: View {
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(spacing: 14) {
-                            HStack {
-                                Spacer()
-                                tutorFace
+                            HStack(alignment: .top, spacing: 12) {
+                                personCard
+                                Spacer(minLength: 24)
                             }
                             if launch == nil { peopleRow }
                             ForEach(turns) { t in
@@ -138,6 +142,8 @@ struct TutorView: View {
                 guard !greeted else { return }
                 greeted = true
                 turns = [opener]
+                withAnimation(.spring(duration: 0.45)) { popped = true }
+                Talk.de(speech(opener))
             }
             .onDisappear {
                 tickTalk()
@@ -147,6 +153,7 @@ struct TutorView: View {
             .onChange(of: persona) { _, _ in
                 if !turns.contains(where: { $0.role == "user" }) {
                     turns = [opener]
+                    Talk.de(speech(opener))
                 }
             }
             .onChange(of: mic.listening) { was, now in
@@ -185,7 +192,93 @@ struct TutorView: View {
                 }
                 .presentationDetents([.medium])
             }
+            .sheet(isPresented: $showVoices) { voiceSheet }
         }
+    }
+
+    private var personCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ZStack(alignment: .bottomLeading) {
+                Group {
+                    if let ui = UIImage(named: "Tutor") {
+                        Image(uiImage: ui).resizable().scaledToFill()
+                    } else {
+                        Image(systemName: "person.crop.square.fill")
+                            .resizable()
+                            .padding(28)
+                            .foregroundStyle(.white)
+                            .background(Theme.accent)
+                    }
+                }
+                .frame(width: 148, height: 188)
+                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(speaker.speaking ? Theme.accent : Color.white.opacity(0.2), lineWidth: speaker.speaking ? 3 : 1))
+                if speaker.speaking {
+                    Text("mówi")
+                        .font(.caption2.weight(.bold))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.black.opacity(0.55), in: Capsule())
+                        .padding(8)
+                }
+            }
+            .scaleEffect(popped ? (speaker.speaking ? 1.04 : 1) : 0.55)
+            .opacity(popped ? 1 : 0)
+            .animation(.spring(duration: 0.45), value: popped)
+            .animation(.easeInOut(duration: 0.55).repeatForever(autoreverses: true), value: speaker.speaking)
+            Button { showVoices = true } label: {
+                Label(voiceTitle, systemImage: "waveform")
+                    .font(.caption.weight(.semibold))
+                    .frame(minHeight: 36)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Theme.text2)
+        }
+    }
+
+    private var voiceTitle: String {
+        Talk.germanVoices().first { $0.identifier == deVoice }?.name ?? "Głos"
+    }
+
+    private var voiceSheet: some View {
+        NavigationStack {
+            List {
+                Button {
+                    deVoice = ""
+                    showVoices = false
+                    Talk.de("Hallo, ich bin da.")
+                } label: {
+                    HStack {
+                        Text("Automatycznie, najlepszy dostępny")
+                        Spacer()
+                        if deVoice.isEmpty { Image(systemName: "checkmark") }
+                    }
+                }
+                ForEach(Talk.germanVoices(), id: \.identifier) { voice in
+                    Button {
+                        deVoice = voice.identifier
+                        showVoices = false
+                        Talk.de("Hallo, so klinge ich.", voice: voice.identifier)
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(voice.name)
+                                Text(Talk.qualityName(voice)).font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            if deVoice == voice.identifier { Image(systemName: "checkmark") }
+                        }
+                    }
+                }
+                Text("Naturalny głos ściągasz na iPhonie: Ustawienia, Dostępność, Treść mówiona, Głosy, Niemiecki. Potem wróć tutaj i wybierz ten z dopiskiem naturalny.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+            .navigationTitle("Głos")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { Button("Zamknij") { showVoices = false } }
+        }
+        .presentationDetents([.medium, .large])
     }
 
     private var peopleRow: some View {

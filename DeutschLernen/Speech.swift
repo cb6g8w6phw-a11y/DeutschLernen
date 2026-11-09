@@ -4,24 +4,79 @@ import Speech
 import SwiftUI
 
 enum Talk {
-    static let synth = AVSpeechSynthesizer()
-
-    static func de(_ text: String, rate: Float = 0.46, voice: String? = nil) {
-        try? AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .spokenAudio, options: [.defaultToSpeaker, .mixWithOthers, .allowBluetoothHFP])
-        try? AVAudioSession.sharedInstance().setActive(true)
-        let clean = text.replacingOccurrences(of: "*", with: "")
-        synth.stopSpeaking(at: .immediate)
-        let u = AVSpeechUtterance(string: clean)
-        if let voice, let picked = AVSpeechSynthesisVoice(identifier: voice) {
-            u.voice = picked
-        } else {
-            u.voice = AVSpeechSynthesisVoice(language: "de-DE")
-        }
-        u.rate = rate
-        synth.speak(u)
+    static func de(_ text: String, rate: Float = 0.48, voice: String? = nil) {
+        Speaker.shared.speak(text, rate: rate, voice: voice)
     }
 
-    static func stop() { synth.stopSpeaking(at: .immediate) }
+    static func stop() { Speaker.shared.stop() }
+
+    static func germanVoices() -> [AVSpeechSynthesisVoice] {
+        AVSpeechSynthesisVoice.speechVoices()
+            .filter { $0.language.hasPrefix("de") }
+            .sorted { rank($0) > rank($1) }
+    }
+
+    static func rank(_ voice: AVSpeechSynthesisVoice) -> Int {
+        switch voice.quality {
+        case .premium: return 3
+        case .enhanced: return 2
+        default: return voice.language == "de-DE" ? 1 : 0
+        }
+    }
+
+    static func qualityName(_ voice: AVSpeechSynthesisVoice) -> String {
+        switch voice.quality {
+        case .premium: return "najlepszy"
+        case .enhanced: return "naturalny"
+        default: return "zwykły"
+        }
+    }
+}
+
+final class Speaker: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
+    static let shared = Speaker()
+    @Published var speaking = false
+    private let synth = AVSpeechSynthesizer()
+
+    private override init() {
+        super.init()
+        synth.delegate = self
+    }
+
+    func speak(_ text: String, rate: Float, voice: String?) {
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
+        try? AVAudioSession.sharedInstance().setActive(true)
+        let clean = text.replacingOccurrences(of: "*", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty else { return }
+        synth.stopSpeaking(at: .immediate)
+        let utterance = AVSpeechUtterance(string: clean)
+        utterance.voice = picked(voice)
+        utterance.rate = utterance.voice?.quality == .default ? rate : 0.5
+        utterance.pitchMultiplier = 1
+        speaking = true
+        synth.speak(utterance)
+    }
+
+    func stop() {
+        synth.stopSpeaking(at: .immediate)
+        speaking = false
+    }
+
+    private func picked(_ voice: String?) -> AVSpeechSynthesisVoice? {
+        let stored = voice ?? UserDefaults.standard.string(forKey: "deVoice")
+        if let stored, !stored.isEmpty, let chosen = AVSpeechSynthesisVoice(identifier: stored) {
+            return chosen
+        }
+        return Talk.germanVoices().first ?? AVSpeechSynthesisVoice(language: "de-DE")
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        Task { @MainActor in self.speaking = false }
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        Task { @MainActor in self.speaking = false }
+    }
 }
 
 @MainActor
