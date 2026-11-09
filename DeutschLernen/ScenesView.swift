@@ -117,6 +117,10 @@ struct SceneChatView: View {
     @State private var showStars = false
     @State private var earned = 1
     @State private var openPL: Set<UUID> = []
+    @State private var popped = false
+    @State private var showVoices = false
+    @AppStorage("deVoice") private var deVoice = ""
+    @ObservedObject private var speaker = Speaker.shared
 
     var body: some View {
         VStack(spacing: 0) {
@@ -128,6 +132,7 @@ struct SceneChatView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 12) {
+                        personCard
                         ForEach(messages) { m in
                             VStack(alignment: m.role == "user" ? .trailing : .leading, spacing: 6) {
                                 Text(m.text)
@@ -208,6 +213,10 @@ struct SceneChatView: View {
                 Text(mic.note.isEmpty ? mic.text : mic.note)
                     .font(.footnote)
                     .padding(.horizontal)
+                Text("Mikrofon słucha niemieckiego. Po polsku wpisz palcem, rozmowa i tak pójdzie dalej.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal)
                 Button("Wstaw to, co usłyszałem") { input = mic.text; mic.stop() }
                     .buttonStyle(.glass)
                     .padding(.bottom, 6)
@@ -228,11 +237,14 @@ struct SceneChatView: View {
             guard !started else { return }
             started = true
             messages = [ChatMsg(role: "model", text: scenario.opener)]
+            withAnimation(.spring(duration: 0.45)) { popped = true }
+            Talk.de(scenario.opener)
         }
         .onDisappear { mic.stop(); Talk.stop() }
-        .onChange(of: mic.text) { _, new in
-            if mic.listening, !new.isEmpty { input = new }
+        .onChange(of: mic.listening) { was, now in
+            if was, !now, !mic.text.isEmpty { input = mic.text }
         }
+        .sheet(isPresented: $showVoices) { sceneVoices }
         .alert("Scena zaliczona", isPresented: $showStars) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -254,17 +266,23 @@ struct SceneChatView: View {
 
     private func systemPrompt() -> String {
         """
-        Jesteś Niemcem i grasz rolę: \(scenario.role).
+        Jesteś żywym człowiekiem i grasz rolę: \(scenario.role). To rozmowa, nie lekcja i nie tłumacz.
         Scena: \(scenario.title).
-        Zadanie ucznia (nie zdradzaj mu gotowej odpowiedzi, dopóki nie poprosi o pomoc): \(scenario.task).
+        Cel ucznia, nie zdradzaj gotowca: \(scenario.task).
         \(Learner.line)
+        Jak uczeń napisze po polsku, zrozum o co chodzi i odpowiedz dalej po niemiecku. Nigdy nie oddawaj jego zdania jako swojej kwestii i nie tłumacz mu tego, co sam właśnie powiedział.
+        Przykład. Uczeń: Na nodze mam zaczerwienienie od kleszcza.
+        Źle: DE: Was genau ist an Ihrer Nase rot, und haben Sie einen Zeckenstich?
+        Dobrze: DE: Ein Zeckenstich am Bein. Seit wann ist die Stelle rot? Haben Sie Fieber?
+        PL: Ukąszenie kleszcza na nodze. Od kiedy to miejsce jest czerwone? Ma pan gorączkę?
         Zasady:
-        - Odpowiadasz jako ta postać, nie jako nauczyciel i nie poprawiasz zdania ucznia w swojej kwestii.
+        - Jedna albo dwie krótkie kwestie jak w prawdziwej rozmowie. Na końcu jedno nowe pytanie, które wynika z tego, co usłyszałeś.
+        - Nie powtarzaj poprzedniego pytania, jeśli uczeń już na nie odpowiedział.
         - Format, każda rzecz w osobnej linii, bez markdownu:
-        DE: twoja kwestia po niemiecku, najwyżej dwa zdania, na końcu pytanie
-        PL: tłumaczenie tej kwestii na polski
+        DE: tylko twoja nowa kwestia po niemiecku
+        PL: polskie tłumaczenie tej kwestii, nie zdania ucznia
         ERR: po polsku co było nie tak | poprawne zdanie
-        ERR tylko gdy uczeń powiedział coś źle. Jak było dobrze, nie pisz ERR i nie pisz OK.
+        ERR tylko gdy uczeń mówił po niemiecku i pomylił formę. Jak pisał po polsku, nie poprawiaj, tylko prowadź rozmowę.
         Postępy: \(store.progressSummary())
         """
     }
@@ -279,11 +297,12 @@ struct SceneChatView: View {
         loading = true
         defer { loading = false }
         do {
-            let history = messages.map { GeminiMessage(role: $0.role, text: $0.text) }
+            let history = messages.map { message in
+                GeminiMessage(role: message.role, text: message.role == "user" ? forModel(message.text) : message.text)
+            }
             let reply = try await Gemini.send(messages: history, system: systemPrompt())
             let turn = splitReply(reply)
             messages.append(turn)
-            if !turn.polish.isEmpty { openPL.insert(turn.id) }
             let mine = messages.filter { $0.role == "user" }.count
             if mine >= 2 { store.markScene(scenario.id) }
             Talk.de(turn.text)
@@ -361,5 +380,87 @@ struct SceneChatView: View {
             let t = line.trimmingCharacters(in: .whitespaces)
             return !t.isEmpty && !t.hasPrefix("OK") && !t.lowercased().contains("popraw")
         } ?? text
+    }
+
+    private func forModel(_ text: String) -> String {
+        let polish = text.range(of: "[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]", options: .regularExpression) != nil
+        guard polish else { return text }
+        return "Uczeń powiedział po polsku. Zrozum sens i prowadź rozmowę dalej. Nie tłumacz tego zdania i nie powtarzaj go. Treść: \(text)"
+    }
+
+    private var personCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ZStack(alignment: .bottomLeading) {
+                Group {
+                    if let ui = UIImage(named: "Tutor") {
+                        Image(uiImage: ui).resizable().scaledToFill()
+                    } else {
+                        Image(systemName: "person.crop.square.fill")
+                            .resizable()
+                            .padding(24)
+                            .foregroundStyle(.white)
+                            .background(Theme.accent)
+                    }
+                }
+                .frame(width: 132, height: 168)
+                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(speaker.speaking ? Theme.accent : Color.white.opacity(0.2), lineWidth: speaker.speaking ? 3 : 1))
+                if speaker.speaking {
+                    Text("mówi")
+                        .font(.caption2.weight(.bold))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.black.opacity(0.55), in: Capsule())
+                        .padding(8)
+                }
+            }
+            .scaleEffect(popped ? 1 : 0.55)
+            .opacity(popped ? 1 : 0)
+            Button { showVoices = true } label: {
+                Label(Talk.germanVoices().first { $0.identifier == deVoice }?.name ?? "Głos", systemImage: "waveform")
+                    .font(.caption.weight(.semibold))
+                    .frame(minHeight: 36)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Theme.text2)
+        }
+    }
+
+    private var sceneVoices: some View {
+        NavigationStack {
+            List {
+                Button {
+                    deVoice = ""
+                    showVoices = false
+                    Talk.de("Hallo, ich bin da.")
+                } label: {
+                    HStack {
+                        Text("Automatycznie, najlepszy dostępny")
+                        Spacer()
+                        if deVoice.isEmpty { Image(systemName: "checkmark") }
+                    }
+                }
+                ForEach(Talk.germanVoices(), id: \.identifier) { voice in
+                    Button {
+                        deVoice = voice.identifier
+                        showVoices = false
+                        Talk.de("Hallo, so klinge ich.", voice: voice.identifier)
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(voice.name)
+                                Text(Talk.qualityName(voice)).font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            if deVoice == voice.identifier { Image(systemName: "checkmark") }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Głos")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { Button("Zamknij") { showVoices = false } }
+        }
+        .presentationDetents([.medium, .large])
     }
 }
