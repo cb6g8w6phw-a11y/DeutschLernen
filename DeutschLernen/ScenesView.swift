@@ -423,6 +423,7 @@ struct SceneChatView: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(Theme.text2)
+            PaceButtons()
         }
     }
 

@@ -233,6 +233,7 @@ struct TutorView: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(Theme.text2)
+            PaceButtons()
         }
     }
 
@@ -495,8 +496,7 @@ struct TutorView: View {
     }
 
     private func speech(_ t: Turn) -> String {
-        if blind || t.say.isEmpty { return t.german }
-        return "\(t.german) Sag jetzt: \(t.say)"
+        t.german
     }
 
     private func flushMic() {

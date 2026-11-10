@@ -4,7 +4,7 @@ import Speech
 import SwiftUI
 
 enum Talk {
-    static func de(_ text: String, rate: Float = 0.48, voice: String? = nil) {
+    static func de(_ text: String, rate: Float = 0, voice: String? = nil) {
         Speaker.shared.speak(text, rate: rate, voice: voice)
     }
 
@@ -37,6 +37,10 @@ final class Speaker: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     static let shared = Speaker()
     @Published var speaking = false
     private let synth = AVSpeechSynthesizer()
+    private var lines: [String] = []
+    private var voiceId: String?
+    private var pace: Float = 0.38
+    private var generation = 0
 
     private override init() {
         super.init()
@@ -48,18 +52,56 @@ final class Speaker: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         try? AVAudioSession.sharedInstance().setActive(true)
         let clean = text.replacingOccurrences(of: "*", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return }
+        generation += 1
         synth.stopSpeaking(at: .immediate)
-        let utterance = AVSpeechUtterance(string: clean)
-        utterance.voice = picked(voice)
-        utterance.rate = utterance.voice?.quality == .default ? rate : 0.5
-        utterance.pitchMultiplier = 1
+        lines = sentences(clean)
+        voiceId = voice
+        pace = rate > 0 ? rate : Self.savedPace()
         speaking = true
-        synth.speak(utterance)
+        sayNext(generation)
     }
 
     func stop() {
+        generation += 1
+        lines = []
         synth.stopSpeaking(at: .immediate)
         speaking = false
+    }
+
+    static func savedPace() -> Float {
+        UserDefaults.standard.string(forKey: "talkPace") == "normal" ? 0.44 : 0.36
+    }
+
+    private func sayNext(_ gen: Int) {
+        guard gen == generation else { return }
+        guard !lines.isEmpty else {
+            speaking = false
+            return
+        }
+        let line = lines.removeFirst()
+        let utterance = AVSpeechUtterance(string: line)
+        utterance.voice = picked(voiceId)
+        utterance.rate = pace
+        utterance.pitchMultiplier = 1
+        utterance.preUtteranceDelay = 0.05
+        utterance.postUtteranceDelay = 0.45
+        synth.speak(utterance)
+    }
+
+    private func sentences(_ text: String) -> [String] {
+        var parts: [String] = []
+        var piece = ""
+        for ch in text {
+            piece.append(ch)
+            if ".!?".contains(ch) {
+                let trimmed = piece.trimmingCharacters(in: .whitespacesAndNewlines)
+                if trimmed.count > 1 { parts.append(trimmed) }
+                piece = ""
+            }
+        }
+        let rest = piece.trimmingCharacters(in: .whitespacesAndNewlines)
+        if rest.count > 1 { parts.append(rest) }
+        return parts.isEmpty ? [text] : parts
     }
 
     private func picked(_ voice: String?) -> AVSpeechSynthesisVoice? {
@@ -71,11 +113,33 @@ final class Speaker: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     }
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
-        Task { @MainActor in self.speaking = false }
+        Task { @MainActor in self.sayNext(self.generation) }
     }
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
-        Task { @MainActor in self.speaking = false }
+        Task { @MainActor in
+            if self.lines.isEmpty { self.speaking = false }
+        }
+    }
+}
+
+struct PaceButtons: View {
+    @AppStorage("talkPace") private var pace = "slow"
+
+    var body: some View {
+        HStack(spacing: 8) {
+            paceButton("Wolno", "slow")
+            paceButton("Zwykle", "normal")
+        }
+    }
+
+    private func paceButton(_ title: String, _ value: String) -> some View {
+        Button(title) { pace = value }
+            .font(.caption.weight(.semibold))
+            .padding(.horizontal, 12)
+            .frame(minHeight: 36)
+            .background(pace == value ? Theme.accent : Theme.card, in: Capsule())
+            .foregroundStyle(Theme.text)
     }
 }
 

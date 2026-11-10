@@ -10,22 +10,24 @@ struct DailyRunView: View {
         Group {
             switch step {
             case 0:
-                QuizView(sessionSize: 15, onDone: { score in
-                    wordScore = score
-                    step = 1
-                })
+                LessonStep { step = 1 }
             case 1:
-                sceneStep
+                QuizView(sessionSize: 8, onDone: { score in
+                    wordScore = score
+                    step = 2
+                })
             case 2:
+                sceneStep
+            case 3:
                 QuizView(sessionSize: 5, onDone: { score in
                     testScore = score
-                    step = 3
+                    step = 4
                 })
             default:
                 summary
             }
         }
-        .navigationTitle(step == 3 ? "Podsumowanie" : "Dziś")
+        .navigationTitle(step == 4 ? "Podsumowanie" : "Dziś")
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -52,7 +54,7 @@ struct DailyRunView: View {
                 Text("Wejdź w scenę").primaryButton()
             }
             .padding(.horizontal)
-            Button("Scena zrobiona, dalej") { step = 2 }
+            Button("Scena zrobiona, dalej") { step = 3 }
                 .ghostButton()
             Spacer()
         }
@@ -91,5 +93,67 @@ struct DailyRunView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .themedCard()
+    }
+}
+
+struct LessonStep: View {
+    @EnvironmentObject var store: LearningStore
+    var onDone: () -> Void
+    @State private var lines: [Word] = []
+    @State private var index = 0
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Najpierw usłysz")
+                .font(.largeTitle.bold())
+            Text("Trzy zdania, wolno i po kolei. Tłumaczenie jest od razu pod spodem. Dopiero potem powtórki i scena.")
+                .font(.subheadline)
+                .foregroundStyle(Theme.text2)
+            if lines.isEmpty {
+                Text("Brak zdań w bazie.")
+                Button("Dalej") { onDone() }.primaryButton()
+            } else {
+                let word = lines[min(index, lines.count - 1)]
+                Text("\(index + 1) z \(lines.count)")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.text2)
+                Text(word.ex.isEmpty ? word.de : word.ex)
+                    .font(.title2.weight(.bold))
+                Text(word.pl)
+                    .font(.body)
+                    .foregroundStyle(Theme.text2)
+                Button {
+                    Talk.de(word.ex.isEmpty ? word.de : word.ex)
+                } label: {
+                    Label("Odtwórz wolno", systemImage: "speaker.wave.2")
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.accent)
+                PaceButtons()
+                Button(index + 1 < lines.count ? "Następne zdanie" : "Rozumiem, idę do powtórek") {
+                    if index + 1 < lines.count {
+                        index += 1
+                        let next = lines[index]
+                        Talk.de(next.ex.isEmpty ? next.de : next.ex)
+                    } else {
+                        onDone()
+                    }
+                }
+                .primaryButton()
+            }
+            Spacer()
+        }
+        .padding(20)
+        .appBackground()
+        .onAppear {
+            if lines.isEmpty {
+                lines = Array(store.nextSession(size: 3).prefix(3))
+                if let first = lines.first {
+                    Talk.de(first.ex.isEmpty ? first.de : first.ex)
+                }
+            }
+        }
     }
 }

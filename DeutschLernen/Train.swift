@@ -141,7 +141,7 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Plan na dziś")
                     .font(.headline)
-                Text("Powtórki, 1 scena, krótki test")
+                Text("Najpierw 3 zdania wolno, potem powtórki, 1 scena i krótki test")
                     .font(.subheadline)
                     .foregroundStyle(Theme.text2)
             }
