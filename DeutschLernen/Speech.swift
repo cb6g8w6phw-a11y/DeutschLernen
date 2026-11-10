@@ -4,10 +4,12 @@ import Speech
 import SwiftUI
 
 enum Talk {
+    @MainActor
     static func de(_ text: String, rate: Float = 0, voice: String? = nil) {
         VoiceBox.shared.speak(text, rate: rate, voice: voice)
     }
 
+    @MainActor
     static func stop() {
         VoiceBox.shared.stop()
         Speaker.shared.stop()
