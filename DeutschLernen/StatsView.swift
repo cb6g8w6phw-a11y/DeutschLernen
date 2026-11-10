@@ -17,6 +17,7 @@ struct StatsView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
+                    levelCard
                     summary
                     topics
                     activity
@@ -31,6 +32,24 @@ struct StatsView: View {
             .containerBackground(for: .navigation) { NightGlow() }
             .toolbarBackground(.hidden, for: .navigationBar)
         }
+    }
+
+    private var levelCard: some View {
+        let level: String
+        switch store.masteredCount {
+        case 0..<40: level = "A1"
+        case 40..<120: level = "A1–A2"
+        case 120..<220: level = "A2"
+        default: level = "B1"
+        }
+        return VStack(alignment: .leading, spacing: 8) {
+            Text("Poziom \(level)").font(.title2.bold())
+            Text("Znasz \(store.masteredCount) słów na trzech dniach. W nauce: \(store.learningCount).")
+            Text("Błędy zapisane: \(store.journal.mistakes.count). Nauka w tym miesiącu: \(store.talkLabel). Wymowa: \(store.journal.said) prób.")
+                .foregroundStyle(Theme.text2)
+        }
+        .padding(16)
+        .themedCard()
     }
 
     private var summary: some View {

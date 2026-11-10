@@ -429,6 +429,7 @@ final class LearningStore: ObservableObject {
         guard seconds > 0 else { return }
         roll()
         journal.monthSeconds += min(seconds, 3600)
+        UserDefaults.standard.set(Self.dayKey(), forKey: "didTalkDay")
         publishJournal()
     }
 
@@ -472,6 +473,7 @@ final class LearningStore: ObservableObject {
         roll()
         journal.listenTries += 1
         if ok { journal.listenOk += 1 }
+        UserDefaults.standard.set(journal.day, forKey: "didListenDay")
         publishJournal()
     }
 

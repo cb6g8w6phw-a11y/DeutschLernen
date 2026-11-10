@@ -86,41 +86,37 @@ struct TodayView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("Czas na 20 minut nauki")
-                        .font(.largeTitle.bold())
-                        .foregroundStyle(Theme.text)
-                    Text("Dzień \(store.planDay) z 30")
-                        .font(.subheadline)
+                    HStack {
+                        Text("Deutsch AI")
+                            .font(.headline)
+                        Spacer()
+                        Text(levelName)
+                            .font(.caption.weight(.bold))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Theme.ok.opacity(0.25), in: Capsule())
+                    }
+                    Text("Hallo! 👋")
+                        .font(.system(size: 40, weight: .bold))
+                    Text("Gotowy na dzisiejszą lekcję?")
                         .foregroundStyle(Theme.text2)
-                    Text(store.phaseTitle)
-                        .font(.footnote)
-                        .foregroundStyle(Theme.text2)
-                    Text("Do końca miesiąca: \(store.masteredCount)/300 zdań, \(store.scenesClean)/5 scen bez podpowiedzi")
-                        .font(.footnote)
-                        .foregroundStyle(Theme.text2)
-                    plan
+                    goalCard
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                        bigTile("Mówienie", "Ćwicz rozmowę", "mic.fill", Theme.accent) { TutorView() }
+                        bigTile("Słówka", "Powtarzaj wiedzę", "rectangle.stack.fill", Color(hex: "5AC8FA")) { QuizView(sessionSize: 10) }
+                        bigTile("Słuchanie", "Rozumiej Niemców", "headphones", Color(hex: "8B6CF0")) { ListenView() }
+                        bigTile("Postępy", "Sprawdzaj wyniki", "chart.bar.fill", Theme.orange) { StatsView() }
+                    }
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                        bigTile("Gramatyka", "Krótko, na przykładach", "textformat", Theme.ok) { GrammarView() }
+                        bigTile("Wymowa", "Powiedz i popraw", "waveform", Color(hex: "FF6B9A")) { PronounceView() }
+                        bigTile("Błędy", "To, co mylisz", "exclamationmark.bubble", Color(hex: "FF453A")) { MistakeReview() }
+                        bigTile("Gry", "Pary, zdania, czas", "gamecontroller", Color(hex: "FFD60A")) { GamesHome() }
+                    }
                     NavigationLink { DailyRunView() } label: {
-                        Text("Zacznij naukę").primaryButton()
+                        Text("Pełna lekcja: zdania, powtórki, scena").primaryButton()
                     }
                     .buttonStyle(.plain)
-                    HStack(spacing: 10) {
-                        stat("\(Theme.dni(store.streak))", "Seria")
-                        stat("\(store.learningCount)", "W nauce")
-                        stat("\(store.dueToday)", "Do powtórki")
-                    }
-                    if let word = store.wordOfDay { wordCard(word) }
-                    Text("Trening")
-                        .font(.headline)
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 10) {
-                            tile("Powtórki", "rectangle.stack", Theme.accent) { QuizView(sessionSize: 10) }
-                            tile("Moje słówka", "text.book.closed", Theme.orange) { WordsView() }
-                            tile("Rozmowa", "waveform", Color(hex: "5AC8FA")) { TutorView() }
-                            tile("Słuchanie", "ear", Color(hex: "FF6B9A")) { ListenView() }
-                            tile("Wymowa", "mic", Color(hex: "30D158")) { PronounceView() }
-                            tile("Gry", "gamecontroller", Color(hex: "FFD60A")) { GamesHome() }
-                        }
-                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
@@ -130,6 +126,73 @@ struct TodayView: View {
             .toolbar(.hidden, for: .navigationBar)
             .containerBackground(for: .navigation) { NightGlow() }
         }
+    }
+
+    private var levelName: String {
+        switch store.masteredCount {
+        case 0..<40: return "A1"
+        case 40..<120: return "A1–A2"
+        case 120..<220: return "A2"
+        default: return "B1"
+        }
+    }
+
+    private var todayKey: String { LearningStore.dayKey() }
+
+    private var goals: [(String, Bool)] {
+        [
+            ("10 nowych słówek", store.reviewsToday >= 10),
+            ("Rozmowa z AI", UserDefaults.standard.string(forKey: "didTalkDay") == todayKey),
+            ("Słuchanie", UserDefaults.standard.string(forKey: "didListenDay") == todayKey),
+            ("Powtórka błędów", UserDefaults.standard.string(forKey: "didFixDay") == todayKey)
+        ]
+    }
+
+    private var goalCard: some View {
+        let done = goals.filter(\.1).count
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Dzisiejszy cel").font(.headline)
+                Spacer()
+                Text("\(done)/4 ukończone").font(.caption).foregroundStyle(Theme.text2)
+            }
+            ProgressView(value: Double(done), total: 4).tint(Theme.accent)
+            goalRow("10 nowych słówek", goals[0].1) { QuizView(sessionSize: 10) }
+            goalRow("Rozmowa z AI", goals[1].1) { TutorView() }
+            goalRow("Słuchanie", goals[2].1) { ListenView() }
+            goalRow("Powtórka błędów", goals[3].1) { MistakeReview() }
+        }
+        .padding(14)
+        .themedCard()
+    }
+
+    private func goalRow<Dest: View>(_ title: String, _ done: Bool, @ViewBuilder dest: () -> Dest) -> some View {
+        NavigationLink { dest() } label: {
+            HStack(spacing: 10) {
+                Image(systemName: done ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(done ? Theme.ok : Theme.text2)
+                Text(title).foregroundStyle(Theme.text)
+                Spacer()
+            }
+            .frame(minHeight: 36)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func bigTile<Dest: View>(_ title: String, _ text: String, _ icon: String, _ tint: Color, @ViewBuilder dest: () -> Dest) -> some View {
+        NavigationLink { dest() } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundStyle(tint)
+                Text(title).font(.headline).foregroundStyle(Theme.text)
+                Text(text).font(.caption).foregroundStyle(Theme.text2)
+            }
+            .frame(maxWidth: .infinity, minHeight: 110, alignment: .leading)
+            .padding(14)
+            .themedCard(radius: 18)
+        }
+        .buttonStyle(.plain)
     }
 
     private var plan: some View {
@@ -396,6 +459,14 @@ struct PronounceView: View {
             .buttonStyle(.glass)
             if !parts.isEmpty {
                 SaidWords(parts: parts)
+                let bad = parts.filter { !$0.ok }.map(\.word)
+                if bad.isEmpty {
+                    Text("Całe zdanie było słyszalne.").foregroundStyle(Theme.ok)
+                } else {
+                    Text("Źle albo za cicho: \(bad.joined(separator: ", ")). Powiedz te słowa jeszcze raz.")
+                        .foregroundStyle(Color(hex: "FF453A"))
+                }
+                Text("Usłyszałem: \(mic.text)").font(.footnote).foregroundStyle(Theme.text2)
             }
             if !mic.note.isEmpty { Text(mic.note).font(.caption).foregroundStyle(.secondary) }
             if mic.listening { Text(mic.text.isEmpty ? "Słucham…" : mic.text).font(.footnote) }
