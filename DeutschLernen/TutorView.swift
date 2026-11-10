@@ -234,6 +234,7 @@ struct TutorView: View {
             .buttonStyle(.plain)
             .foregroundStyle(Theme.text2)
             PaceButtons()
+            GenderButtons()
         }
     }
 
@@ -353,18 +354,15 @@ struct TutorView: View {
                 Text(t.german)
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
                     .foregroundStyle(Theme.text)
-                HStack(spacing: 16) {
-                    Button { Talk.de(speech(t)) } label: {
-                        Image(systemName: "speaker.wave.2.fill")
-                    }
-                    .buttonStyle(.plain)
+                HStack(alignment: .center, spacing: 8) {
+                    VoiceControls(text: speech(t))
                     Button { Task { await reveal(t) } } label: {
                         Image(systemName: openPL.contains(t.id) ? "character.book.closed.fill" : "character.book.closed")
+                            .frame(width: 44, height: 44)
                     }
                     .buttonStyle(.plain)
+                    .foregroundStyle(Theme.accent)
                 }
-                .font(.body)
-                .foregroundStyle(Theme.accent)
                 if openPL.contains(t.id) {
                     Text(String(repeating: "· ", count: 16))
                         .font(.caption2)
@@ -496,7 +494,8 @@ struct TutorView: View {
     }
 
     private func speech(_ t: Turn) -> String {
-        t.german
+        if t.say.isEmpty { return t.german }
+        return "\(t.german) Powiedz: \(t.say)"
     }
 
     private func flushMic() {

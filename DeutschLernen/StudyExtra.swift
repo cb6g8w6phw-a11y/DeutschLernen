@@ -148,6 +148,8 @@ struct MistakeReview: View {
                     .background(fill(1, item), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 if picked != nil {
                     Text(item.why).foregroundStyle(Theme.text2)
+                    Button("Posłuchaj poprawnego") { Talk.de(item.right) }
+                        .ghostButton()
                     Button("Dalej") {
                         index += 1
                         picked = nil
@@ -168,6 +170,7 @@ struct MistakeReview: View {
         if i == 1 {
             hits += 1
             UserDefaults.standard.set(LearningStore.dayKey(), forKey: "didFixDay")
+            Talk.de(item.right)
             UINotificationFeedbackGenerator().notificationOccurred(.success)
         } else {
             UINotificationFeedbackGenerator().notificationOccurred(.error)
@@ -179,5 +182,72 @@ struct MistakeReview: View {
         if i == 1 { return Theme.ok.opacity(0.75) }
         if i == picked { return Color(hex: "FF453A").opacity(0.75) }
         return Theme.card
+    }
+}
+
+struct DictationView: View {
+    private let lines: [(de: String, pl: String)] = [
+        ("Ich bin krank.", "Jestem chory."),
+        ("Ich habe heute Frühschicht.", "Mam dziś poranną zmianę."),
+        ("Der Chef ist noch nicht da.", "Szefa jeszcze nie ma."),
+        ("Ich brauche eine Pause.", "Potrzebuję przerwy."),
+        ("Können Sie das bitte wiederholen?", "Może pan to powtórzyć?")
+    ]
+    @State private var index = 0
+    @State private var input = ""
+    @State private var note = ""
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Posłuchaj zdania i zapisz je po niemiecku.")
+                .font(.subheadline)
+                .foregroundStyle(Theme.text2)
+            Text("\(index + 1) z \(lines.count)")
+                .font(.footnote)
+                .foregroundStyle(Theme.text2)
+            VoiceControls(text: lines[index].de)
+            Button("Odtwórz dyktando") { Talk.de(lines[index].de) }
+                .primaryButton()
+            PaceButtons()
+            GenderButtons()
+            TextField("Zapisz, co usłyszałeś", text: $input, axis: .vertical)
+                .lineLimit(2...4)
+                .padding(12)
+                .themedCard(radius: 16)
+            Button("Sprawdź") { check() }
+                .primaryButton()
+            if !note.isEmpty {
+                Text(note).font(.headline)
+                Text(lines[index].pl).foregroundStyle(Theme.text2)
+            }
+            if index + 1 < lines.count, note.hasPrefix("Dobrze") {
+                Button("Następne") {
+                    index += 1
+                    input = ""
+                    note = ""
+                    Talk.de(lines[index].de)
+                }
+                .ghostButton()
+            }
+            Spacer()
+        }
+        .padding(20)
+        .navigationTitle("Dyktando")
+        .containerBackground(for: .navigation) { NightGlow() }
+        .onAppear { Talk.de(lines[0].de) }
+        .onDisappear { Talk.stop() }
+    }
+
+    private func check() {
+        let heard = input.lowercased().filter { $0.isLetter || $0.isNumber || $0 == " " }
+        let wanted = lines[index].de.lowercased().filter { $0.isLetter || $0.isNumber || $0 == " " }
+        if heard.split(separator: " ").joined(separator: " ") == wanted.split(separator: " ").joined(separator: " ") {
+            note = "Dobrze."
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        } else {
+            note = "Jeszcze nie. Poprawnie: \(lines[index].de)"
+            Talk.de(lines[index].de)
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
+        }
     }
 }

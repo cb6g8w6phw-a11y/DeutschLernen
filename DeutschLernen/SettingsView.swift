@@ -4,6 +4,7 @@ struct SettingsView: View {
     @EnvironmentObject var store: LearningStore
     @State private var groq = ""
     @State private var gemini = ""
+    @State private var eleven = ""
     @State private var keyOK = false
     @AppStorage("profileJob") private var job = ""
     @AppStorage("profileCity") private var city = ""
@@ -36,6 +37,19 @@ struct SettingsView: View {
                     ThemePicker()
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
+                }
+                Section {
+                    SecureField("Klucz ElevenLabs", text: $eleven)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .onChange(of: eleven) { _, value in Secret.save(value, "elevenKey") }
+                    Link("Klucz głosu: elevenlabs.io", destination: URL(string: "https://elevenlabs.io/app/settings/api-keys")!)
+                    Text("Ten klucz tylko czyta odpowiedzi na głos. Rozmowę dalej pisze Gemini albo Groq. Głos jest niemiecki, wolny przy A1–A2.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    GenderButtons()
+                    PaceButtons()
+                } header: {
+                    Text("ElevenLabs — głos")
                 }
                 Section {
                     SecureField("Klucz Groq", text: $groq)
@@ -97,6 +111,7 @@ struct SettingsView: View {
             .onAppear {
                 groq = Secret.load("groqKey")
                 gemini = Secret.load("geminiKey")
+                eleven = Secret.load("elevenKey")
             }
         }
     }

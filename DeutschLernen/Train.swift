@@ -112,6 +112,7 @@ struct TodayView: View {
                         bigTile("Wymowa", "Powiedz i popraw", "waveform", Color(hex: "FF6B9A")) { PronounceView() }
                         bigTile("Błędy", "To, co mylisz", "exclamationmark.bubble", Color(hex: "FF453A")) { MistakeReview() }
                         bigTile("Gry", "Pary, zdania, czas", "gamecontroller", Color(hex: "FFD60A")) { GamesHome() }
+                        bigTile("Dyktando", "Usłysz i zapisz", "pencil.line", Color(hex: "5AC8FA")) { DictationView() }
                     }
                     NavigationLink { DailyRunView() } label: {
                         Text("Pełna lekcja: zdania, powtórki, scena").primaryButton()

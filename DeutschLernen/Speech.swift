@@ -5,10 +5,13 @@ import SwiftUI
 
 enum Talk {
     static func de(_ text: String, rate: Float = 0, voice: String? = nil) {
-        Speaker.shared.speak(text, rate: rate, voice: voice)
+        VoiceBox.shared.speak(text, rate: rate, voice: voice)
     }
 
-    static func stop() { Speaker.shared.stop() }
+    static func stop() {
+        VoiceBox.shared.stop()
+        Speaker.shared.stop()
+    }
 
     static func germanVoices() -> [AVSpeechSynthesisVoice] {
         AVSpeechSynthesisVoice.speechVoices()
@@ -140,6 +143,240 @@ struct PaceButtons: View {
             .frame(minHeight: 36)
             .background(pace == value ? Theme.accent : Theme.card, in: Capsule())
             .foregroundStyle(Theme.text)
+    }
+}
+
+struct GenderButtons: View {
+    @AppStorage("elevenGender") private var gender = "male"
+
+    var body: some View {
+        HStack(spacing: 8) {
+            one("Męski", "male")
+            one("Żeński", "female")
+        }
+    }
+
+    private func one(_ title: String, _ value: String) -> some View {
+        Button(title) { gender = value }
+            .font(.caption.weight(.semibold))
+            .padding(.horizontal, 12)
+            .frame(minHeight: 36)
+            .background(gender == value ? Theme.accent : Theme.card, in: Capsule())
+            .foregroundStyle(Theme.text)
+    }
+}
+
+struct VoiceControls: View {
+    let text: String
+    @ObservedObject private var box = VoiceBox.shared
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 16) {
+                Button {
+                    if box.playing { box.pause() } else { box.resumeOrPlay(text) }
+                } label: {
+                    Image(systemName: box.playing ? "pause.fill" : "play.fill")
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                Button { box.stop() } label: {
+                    Image(systemName: "stop.fill")
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                Button { box.replay() } label: {
+                    Image(systemName: "arrow.counterclockwise")
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.plain)
+                .disabled(box.lastClip == nil && box.lastText.isEmpty)
+            }
+            .foregroundStyle(Theme.accent)
+            if !box.note.isEmpty, box.lastText == text || box.lastText.isEmpty {
+                Text(box.note)
+                    .font(.caption2)
+                    .foregroundStyle(Theme.text2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+}
+
+@MainActor
+final class VoiceBox: NSObject, ObservableObject {
+    static let shared = VoiceBox()
+    @Published var playing = false
+    @Published var note = ""
+    @Published var lastText = ""
+    private var player: AVAudioPlayer?
+    private var job: Task<Void, Never>?
+    private var generation = 0
+    fileprivate var lastClip: Data?
+
+    private let male = ["nPczCjzI2devNBz1zQrb", "onwK4e9ZLuTAKqWW03F9"]
+    private let female = ["Xb7hH8MSUJpSbSDYk0k2", "EXAVITQu4vr4xnSDxMaL"]
+
+    func speak(_ text: String, rate: Float, voice: String?) {
+        let clean = text.replacingOccurrences(of: "*", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !clean.isEmpty else { return }
+        generation += 1
+        let gen = generation
+        job?.cancel()
+        player?.stop()
+        Speaker.shared.stop()
+        lastText = clean
+        note = ""
+        let key = Secret.load("elevenKey").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !key.isEmpty else {
+            note = "Brak klucza ElevenLabs. Ustawienia → wklej klucz, wtedy głos będzie naturalny."
+            Speaker.shared.speak(clean, rate: rate, voice: voice)
+            return
+        }
+        playing = true
+        Speaker.shared.speaking = true
+        job = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let data = try await self.fetch(clean, key: key)
+                guard gen == self.generation else { return }
+                self.lastClip = data
+                try self.play(data)
+            } catch is CancellationError {
+                return
+            } catch {
+                guard gen == self.generation else { return }
+                self.playing = false
+                Speaker.shared.speaking = false
+                self.note = self.message(error)
+                Speaker.shared.speak(clean, rate: rate, voice: voice)
+            }
+        }
+    }
+
+    func pause() {
+        player?.pause()
+        playing = false
+        Speaker.shared.speaking = false
+    }
+
+    func resumeOrPlay(_ text: String) {
+        if player != nil, lastText == text, player?.currentTime ?? 0 > 0, player?.isPlaying == false {
+            player?.play()
+            playing = true
+            Speaker.shared.speaking = true
+            return
+        }
+        speak(text, rate: 0, voice: nil)
+    }
+
+    func replay() {
+        if let lastClip {
+            note = ""
+            do { try play(lastClip) } catch {
+                note = "Nie dało się odtworzyć nagrania jeszcze raz."
+            }
+            return
+        }
+        if !lastText.isEmpty { speak(lastText, rate: 0, voice: nil) }
+    }
+
+    func stop() {
+        generation += 1
+        job?.cancel()
+        player?.stop()
+        player = nil
+        playing = false
+        Speaker.shared.speaking = false
+    }
+
+    private func play(_ data: Data) throws {
+        try AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
+        try AVAudioSession.sharedInstance().setActive(true)
+        let audio = try AVAudioPlayer(data: data)
+        audio.delegate = self
+        audio.prepareToPlay()
+        player = audio
+        audio.play()
+        playing = true
+        Speaker.shared.speaking = true
+    }
+
+    private func fetch(_ text: String, key: String) async throws -> Data {
+        let femaleVoice = UserDefaults.standard.string(forKey: "elevenGender") == "female"
+        let voices = femaleVoice ? female : male
+        let slow = UserDefaults.standard.string(forKey: "talkPace") != "normal"
+        var last = "ElevenLabs nie oddał nagrania."
+        for voice in voices {
+            var req = URLRequest(url: URL(string: "https://api.elevenlabs.io/v1/text-to-speech/\(voice)?output_format=mp3_44100_128")!)
+            req.httpMethod = "POST"
+            req.timeoutInterval = 35
+            req.setValue(key, forHTTPHeaderField: "xi-api-key")
+            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            req.setValue("audio/mpeg", forHTTPHeaderField: "Accept")
+            let body: [String: Any] = [
+                "text": text,
+                "model_id": "eleven_multilingual_v2",
+                "language_code": "de",
+                "voice_settings": [
+                    "stability": 0.62,
+                    "similarity_boost": 0.8,
+                    "style": 0.0,
+                    "use_speaker_boost": true,
+                    "speed": slow ? 0.8 : 1.0
+                ]
+            ]
+            req.httpBody = try JSONSerialization.data(withJSONObject: body)
+            let (data, resp) = try await URLSession.shared.data(for: req)
+            let code = (resp as? HTTPURLResponse)?.statusCode ?? 0
+            if (200..<300).contains(code), !data.isEmpty { return data }
+            last = String(data: data, encoding: .utf8) ?? ""
+            if code == 401 { throw ElevenFail.rejected }
+            if code == 429 { throw ElevenFail.limit }
+        }
+        throw ElevenFail.other(last)
+    }
+
+    private func message(_ error: Error) -> String {
+        if let url = error as? URLError {
+            switch url.code {
+            case .notConnectedToInternet, .dataNotAllowed, .networkConnectionLost:
+                return "Brak internetu. Naturalny głos potrzebuje sieci. Na razie mówię głosem iPhone'a."
+            case .timedOut:
+                return "ElevenLabs nie zdążył. Spróbuj odtworzyć jeszcze raz."
+            default:
+                return "Nie udało się pobrać głosu. Na razie mówię głosem iPhone'a."
+            }
+        }
+        if let fail = error as? ElevenFail {
+            switch fail {
+            case .rejected: return "Klucz ElevenLabs odrzucony. Wklej go jeszcze raz w Ustawieniach."
+            case .limit: return "Limit ElevenLabs na dziś. Odczekaj albo sprawdź konto."
+            case .other: return "Synteza mowy nie wyszła. Na razie mówię głosem iPhone'a."
+            }
+        }
+        return "Synteza mowy nie wyszła. Na razie mówię głosem iPhone'a."
+    }
+}
+
+private enum ElevenFail: Error {
+    case rejected, limit, other(String)
+}
+
+extension VoiceBox: AVAudioPlayerDelegate {
+    nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        Task { @MainActor in
+            VoiceBox.shared.playing = false
+            Speaker.shared.speaking = false
+        }
+    }
+
+    nonisolated func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) {
+        Task { @MainActor in
+            VoiceBox.shared.playing = false
+            Speaker.shared.speaking = false
+            VoiceBox.shared.note = "Nagranie jest uszkodzone. Stuknij odtwórz jeszcze raz."
+        }
     }
 }
 

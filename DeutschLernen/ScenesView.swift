@@ -139,13 +139,8 @@ struct SceneChatView: View {
                                     .padding(14)
                                     .liquidGlass(radius: 22, tint: m.role == "user" ? Ink.brass.opacity(0.45) : nil)
                                 if m.role == "model" {
-                                    HStack(spacing: 16) {
-                                        Button { Talk.de(m.text) } label: {
-                                            Image(systemName: "speaker.wave.2")
-                                                .frame(width: 44, height: 44)
-                                        }
-                                        .buttonStyle(.plain)
-                                        .foregroundStyle(Theme.accent)
+                                    HStack(alignment: .center, spacing: 8) {
+                                        VoiceControls(text: m.text)
                                         Button { Task { await reveal(m) } } label: {
                                             Label(openPL.contains(m.id) ? "Ukryj" : "Tłumaczenie", systemImage: "character.book.closed")
                                                 .font(.subheadline.weight(.semibold))
@@ -424,6 +419,7 @@ struct SceneChatView: View {
             .buttonStyle(.plain)
             .foregroundStyle(Theme.text2)
             PaceButtons()
+            GenderButtons()
         }
     }
 
