@@ -118,6 +118,7 @@ struct TodayView: View {
                             tile("Rozmowa", "waveform", Color(hex: "5AC8FA")) { TutorView() }
                             tile("Słuchanie", "ear", Color(hex: "FF6B9A")) { ListenView() }
                             tile("Wymowa", "mic", Color(hex: "30D158")) { PronounceView() }
+                            tile("Gry", "gamecontroller", Color(hex: "FFD60A")) { GamesHome() }
                         }
                     }
                 }

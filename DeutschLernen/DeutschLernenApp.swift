@@ -32,6 +32,7 @@ struct MoreView: View {
     var body: some View {
         NavigationStack {
             List {
+                more("Gry", "gamecontroller", Color(hex: "FFD60A")) { GamesHome() }
                 more("Moje słówka", "text.book.closed", Theme.accent) { WordsView() }
                 more("Niemiecki na budowie", "hammer", Theme.orange) { BuildView() }
                 more("Słuchanie", "ear", Color(hex: "5AC8FA")) { ListenView() }
