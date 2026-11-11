@@ -4,6 +4,10 @@ import SwiftUI
 struct DeutschLernenApp: App {
     @StateObject private var store = LearningStore()
 
+    init() {
+        NewsRefresh.register()
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView().environmentObject(store)
@@ -12,6 +16,8 @@ struct DeutschLernenApp: App {
 }
 
 struct RootView: View {
+    @Environment(\.scenePhase) private var phase
+
     var body: some View {
         TabView {
             TodayView().tabItem { Label("Lekcje", systemImage: "book.closed") }
@@ -25,6 +31,12 @@ struct RootView: View {
         .tint(Color(hex: "8B6CF0"))
         .preferredColorScheme(.dark)
         .fontDesign(.rounded)
+        .onAppear { NewsClock.shared.start() }
+        .onChange(of: phase) { _, phase in
+            if phase == .active {
+                Task { await NewsClock.shared.kick(force: false) }
+            }
+        }
     }
 }
 

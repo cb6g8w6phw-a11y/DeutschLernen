@@ -1,6 +1,7 @@
+import BackgroundTasks
 import SwiftUI
 
-struct NewsItem: Identifiable, Hashable {
+struct NewsItem: Identifiable, Hashable, Codable {
     var id: String
     var title: String
     var body: String
@@ -70,6 +71,124 @@ enum NewsFeed {
             .replacingOccurrences(of: "\"", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
+}
+
+enum NewsDay {
+    private static let storeKey = "newsDayCache"
+
+    private struct Box: Codable {
+        var day: String
+        var items: [NewsItem]
+        var updated: Date
+    }
+
+    static func cached() -> [NewsItem] {
+        box()?.items ?? []
+    }
+
+    static func stamp() -> Date? {
+        guard box()?.day == LearningStore.dayKey() else { return nil }
+        return box()?.updated
+    }
+
+    static func refresh(force: Bool) async -> [NewsItem] {
+        let hour = Calendar.current.component(.hour, from: Date())
+        let daytime = (6..<22).contains(hour)
+        let today = cached()
+        let stale = stamp().map { Date().timeIntervalSince($0) > 30 * 60 } ?? true
+        guard force || today.isEmpty || (daytime && stale) else { return today }
+        do {
+            return merge(try await NewsFeed.load())
+        } catch {
+            return today
+        }
+    }
+
+    private static func merge(_ fresh: [NewsItem]) -> [NewsItem] {
+        var items = cached()
+        var seen = Set(items.map { Normalizer.clean($0.title) })
+        let added = fresh.filter { seen.insert(Normalizer.clean($0.title)).inserted }
+        items = added + items
+        items = Array(items.prefix(40))
+        let next = Box(day: LearningStore.dayKey(), items: items, updated: Date())
+        if let data = try? JSONEncoder().encode(next) {
+            UserDefaults.standard.set(data, forKey: storeKey)
+        }
+        return items
+    }
+
+    private static func box() -> Box? {
+        guard let data = UserDefaults.standard.data(forKey: storeKey),
+              let saved = try? JSONDecoder().decode(Box.self, from: data),
+              saved.day == LearningStore.dayKey() else { return nil }
+        return saved
+    }
+}
+
+enum NewsRefresh {
+    static let id = "com.example.DeutschLernen.news"
+
+    static func register() {
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: id, using: nil) { task in
+            guard let task = task as? BGAppRefreshTask else { return }
+            let work = Task {
+                _ = await NewsDay.refresh(force: false)
+                task.setTaskCompleted(success: true)
+                schedule()
+            }
+            task.expirationHandler = {
+                work.cancel()
+                task.setTaskCompleted(success: false)
+            }
+        }
+    }
+
+    static func schedule() {
+        let request = BGAppRefreshTaskRequest(identifier: id)
+        request.earliestBeginDate = Date(timeIntervalSinceNow: 30 * 60)
+        try? BGTaskScheduler.shared.submit(request)
+    }
+}
+
+@MainActor
+final class NewsClock: ObservableObject {
+    static let shared = NewsClock()
+    @Published var items: [NewsItem] = NewsDay.cached()
+    @Published var updated: Date? = NewsDay.stamp()
+    @Published var loading = false
+    private var timer: Timer?
+    private var started = false
+
+    var caption: String {
+        let time = updated.map { Self.clock.string(from: $0) } ?? "jeszcze dziś nie"
+        return "Sama bierze newsy z internetu od 6:00 do 22:00 i dokłada nowe z całego dnia. Ostatnio: \(time)."
+    }
+
+    func start() {
+        NewsRefresh.schedule()
+        if !started {
+            started = true
+            timer = Timer.scheduledTimer(withTimeInterval: 30 * 60, repeats: true) { _ in
+                Task { @MainActor in await NewsClock.shared.kick(force: false) }
+            }
+        }
+        Task { await kick(force: false) }
+    }
+
+    func kick(force: Bool) async {
+        loading = true
+        defer { loading = false }
+        items = await NewsDay.refresh(force: force)
+        updated = NewsDay.stamp()
+        NewsRefresh.schedule()
+    }
+
+    private static let clock: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pl_PL")
+        formatter.dateFormat = "HH:mm"
+        return formatter
+    }()
 }
 
 private final class RSSParser: NSObject, XMLParserDelegate {
@@ -144,26 +263,26 @@ private final class RSSParser: NSObject, XMLParserDelegate {
 }
 
 struct NewsListView: View {
-    @State private var items: [NewsItem] = []
-    @State private var loading = false
-    @State private var error = ""
+    @ObservedObject private var clock = NewsClock.shared
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Najnowsze wiadomości po niemiecku. Stuknij słowo, żeby dodać je do nauki.")
+                Text(clock.caption)
                     .font(.subheadline)
                     .foregroundStyle(Theme.text2)
-                if loading, items.isEmpty {
+                if clock.loading, clock.items.isEmpty {
                     ProgressView("Pobieram wiadomości…")
                         .tint(Theme.accent)
                         .foregroundStyle(Theme.text2)
                         .frame(maxWidth: .infinity, minHeight: 120)
                 }
-                if !error.isEmpty {
-                    Text(error).font(.footnote).foregroundStyle(Theme.bad)
+                if !clock.loading, clock.items.isEmpty {
+                    Text("Jeszcze nic nie doszło. Jak jest internet, aplikacja sama spróbuje ponownie.")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.bad)
                 }
-                ForEach(items) { item in
+                ForEach(clock.items) { item in
                     NavigationLink {
                         NewsArticleView(item: item)
                     } label: {
@@ -198,20 +317,7 @@ struct NewsListView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         .containerBackground(for: .navigation) { NightGlow() }
-        .refreshable { await reload() }
-        .task { if items.isEmpty { await reload() } }
-    }
-
-    private func reload() async {
-        loading = true
-        error = ""
-        defer { loading = false }
-        do {
-            items = try await NewsFeed.load()
-            if items.isEmpty { error = "Nie ma teraz nowych wiadomości. Pociągnij w dół i spróbuj jeszcze raz." }
-        } catch {
-            self.error = "Nie udało się pobrać wiadomości. Sprawdź internet."
-        }
+        .refreshable { await clock.kick(force: true) }
     }
 }
 
