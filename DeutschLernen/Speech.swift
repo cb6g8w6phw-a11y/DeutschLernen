@@ -110,11 +110,29 @@ final class Speaker: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     }
 
     private func picked(_ voice: String?) -> AVSpeechSynthesisVoice? {
-        let stored = voice ?? UserDefaults.standard.string(forKey: "deVoice")
-        if let stored, !stored.isEmpty, let chosen = AVSpeechSynthesisVoice(identifier: stored) {
+        let female = UserDefaults.standard.string(forKey: "elevenGender") == "female"
+        let german = Talk.germanVoices()
+        if let voice, !voice.isEmpty, let chosen = AVSpeechSynthesisVoice(identifier: voice), Self.fits(chosen, female) {
             return chosen
         }
-        return Talk.germanVoices().first ?? AVSpeechSynthesisVoice(language: "de-DE")
+        if let stored = UserDefaults.standard.string(forKey: "deVoice"),
+           !stored.isEmpty,
+           let chosen = AVSpeechSynthesisVoice(identifier: stored),
+           Self.fits(chosen, female) {
+            return chosen
+        }
+        return german.first { Self.fits($0, female) } ?? german.first ?? AVSpeechSynthesisVoice(language: "de-DE")
+    }
+
+    private static func fits(_ voice: AVSpeechSynthesisVoice, _ female: Bool) -> Bool {
+        switch voice.gender {
+        case .female: return female
+        case .male: return !female
+        default:
+            let name = voice.name.lowercased()
+            let girl = name.contains("anna") || name.contains("helena") || name.contains("petra") || name.contains("katja")
+            return female ? girl : !girl
+        }
     }
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
@@ -159,7 +177,11 @@ struct GenderButtons: View {
     }
 
     private func one(_ title: String, _ value: String) -> some View {
-        Button(title) { gender = value }
+        Button(title) {
+            gender = value
+            VoiceBox.shared.dropCache()
+            Talk.de(value == "female" ? "Hallo, ich bin Anna." : "Hallo, ich bin Markus.")
+        }
             .font(.caption.weight(.semibold))
             .padding(.horizontal, 12)
             .frame(minHeight: 36)
@@ -281,6 +303,16 @@ final class VoiceBox: NSObject, ObservableObject {
             return
         }
         if !lastText.isEmpty { speak(lastText, rate: 0, voice: nil) }
+    }
+
+    func dropCache() {
+        generation += 1
+        job?.cancel()
+        player?.stop()
+        player = nil
+        lastClip = nil
+        playing = false
+        Speaker.shared.speaking = false
     }
 
     func stop() {

@@ -221,6 +221,15 @@ struct QuizView: View {
                     if !sayNote.isEmpty {
                         Text(sayNote).font(.footnote).foregroundStyle(Theme.text2).multilineTextAlignment(.center)
                     }
+                    Button {
+                        skipSpeech(w)
+                    } label: {
+                        Text("Pomiń wymowę")
+                            .font(.body.weight(.semibold))
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Theme.text2)
                 }
             }
             if answered, !speakGate || saidWell {
@@ -457,6 +466,17 @@ struct QuizView: View {
             return
         }
         finish(ok, w)
+    }
+
+    private func skipSpeech(_ w: Word) {
+        guard speakGate else { return }
+        mic.stop()
+        speakGate = false
+        saidWell = true
+        score += 1
+        sayNote = ""
+        explain = "Wymowa pominięta. Zdanie zaliczone bez mówienia."
+        store.grade(w, .mid)
     }
 
     private func giveUp(_ w: Word) {
