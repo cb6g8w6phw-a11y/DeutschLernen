@@ -113,6 +113,7 @@ struct TodayView: View {
                         bigTile("Błędy", "To, co mylisz", "exclamationmark.bubble", Color(hex: "FF453A")) { MistakeReview() }
                         bigTile("Gry", "Pary, zdania, czas", "gamecontroller", Color(hex: "FFD60A")) { GamesHome() }
                         bigTile("Dyktando", "Usłysz i zapisz", "pencil.line", Color(hex: "5AC8FA")) { DictationView() }
+                        bigTile("Wiadomości", "Czytaj i dodawaj słowa", "newspaper", Theme.orange) { NewsListView() }
                     }
                     NavigationLink { DailyRunView() } label: {
                         Text("Pełna lekcja: zdania, powtórki, scena").primaryButton()

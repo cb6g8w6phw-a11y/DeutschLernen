@@ -88,6 +88,24 @@ struct PracticeView: View {
                         Spacer()
                         Button { streak = true } label: { streakPill }
                     }
+                    NavigationLink {
+                        NewsListView()
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "newspaper.fill")
+                                .font(.title2)
+                                .foregroundStyle(Theme.orange)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Wiadomości").font(.headline).foregroundStyle(Theme.text)
+                                Text("Świat po niemiecku, tłumaczenie i słówka").font(.caption).foregroundStyle(Theme.text2)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right").foregroundStyle(Theme.text2)
+                        }
+                        .padding(16)
+                        .themedCard(radius: 18)
+                    }
+                    .buttonStyle(.plain)
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
                         ForEach(PracticeData.modes, id: \.2) { mode in
                             NavigationLink {
