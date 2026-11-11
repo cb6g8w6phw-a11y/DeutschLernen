@@ -234,7 +234,6 @@ struct TutorView: View {
             .buttonStyle(.plain)
             .foregroundStyle(Theme.text2)
             PaceButtons()
-            GenderButtons()
         }
     }
 
@@ -256,7 +255,7 @@ struct TutorView: View {
                         if deVoice.isEmpty { Image(systemName: "checkmark") }
                     }
                 }
-                ForEach(Talk.germanVoices(), id: \.identifier) { voice in
+                ForEach(Talk.germanVoices().filter { !Talk.isGirl($0) }, id: \.identifier) { voice in
                     Button {
                         deVoice = voice.identifier
                         showVoices = false

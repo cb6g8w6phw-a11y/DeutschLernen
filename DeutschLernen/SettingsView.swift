@@ -44,9 +44,10 @@ struct SettingsView: View {
                         .autocorrectionDisabled()
                         .onChange(of: eleven) { _, value in Secret.save(value, "elevenKey") }
                     Link("Klucz głosu: elevenlabs.io", destination: URL(string: "https://elevenlabs.io/app/settings/api-keys")!)
-                    Text("Ten klucz tylko czyta odpowiedzi na głos. Rozmowę dalej pisze Gemini albo Groq. Głos jest niemiecki, wolny przy A1–A2.")
+                    Text("Ten klucz tylko czyta odpowiedzi na głos. Rozmowę dalej pisze Gemini albo Groq. Głos jest męski i niemiecki.")
                         .font(.footnote).foregroundStyle(.secondary)
-                    GenderButtons()
+                    Text("Jeśli nadal słyszysz kobietę, na iPhonie ściągnij głos Markus: Ustawienia, Dostępność, Treść mówiona, Głosy, Niemiecki.")
+                        .font(.footnote).foregroundStyle(.secondary)
                     PaceButtons()
                 } header: {
                     Text("ElevenLabs — głos")

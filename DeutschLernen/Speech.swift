@@ -29,30 +29,18 @@ enum Talk {
         }
     }
 
-    static func bestVoice(female: Bool) -> AVSpeechSynthesisVoice? {
-        let all = germanVoices()
-        func score(_ voice: AVSpeechSynthesisVoice) -> Int {
-            let blob = (voice.name + " " + voice.identifier).lowercased()
-            let girl = ["female", "anna", "helena", "petra", "katja", "shelley", "sandy", "flo", "grandma"].contains { blob.contains($0) }
-            let boy = ["male", "markus", "martin", "eddy", "reed", "rocko", "grandpa"].contains { blob.contains($0) }
-            if voice.gender == .female { return female ? 20 + rank(voice) : 0 }
-            if voice.gender == .male { return female ? 0 : 20 + rank(voice) }
-            if girl { return female ? 16 + rank(voice) : 0 }
-            if boy { return female ? 0 : 16 + rank(voice) }
-            return rank(voice)
-        }
-        return all.max { score($0) < score($1) }
+    static func isGirl(_ voice: AVSpeechSynthesisVoice) -> Bool {
+        if voice.gender == .female { return true }
+        if voice.gender == .male { return false }
+        let blob = (voice.name + " " + voice.identifier).lowercased()
+        return ["female", "anna", "helena", "petra", "katja", "shelley", "sandy", "flo", "grandma"].contains { blob.contains($0) }
     }
 
-    static func voiceCaption() -> String {
-        let female = UserDefaults.standard.string(forKey: "elevenGender") == "female"
-        let name = bestVoice(female: female)?.name ?? "domyślny"
-        let other = bestVoice(female: !female)?.identifier
-        let same = other == bestVoice(female: female)?.identifier
-        if same {
-            return female ? "Na telefonie jest jeden głos (\(name)). Żeński = wyższy ton." : "Na telefonie jest jeden głos (\(name)). Męski = niższy ton."
-        }
-        return female ? "Głos: \(name), wyższy." : "Głos: \(name), niższy."
+    static func maleVoice() -> AVSpeechSynthesisVoice? {
+        let males = germanVoices().filter { !isGirl($0) }
+        return males.max { rank($0) < rank($1) }
+            ?? AVSpeechSynthesisVoice(identifier: "com.apple.voice.compact.de-DE.Markus")
+            ?? AVSpeechSynthesisVoice(language: "de-DE")
     }
 
     static func qualityName(_ voice: AVSpeechSynthesisVoice) -> String {
@@ -113,8 +101,7 @@ final class Speaker: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         let utterance = AVSpeechUtterance(string: line)
         utterance.voice = picked(voiceId)
         utterance.rate = pace
-        let female = UserDefaults.standard.string(forKey: "elevenGender") == "female"
-        utterance.pitchMultiplier = female ? 1.35 : 0.72
+        utterance.pitchMultiplier = 0.95
         utterance.preUtteranceDelay = 0.05
         utterance.postUtteranceDelay = 0.45
         synth.speak(utterance)
@@ -137,8 +124,16 @@ final class Speaker: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     }
 
     private func picked(_ voice: String?) -> AVSpeechSynthesisVoice? {
-        let female = UserDefaults.standard.string(forKey: "elevenGender") == "female"
-        return Talk.bestVoice(female: female) ?? AVSpeechSynthesisVoice(language: "de-DE")
+        if let voice, !voice.isEmpty, let chosen = AVSpeechSynthesisVoice(identifier: voice), !Talk.isGirl(chosen) {
+            return chosen
+        }
+        if let stored = UserDefaults.standard.string(forKey: "deVoice"),
+           !stored.isEmpty,
+           let chosen = AVSpeechSynthesisVoice(identifier: stored),
+           !Talk.isGirl(chosen) {
+            return chosen
+        }
+        return Talk.maleVoice()
     }
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
@@ -168,36 +163,6 @@ struct PaceButtons: View {
             .padding(.horizontal, 12)
             .frame(minHeight: 36)
             .background(pace == value ? Theme.accent : Theme.card, in: Capsule())
-            .foregroundStyle(Theme.text)
-    }
-}
-
-struct GenderButtons: View {
-    @AppStorage("elevenGender") private var gender = "male"
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                one("Męski", "male")
-                one("Żeński", "female")
-            }
-            Text(Talk.voiceCaption())
-                .font(.caption2)
-                .foregroundStyle(Theme.text2)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private func one(_ title: String, _ value: String) -> some View {
-        Button(title) {
-            gender = value
-            VoiceBox.shared.dropCache()
-            Talk.de(value == "female" ? "Hallo, ich bin Anna." : "Hallo, ich bin Markus.")
-        }
-            .font(.caption.weight(.semibold))
-            .padding(.horizontal, 12)
-            .frame(minHeight: 36)
-            .background(gender == value ? Theme.accent : Theme.card, in: Capsule())
             .foregroundStyle(Theme.text)
     }
 }
@@ -251,7 +216,6 @@ final class VoiceBox: NSObject, ObservableObject {
     fileprivate var lastClip: Data?
 
     private let male = ["nPczCjzI2devNBz1zQrb", "onwK4e9ZLuTAKqWW03F9"]
-    private let female = ["Xb7hH8MSUJpSbSDYk0k2", "EXAVITQu4vr4xnSDxMaL"]
 
     func speak(_ text: String, rate: Float, voice: String?) {
         let clean = text.replacingOccurrences(of: "*", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -349,8 +313,7 @@ final class VoiceBox: NSObject, ObservableObject {
     }
 
     private func fetch(_ text: String, key: String) async throws -> Data {
-        let femaleVoice = UserDefaults.standard.string(forKey: "elevenGender") == "female"
-        let voices = femaleVoice ? female : male
+        let voices = male
         let slow = UserDefaults.standard.string(forKey: "talkPace") != "normal"
         var last = "ElevenLabs nie oddał nagrania."
         for voice in voices {

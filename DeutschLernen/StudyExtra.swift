@@ -209,7 +209,6 @@ struct DictationView: View {
             Button("Odtwórz dyktando") { Talk.de(lines[index].de) }
                 .primaryButton()
             PaceButtons()
-            GenderButtons()
             TextField("Zapisz, co usłyszałeś", text: $input, axis: .vertical)
                 .lineLimit(2...4)
                 .padding(12)
