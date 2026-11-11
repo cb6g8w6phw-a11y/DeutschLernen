@@ -29,6 +29,32 @@ enum Talk {
         }
     }
 
+    static func bestVoice(female: Bool) -> AVSpeechSynthesisVoice? {
+        let all = germanVoices()
+        func score(_ voice: AVSpeechSynthesisVoice) -> Int {
+            let blob = (voice.name + " " + voice.identifier).lowercased()
+            let girl = ["female", "anna", "helena", "petra", "katja", "shelley", "sandy", "flo", "grandma"].contains { blob.contains($0) }
+            let boy = ["male", "markus", "martin", "eddy", "reed", "rocko", "grandpa"].contains { blob.contains($0) }
+            if voice.gender == .female { return female ? 20 + rank(voice) : 0 }
+            if voice.gender == .male { return female ? 0 : 20 + rank(voice) }
+            if girl { return female ? 16 + rank(voice) : 0 }
+            if boy { return female ? 0 : 16 + rank(voice) }
+            return rank(voice)
+        }
+        return all.max { score($0) < score($1) }
+    }
+
+    static func voiceCaption() -> String {
+        let female = UserDefaults.standard.string(forKey: "elevenGender") == "female"
+        let name = bestVoice(female: female)?.name ?? "domyślny"
+        let other = bestVoice(female: !female)?.identifier
+        let same = other == bestVoice(female: female)?.identifier
+        if same {
+            return female ? "Na telefonie jest jeden głos (\(name)). Żeński = wyższy ton." : "Na telefonie jest jeden głos (\(name)). Męski = niższy ton."
+        }
+        return female ? "Głos: \(name), wyższy." : "Głos: \(name), niższy."
+    }
+
     static func qualityName(_ voice: AVSpeechSynthesisVoice) -> String {
         switch voice.quality {
         case .premium: return "najlepszy"
@@ -87,7 +113,8 @@ final class Speaker: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         let utterance = AVSpeechUtterance(string: line)
         utterance.voice = picked(voiceId)
         utterance.rate = pace
-        utterance.pitchMultiplier = 1
+        let female = UserDefaults.standard.string(forKey: "elevenGender") == "female"
+        utterance.pitchMultiplier = female ? 1.35 : 0.72
         utterance.preUtteranceDelay = 0.05
         utterance.postUtteranceDelay = 0.45
         synth.speak(utterance)
@@ -111,28 +138,7 @@ final class Speaker: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
 
     private func picked(_ voice: String?) -> AVSpeechSynthesisVoice? {
         let female = UserDefaults.standard.string(forKey: "elevenGender") == "female"
-        let german = Talk.germanVoices()
-        if let voice, !voice.isEmpty, let chosen = AVSpeechSynthesisVoice(identifier: voice), Self.fits(chosen, female) {
-            return chosen
-        }
-        if let stored = UserDefaults.standard.string(forKey: "deVoice"),
-           !stored.isEmpty,
-           let chosen = AVSpeechSynthesisVoice(identifier: stored),
-           Self.fits(chosen, female) {
-            return chosen
-        }
-        return german.first { Self.fits($0, female) } ?? german.first ?? AVSpeechSynthesisVoice(language: "de-DE")
-    }
-
-    private static func fits(_ voice: AVSpeechSynthesisVoice, _ female: Bool) -> Bool {
-        switch voice.gender {
-        case .female: return female
-        case .male: return !female
-        default:
-            let name = voice.name.lowercased()
-            let girl = name.contains("anna") || name.contains("helena") || name.contains("petra") || name.contains("katja")
-            return female ? girl : !girl
-        }
+        return Talk.bestVoice(female: female) ?? AVSpeechSynthesisVoice(language: "de-DE")
     }
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
@@ -170,9 +176,15 @@ struct GenderButtons: View {
     @AppStorage("elevenGender") private var gender = "male"
 
     var body: some View {
-        HStack(spacing: 8) {
-            one("Męski", "male")
-            one("Żeński", "female")
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                one("Męski", "male")
+                one("Żeński", "female")
+            }
+            Text(Talk.voiceCaption())
+                .font(.caption2)
+                .foregroundStyle(Theme.text2)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
