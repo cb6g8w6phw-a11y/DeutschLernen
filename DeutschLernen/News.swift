@@ -87,7 +87,7 @@ enum NewsDay {
     }
 
     static func stamp() -> Date? {
-        guard box()?.day == LearningStore.dayKey() else { return nil }
+        guard box()?.day == NewsDay.today() else { return nil }
         return box()?.updated
     }
 
@@ -110,17 +110,26 @@ enum NewsDay {
         let added = fresh.filter { seen.insert(Normalizer.clean($0.title)).inserted }
         items = added + items
         items = Array(items.prefix(40))
-        let next = Box(day: LearningStore.dayKey(), items: items, updated: Date())
+        let next = Box(day: today(), items: items, updated: Date())
         if let data = try? JSONEncoder().encode(next) {
             UserDefaults.standard.set(data, forKey: storeKey)
         }
         return items
     }
 
+    private static func today() -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = .current
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: Date())
+    }
+
     private static func box() -> Box? {
         guard let data = UserDefaults.standard.data(forKey: storeKey),
               let saved = try? JSONDecoder().decode(Box.self, from: data),
-              saved.day == LearningStore.dayKey() else { return nil }
+              saved.day == today() else { return nil }
         return saved
     }
 }
