@@ -493,8 +493,7 @@ struct TutorView: View {
     }
 
     private func speech(_ t: Turn) -> String {
-        if t.say.isEmpty { return t.german }
-        return "\(t.german) Powiedz: \(t.say)"
+        t.german
     }
 
     private func flushMic() {
