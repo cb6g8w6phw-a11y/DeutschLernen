@@ -288,8 +288,8 @@ struct NewsArticleView: View {
         .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         .containerBackground(for: .navigation) { NightGlow() }
         .task { await translate() }
-        .sheet(item: $pickedWord) { word in
-            NewsWordSheet(word: word, sentence: sentence(for: word))
+        .sheet(item: pickedWord) { word in
+            NewsWordSheet(word: word.text, sentence: sentence(for: word.text))
                 .presentationDetents([.medium])
         }
     }
