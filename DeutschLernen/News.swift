@@ -118,10 +118,27 @@ private final class RSSParser: NSObject, XMLParserDelegate {
     }
 
     private static func plain(_ raw: String) -> String {
-        var text = raw.replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
-        let entities = ["&": "&", """: "\"", "'": "'", "&#039;": "'", "<": "<", ">": ">", "&nbsp;": " ", "&#8211;": "–", "&#8212;": "—"]
-        for (from, to) in entities { text = text.replacingOccurrences(of: from, with: to) }
-        text = text.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+        var text = raw
+        if let tags = try? NSRegularExpression(pattern: "<[^>]+>") {
+            let range = NSRange(text.startIndex..., in: text)
+            text = tags.stringByReplacingMatches(in: text, range: range, withTemplate: " ")
+        }
+        let pairs = [
+            ("&" + "amp;", "&"),
+            ("&" + "quot;", "\""),
+            ("&" + "apos;", "'"),
+            ("&" + "#039;", "'"),
+            ("&" + "lt;", "<"),
+            ("&" + "gt;", ">"),
+            ("&" + "nbsp;", " "),
+            ("&" + "#8211;", "–"),
+            ("&" + "#8212;", "—")
+        ]
+        for (from, to) in pairs { text = text.replacingOccurrences(of: from, with: to) }
+        if let spaces = try? NSRegularExpression(pattern: "\\s+") {
+            let range = NSRange(text.startIndex..., in: text)
+            text = spaces.stringByReplacingMatches(in: text, range: range, withTemplate: " ")
+        }
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
