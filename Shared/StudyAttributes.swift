@@ -36,7 +36,11 @@ enum DayLines {
     ]
 
     static func today() -> (String, String) {
-        let day = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1
+        on(Date())
+    }
+
+    static func on(_ date: Date) -> (String, String) {
+        let day = Calendar.current.ordinality(of: .day, in: .year, for: date) ?? 1
         return all[day % all.count]
     }
 }

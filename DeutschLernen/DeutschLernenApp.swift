@@ -18,6 +18,8 @@ struct DeutschLernenApp: App {
 struct RootView: View {
     @Environment(\.scenePhase) private var phase
     @EnvironmentObject var store: LearningStore
+    @State private var askNotify = false
+    @AppStorage("notifyExplained") private var notifyExplained = false
 
     var body: some View {
         TabView {
@@ -35,12 +37,29 @@ struct RootView: View {
         .onAppear {
             NewsClock.shared.start()
             Island.rest(reviews: store.reviewsToday)
+            Ping.plan(reviews: store.reviewsToday)
+            Task {
+                let current = await Ping.status()
+                if current == .notDetermined, !notifyExplained { askNotify = true }
+            }
         }
         .onChange(of: phase) { _, phase in
             if phase == .active {
                 Task { await NewsClock.shared.kick(force: false) }
                 Island.rest(reviews: store.reviewsToday)
+                Ping.plan(reviews: store.reviewsToday)
             }
+        }
+        .alert("Zezwól na powiadomienia", isPresented: $askNotify) {
+            Button("Zezwól") {
+                notifyExplained = true
+                Task {
+                    if await Ping.allow() { Ping.plan(reviews: store.reviewsToday) }
+                }
+            }
+            Button("Nie teraz", role: .cancel) { notifyExplained = true }
+        } message: {
+            Text("Rano przyjdzie zdanie po niemiecku, a o 18:00 informacja, ile słówek zostało. W Profilu, w ustawieniach, wybierzesz, co ma być na wyspie.")
         }
     }
 }

@@ -12,9 +12,15 @@ struct SettingsView: View {
     @AppStorage("profileCar") private var car = ""
     @AppStorage("dailyGoal") private var dailyGoal = 20
     @AppStorage("sessionSize") private var sessionSize = 20
+    @AppStorage("islandSentence") private var islandSentence = true
+    @AppStorage("islandEvening") private var islandEvening = true
+    @AppStorage("islandLesson") private var islandLesson = true
+    @AppStorage("islandSpeak") private var islandSpeak = true
+    @AppStorage("islandVoice") private var islandVoice = true
     @State private var testing = false
     @State private var testNote = ""
     @State private var confirmReset = false
+    @State private var notifyNote = "Sprawdzam zgodę…"
 
     var body: some View {
         NavigationStack {
@@ -32,6 +38,30 @@ struct SettingsView: View {
                     Stepper("Sesja: \(sessionSize) słówek", value: $sessionSize, in: 5...200, step: 5)
                     Text("Po celu możesz ćwiczyć dalej. Nie ma blokady.")
                         .font(.footnote).foregroundStyle(.secondary)
+                }
+                Section {
+                    Text("iPhone musi zezwolić na powiadomienia. Rano przyjdzie zdanie, o 18:00 informacja ile słówek zostało. Bez zgody przypomnienia nie wyjdą.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                    Button {
+                        Task { await askNotify() }
+                    } label: {
+                        Text("Zezwól na powiadomienia")
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                    }
+                    Text(notifyNote).font(.footnote).foregroundStyle(.secondary)
+                } header: {
+                    Text("Powiadomienia")
+                }
+                Section {
+                    Toggle("Zdanie na dziś", isOn: $islandSentence)
+                    Toggle("Wieczorem: zostało słówek", isOn: $islandEvening)
+                    Toggle("Nauka i słuchanie", isOn: $islandLesson)
+                    Toggle("Wymowa", isOn: $islandSpeak)
+                    Toggle("Głosówka", isOn: $islandVoice)
+                    Text("Wyłączone nie wchodzi na Dynamic Island. Zdanie i wieczór idą też jako powiadomienie, jeśli zezwolisz.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                } header: {
+                    Text("Co na wyspie")
                 }
                 Section("Wygląd") {
                     ThemePicker()
@@ -113,7 +143,39 @@ struct SettingsView: View {
                 groq = Secret.load("groqKey")
                 gemini = Secret.load("geminiKey")
                 eleven = Secret.load("elevenKey")
+                Task { await refreshNotify() }
             }
+            .onChange(of: islandSentence) { _, _ in applyIsland() }
+            .onChange(of: islandEvening) { _, _ in applyIsland() }
+            .onChange(of: islandLesson) { _, _ in applyIsland() }
+            .onChange(of: islandSpeak) { _, _ in applyIsland() }
+            .onChange(of: islandVoice) { _, _ in applyIsland() }
+            .onChange(of: dailyGoal) { _, _ in applyIsland() }
+        }
+    }
+
+    private func applyIsland() {
+        Island.sync(reviews: store.reviewsToday)
+        Ping.plan(reviews: store.reviewsToday)
+    }
+
+    private func askNotify() async {
+        let ok = await Ping.allow()
+        if ok { Ping.plan(reviews: store.reviewsToday) }
+        await refreshNotify()
+    }
+
+    private func refreshNotify() async {
+        let current = await Ping.status()
+        switch current {
+        case .authorized, .provisional, .ephemeral:
+            notifyNote = "Zgoda jest. Powiadomienia wyjdą według przełączników niżej."
+        case .denied:
+            notifyNote = "Zgoda odrzucona. Stuknij przycisk, otworzą się ustawienia iPhone’a."
+        case .notDetermined:
+            notifyNote = "Jeszcze niepytany. Stuknij przycisk, iPhone pokaże pytanie o zgodę."
+        @unknown default:
+            notifyNote = "Nie udało się sprawdzić zgody."
         }
     }
 
