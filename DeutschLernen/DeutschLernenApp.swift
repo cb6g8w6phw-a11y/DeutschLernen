@@ -17,6 +17,7 @@ struct DeutschLernenApp: App {
 
 struct RootView: View {
     @Environment(\.scenePhase) private var phase
+    @EnvironmentObject var store: LearningStore
 
     var body: some View {
         TabView {
@@ -31,10 +32,14 @@ struct RootView: View {
         .tint(Color(hex: "8B6CF0"))
         .preferredColorScheme(.dark)
         .fontDesign(.rounded)
-        .onAppear { NewsClock.shared.start() }
+        .onAppear {
+            NewsClock.shared.start()
+            Island.rest(reviews: store.reviewsToday)
+        }
         .onChange(of: phase) { _, phase in
             if phase == .active {
                 Task { await NewsClock.shared.kick(force: false) }
+                Island.rest(reviews: store.reviewsToday)
             }
         }
     }

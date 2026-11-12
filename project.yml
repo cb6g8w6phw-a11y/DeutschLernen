@@ -10,6 +10,7 @@ targets:
       - path: DeutschLernen
         excludes:
           - Info.plist
+      - path: Shared
     dependencies:
       - target: DeutschWidget
         embed: true
@@ -28,8 +29,10 @@ targets:
         INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: "Rozpoznawanie mowy zamienia to, co mówisz, na tekst po niemiecku."
         INFOPLIST_KEY_NSCameraUsageDescription: "Aparat skanuje niemieckie listy, instrukcje i tabliczki."
         INFOPLIST_KEY_NSPhotoLibraryUsageDescription: "Zdjęcie z galerii można przetłumaczyć i dodać do powtórek."
-        MARKETING_VERSION: "5.7"
-        CURRENT_PROJECT_VERSION: "46"
+        INFOPLIST_KEY_NSSupportsLiveActivities: YES
+        INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates: YES
+        MARKETING_VERSION: "5.8"
+        CURRENT_PROJECT_VERSION: "47"
         SWIFT_VERSION: "5.0"
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_FILE: DeutschLernen/Info.plist
@@ -41,14 +44,15 @@ targets:
       - path: Widget
         excludes:
           - Info.plist
+      - path: Shared
     info:
       path: Widget/Info.plist
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.DeutschLernen.widget
         GENERATE_INFOPLIST_FILE: NO
-        MARKETING_VERSION: "5.7"
-        CURRENT_PROJECT_VERSION: "46"
+        MARKETING_VERSION: "5.8"
+        CURRENT_PROJECT_VERSION: "47"
         SWIFT_VERSION: "5.0"
         SKIP_INSTALL: YES
         TARGETED_DEVICE_FAMILY: "1"

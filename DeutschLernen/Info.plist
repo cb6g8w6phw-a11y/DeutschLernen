@@ -10,5 +10,9 @@
 	<array>
 		<string>com.example.DeutschLernen.news</string>
 	</array>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
+	<true/>
 </dict>
 </plist>

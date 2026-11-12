@@ -1,16 +1,6 @@
 import SwiftUI
 import WidgetKit
 
-private let lines: [(String, String)] = [
-    ("Ich fange morgen um sechs an.", "Jutro zaczynam o szóstej."),
-    ("Uns fehlt Material.", "Brakuje nam materiału."),
-    ("Pass auf, hier ist ein Kabel.", "Uważaj, tu jest kabel."),
-    ("Ich bin krank und komme heute nicht.", "Jestem chory i dziś nie przyjdę."),
-    ("Wo soll ich das hinstellen?", "Gdzie mam to postawić?"),
-    ("Die Lieferung kommt erst um zehn.", "Dostawa przyjedzie dopiero o dziesiątej."),
-    ("Kannst du den Transporter alleine beladen?", "Czy możesz sam załadować busa?")
-]
-
 struct ZdanieEntry: TimelineEntry {
     let date: Date
     let de: String
@@ -19,7 +9,7 @@ struct ZdanieEntry: TimelineEntry {
 
 struct ZdanieProvider: TimelineProvider {
     func placeholder(in context: Context) -> ZdanieEntry {
-        ZdanieEntry(date: Date(), de: lines[0].0, pl: lines[0].1)
+        ZdanieEntry(date: Date(), de: DayLines.all[0].0, pl: DayLines.all[0].1)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (ZdanieEntry) -> Void) {
@@ -32,8 +22,7 @@ struct ZdanieProvider: TimelineProvider {
     }
 
     private func entry() -> ZdanieEntry {
-        let day = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1
-        let line = lines[day % lines.count]
+        let line = DayLines.today()
         return ZdanieEntry(date: Date(), de: line.0, pl: line.1)
     }
 }
@@ -95,5 +84,8 @@ struct DeutschWidget: Widget {
 
 @main
 struct DeutschWidgetBundle: WidgetBundle {
-    var body: some Widget { DeutschWidget() }
+    var body: some Widget {
+        DeutschWidget()
+        StudyIslandWidget()
+    }
 }

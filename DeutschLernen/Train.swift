@@ -435,8 +435,12 @@ struct ListenView: View {
             voices = AVSpeechSynthesisVoice.speechVoices()
                 .filter { $0.language.hasPrefix("de") }
                 .map { ($0.identifier, $0.name) }
+            showIsland()
         }
-        .onDisappear { Talk.stop() }
+        .onDisappear {
+            Talk.stop()
+            Island.finish(reviews: store.reviewsToday)
+        }
     }
 
     private func loadDeck(forceAll: Bool) {
@@ -448,6 +452,7 @@ struct ListenView: View {
         picked = nil
         showPL = false
         saved = false
+        showIsland()
     }
 
     private func choose(_ i: Int, _ item: CoachData.ListenQ) {
@@ -466,6 +471,15 @@ struct ListenView: View {
         showPL = false
         saved = false
         index += 1
+        showIsland()
+    }
+
+    private func showIsland() {
+        guard let item, !finished else {
+            Island.finish(reviews: store.reviewsToday)
+            return
+        }
+        Island.lesson(title: "Słuchanie", de: item.de, pl: item.pl, done: index, total: max(deck.count, 1))
     }
 
     private func fill(_ i: Int, _ item: CoachData.ListenQ) -> Color {
@@ -482,6 +496,7 @@ struct PronounceView: View {
     @State private var deck: [CoachData.Prompt] = []
     @State private var index = 0
     @State private var parts: [(word: String, ok: Bool)] = []
+    @State private var alive = true
 
     private var item: CoachData.Prompt {
         deck.indices.contains(index) ? deck[index] : CoachData.Prompt(pl: "Gotowe na dziś.", de: "Das war alles.")
@@ -527,6 +542,7 @@ struct PronounceView: View {
                     } else {
                         index += 1
                     }
+                    showSpeak(listening: false)
                 }
                 .buttonStyle(.glass)
             }
@@ -539,15 +555,40 @@ struct PronounceView: View {
         .containerBackground(for: .navigation) { NightGlow() }
         .onAppear {
             if deck.isEmpty { deck = DailyPack.say.shuffled() }
+            showSpeak(listening: false)
         }
         .onChange(of: mic.listening) { was, now in
+            guard alive else { return }
+            if now { showSpeak(listening: true) }
             guard was, !now else { return }
             let heard = mic.text.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !heard.isEmpty else { return }
+            guard !heard.isEmpty else {
+                showSpeak(listening: false)
+                return
+            }
             parts = Heard.parts(target: item.de, heard: heard)
             store.noteSaid()
+            showSpeak(listening: false)
         }
-        .onDisappear { mic.stop(); Talk.stop() }
+        .onDisappear {
+            alive = false
+            mic.stop()
+            Talk.stop()
+            Island.finish(reviews: store.reviewsToday)
+        }
+    }
+
+    private func showSpeak(listening: Bool) {
+        let bad = parts.filter { !$0.ok }
+        Island.speak(
+            de: item.de,
+            pl: item.pl,
+            done: index,
+            total: max(deck.count, 1),
+            ok: !parts.isEmpty && bad.isEmpty,
+            marked: !parts.isEmpty,
+            listening: listening
+        )
     }
 }
 

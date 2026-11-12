@@ -48,7 +48,10 @@ struct QuizView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         .containerBackground(for: .navigation) { NightGlow() }
-        .onDisappear { mic.stop() }
+        .onDisappear {
+            mic.stop()
+            Island.finish(reviews: store.reviewsToday)
+        }
         .onChange(of: mic.listening) { was, now in
             guard was, !now, let w = current else { return }
             let heard = mic.text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -387,7 +390,17 @@ struct QuizView: View {
         saidWell = false
         sayNote = ""
         explain = ""
-        guard let w = current else { return }
+        guard let w = current else {
+            Island.finish(reviews: store.reviewsToday)
+            return
+        }
+        Island.lesson(
+            title: "Nauka",
+            de: drill == "zdania" ? w.ex : w.de,
+            pl: drill == "zdania" ? w.exPl : w.pl,
+            done: index,
+            total: max(queue.count, 1)
+        )
         typing = drill == "slowa" && (store.stats[w.de]?.box ?? 0) >= 2
         flip = drill == "zdania" && (index + 1) % 4 == 0
         deToPl = flip ? true : Bool.random()

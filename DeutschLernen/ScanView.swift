@@ -132,6 +132,8 @@ struct CaptureView: View {
     @State private var polish = ""
     @State private var german = ""
     @State private var note = ""
+    @State private var voiceSeconds = 0
+    @State private var voiceTick: Timer?
     private let modes = ["Tekst", "Zdjęcie", "Głos"]
 
     var body: some View {
@@ -203,6 +205,28 @@ struct CaptureView: View {
         .micPrompt(mic)
         .onChange(of: mic.text) { _, value in
             if mode == "Głos", !value.isEmpty { draft = value }
+        }
+        .onChange(of: mic.listening) { _, on in
+            voiceTick?.invalidate()
+            voiceTick = nil
+            if on {
+                voiceSeconds = 0
+                Island.voice(seconds: 0, on: true)
+                voiceTick = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+                    Task { @MainActor in
+                        guard mic.listening else { return }
+                        voiceSeconds += 1
+                        Island.voice(seconds: voiceSeconds, on: true)
+                    }
+                }
+            } else {
+                Island.finish(reviews: store.reviewsToday)
+            }
+        }
+        .onDisappear {
+            voiceTick?.invalidate()
+            if mic.listening { mic.stop() }
+            Island.finish(reviews: store.reviewsToday)
         }
         .onChange(of: photo) { _, item in
             guard let item else { return }
