@@ -60,6 +60,37 @@ enum NewsFeed {
         return fallback
     }
 
+    static func brief(_ german: String) async -> String {
+        let source = String(german.prefix(4000))
+        do {
+            let reply = try await Gemini.send(
+                messages: [GeminiMessage(role: "user", text: source)],
+                system: "Wyciągnij tylko najważniejsze z tego newsa. Napisz po niemiecku, prosto, poziom A2. Dokładnie 4 krótkie zdania. Same fakty. Bez tytułu, bez listy i bez komentarza."
+            )
+            let clean = reply
+                .replacingOccurrences(of: "*", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if clean.count > 40, clean.count < 800 { return clean }
+        } catch {}
+        return short(german)
+    }
+
+    static func short(_ text: String) -> String {
+        var sentences: [String] = []
+        var current = ""
+        for ch in text {
+            current.append(ch)
+            if ".!?".contains(ch) {
+                let bit = current.trimmingCharacters(in: .whitespacesAndNewlines)
+                if bit.count > 25 { sentences.append(bit) }
+                current = ""
+                if sentences.count == 3 { break }
+            }
+        }
+        if sentences.isEmpty { return String(text.prefix(280)) }
+        return sentences.joined(separator: " ")
+    }
+
     private static func articleBody(_ html: String) -> String? {
         guard let marker = html.range(of: "\"articleBody\"") else { return nil }
         let tail = html[marker.upperBound...]
@@ -110,7 +141,7 @@ enum NewsFeed {
     static func polish(_ german: String) async throws -> (title: String, text: String) {
         let reply = try await Gemini.send(
             messages: [GeminiMessage(role: "user", text: german)],
-            system: "Przetłumacz cały niemiecki news na prosty polski. Nie skracaj. Zostaw wszystkie zdania. Odpowiedz dokładnie tak, dwie części:\nTYTUŁ: krótki tytuł\nTEKST:\npełny przekład, kilka akapitów."
+            system: "Przetłumacz ten krótki news na prosty polski. Zostaw wszystkie podane zdania, nic nie dopisuj. Odpowiedz tak:\nTYTUŁ: krótki tytuł\nTEKST:\npełny przekład tych zdań."
         )
         var title = ""
         var lines: [String] = []
@@ -399,10 +430,10 @@ struct NewsListView: View {
                                     .foregroundStyle(Theme.text)
                                     .multilineTextAlignment(.leading)
                                 if !item.body.isEmpty {
-                                    Text(item.body)
+                                    Text(NewsFeed.short(item.body))
                                         .font(.subheadline)
                                         .foregroundStyle(Theme.text2)
-                                        .lineLimit(3)
+                                        .lineLimit(2)
                                         .multilineTextAlignment(.leading)
                                 }
                             }
@@ -450,12 +481,12 @@ struct NewsArticleView: View {
                 Text(item.title)
                     .font(.title.bold())
                     .foregroundStyle(Theme.text)
-                Text("Cała wiadomość. Stuknij słowo, żeby dodać je do nauki.")
+                Text("Najważniejsze. Stuknij słowo, żeby dodać je do nauki.")
                     .font(.caption)
                     .foregroundStyle(Theme.text2)
                 VStack(alignment: .leading, spacing: 14) {
                     if loadingText, full.isEmpty {
-                        ProgressView("Pobieram całą wiadomość…")
+                        ProgressView("Wybieram najważniejsze…")
                             .tint(Theme.accent)
                             .frame(maxWidth: .infinity, minHeight: 80)
                     }
@@ -487,7 +518,7 @@ struct NewsArticleView: View {
                     Text("Po polsku")
                         .font(.headline)
                     if translating {
-                        ProgressView("Tłumaczę całość…").tint(Theme.accent)
+                        ProgressView("Tłumaczę…").tint(Theme.accent)
                     } else if !error.isEmpty {
                         Text(error).font(.footnote).foregroundStyle(Theme.bad)
                         Button("Tłumacz jeszcze raz") { Task { await translate() } }
@@ -543,7 +574,9 @@ struct NewsArticleView: View {
     }
 
     private func open() async {
-        full = await NewsFeed.fullText(link: item.link, fallback: item.body)
+        let raw = await NewsFeed.fullText(link: item.link, fallback: item.body)
+        let source = raw.isEmpty ? item.title : "\(item.title)\n\(raw)"
+        full = await NewsFeed.brief(source)
         loadingText = false
         await translate()
     }
