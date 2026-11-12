@@ -26,6 +26,7 @@ jobs:
       - name: Package IPA
         run: |
           mkdir Payload
+          rm -rf build/Build/Products/Release-iphoneos/DeutschLernen.app/PlugIns
           cp -R build/Build/Products/Release-iphoneos/DeutschLernen.app Payload/
           zip -qr DeutschLernen.ipa Payload
 
