@@ -45,10 +45,72 @@ enum NewsFeed {
         return parser.items
     }
 
+    static func fullText(link: String, fallback: String) async -> String {
+        guard let url = URL(string: link), url.scheme == "https" else { return fallback }
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 20
+        request.setValue("Mozilla/5.0", forHTTPHeaderField: "User-Agent")
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode),
+              let html = String(data: data, encoding: .utf8) else { return fallback }
+        if let body = articleBody(html), body.count > 180 { return body }
+        let parts = paragraphs(html)
+        let joined = parts.joined(separator: "\n\n")
+        if joined.count > max(fallback.count, 180) { return joined }
+        return fallback
+    }
+
+    private static func articleBody(_ html: String) -> String? {
+        guard let marker = html.range(of: "\"articleBody\"") else { return nil }
+        let tail = html[marker.upperBound...]
+        guard let colon = tail.firstIndex(of: ":") else { return nil }
+        var rest = tail[tail.index(after: colon)...].drop(while: \.isWhitespace)
+        guard rest.first == "\"" else { return nil }
+        rest.removeFirst()
+        var out = ""
+        var escaped = false
+        for ch in rest {
+            if escaped {
+                if ch == "n" { out.append("\n") }
+                else if ch == "\"" { out.append("\"") }
+                else if ch != "t" { out.append(ch) }
+                escaped = false
+                continue
+            }
+            if ch == "\\" { escaped = true; continue }
+            if ch == "\"" { break }
+            out.append(ch)
+        }
+        let clean = RSSParser.plain(out)
+        return clean.count > 80 ? clean : nil
+    }
+
+    private static func paragraphs(_ html: String) -> [String] {
+        var source = html
+        if let start = source.range(of: "<article", options: .caseInsensitive),
+           let end = source.range(of: "</article>", options: .caseInsensitive, range: start.upperBound..<source.endIndex) {
+            source = String(source[start.lowerBound..<end.upperBound])
+        }
+        if let tags = try? NSRegularExpression(pattern: "<(script|style)[\\s\\S]*?</\\1>", options: .caseInsensitive) {
+            let range = NSRange(source.startIndex..., in: source)
+            source = tags.stringByReplacingMatches(in: source, range: range, withTemplate: " ")
+        }
+        guard let regex = try? NSRegularExpression(pattern: "<p[^>]*>([\\s\\S]*?)</p>", options: .caseInsensitive) else { return [] }
+        let ns = source as NSString
+        return regex.matches(in: source, range: NSRange(location: 0, length: ns.length)).compactMap { match in
+            guard match.numberOfRanges > 1 else { return nil }
+            let text = RSSParser.plain(ns.substring(with: match.range(at: 1)))
+            guard text.count > 40 else { return nil }
+            let low = text.lowercased()
+            if low.contains("cookie") || low.contains("newsletter") || low.contains("datenschutz") { return nil }
+            return text
+        }
+    }
+
     static func polish(_ german: String) async throws -> (title: String, text: String) {
         let reply = try await Gemini.send(
             messages: [GeminiMessage(role: "user", text: german)],
-            system: "Przetłumacz ten niemiecki news na prosty polski, tak żeby Polak na poziomie A2 zrozumiał. Odpowiedz dokładnie w dwóch akapitach. Pierwsza linia zaczyna się od TYTUŁ: a druga od TEKST:. Bez komentarza."
+            system: "Przetłumacz cały niemiecki news na prosty polski. Nie skracaj do jednego zdania. Pierwsza linia zaczyna się od TYTUŁ: a zaraz potem TEKST: i cały przekład."
         )
         var title = ""
         var text = ""
@@ -245,7 +307,7 @@ private final class RSSParser: NSObject, XMLParserDelegate {
         element = ""
     }
 
-    private static func plain(_ raw: String) -> String {
+    static func plain(_ raw: String) -> String {
         var text = raw
         if let tags = try? NSRegularExpression(pattern: "<[^>]+>") {
             let range = NSRange(text.startIndex..., in: text)
@@ -295,25 +357,39 @@ struct NewsListView: View {
                     NavigationLink {
                         NewsArticleView(item: item)
                     } label: {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(item.source.uppercased())
-                                .font(.caption.weight(.bold))
-                                .foregroundStyle(Theme.accent)
-                            Text(item.title)
-                                .font(.headline)
-                                .foregroundStyle(Theme.text)
-                                .multilineTextAlignment(.leading)
-                            if !item.body.isEmpty {
-                                Text(item.body)
-                                    .font(.subheadline)
-                                    .foregroundStyle(Theme.text2)
-                                    .lineLimit(3)
+                        HStack(alignment: .top, spacing: 12) {
+                            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                .fill(Theme.gradient)
+                                .frame(width: 4)
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text(item.source.uppercased())
+                                        .font(.caption2.weight(.bold))
+                                        .foregroundStyle(Theme.accent)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Theme.accent.opacity(0.18), in: Capsule())
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundStyle(Theme.text2)
+                                }
+                                Text(item.title)
+                                    .font(.title3.weight(.bold))
+                                    .foregroundStyle(Theme.text)
                                     .multilineTextAlignment(.leading)
+                                if !item.body.isEmpty {
+                                    Text(item.body)
+                                        .font(.subheadline)
+                                        .foregroundStyle(Theme.text2)
+                                        .lineLimit(3)
+                                        .multilineTextAlignment(.leading)
+                                }
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(16)
-                        .themedCard(radius: 18)
+                        .themedCard(radius: 22)
                     }
                     .buttonStyle(.plain)
                 }
@@ -334,39 +410,54 @@ struct NewsArticleView: View {
     let item: NewsItem
     @State private var polishTitle = ""
     @State private var polishText = ""
+    @State private var full = ""
+    @State private var loadingText = true
     @State private var translating = false
     @State private var error = ""
     @State private var picked: String?
 
-    private var german: String { item.body.isEmpty ? item.title : item.body }
+    private var german: String { full.isEmpty ? (item.body.isEmpty ? item.title : item.body) : full }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text(item.source)
-                    .font(.caption.weight(.bold))
+                Text(item.source.uppercased())
+                    .font(.caption2.weight(.bold))
                     .foregroundStyle(Theme.accent)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Theme.accent.opacity(0.18), in: Capsule())
                 Text(item.title)
-                    .font(.title2.bold())
+                    .font(.title.bold())
                     .foregroundStyle(Theme.text)
-                Text("Stuknij słowo, żeby dodać je do nauki.")
+                Text("Cała wiadomość. Stuknij słowo, żeby dodać je do nauki.")
                     .font(.caption)
                     .foregroundStyle(Theme.text2)
-                FlowLayout(spacing: 8) {
-                    ForEach(Array(tokens.enumerated()), id: \.offset) { _, token in
-                        Button { picked = token } label: {
-                            Text(token)
-                                .font(.body.weight(.semibold))
-                                .foregroundStyle(Theme.text)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background(Theme.card2, in: Capsule())
+                VStack(alignment: .leading, spacing: 14) {
+                    if loadingText, full.isEmpty {
+                        ProgressView("Pobieram całą wiadomość…")
+                            .tint(Theme.accent)
+                            .frame(maxWidth: .infinity, minHeight: 80)
+                    }
+                    ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
+                        FlowLayout(spacing: 2) {
+                            ForEach(Array(words(block).enumerated()), id: \.offset) { _, token in
+                                Button { picked = token } label: {
+                                    Text(token + " ")
+                                        .font(.body)
+                                        .foregroundStyle(Theme.text)
+                                        .multilineTextAlignment(.leading)
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
-                        .buttonStyle(.plain)
                     }
                 }
-                Button { Talk.de(item.title) } label: {
-                    Label("Odtwórz tytuł", systemImage: "speaker.wave.2")
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(16)
+                .themedCard(radius: 22)
+                Button { Talk.de(String(german.prefix(420))) } label: {
+                    Label("Odtwórz wiadomość", systemImage: "speaker.wave.2")
                         .frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.plain)
@@ -375,7 +466,7 @@ struct NewsArticleView: View {
                     Text("Po polsku")
                         .font(.headline)
                     if translating {
-                        ProgressView("Tłumaczę…").tint(Theme.accent)
+                        ProgressView("Tłumaczę całość…").tint(Theme.accent)
                     } else if !error.isEmpty {
                         Text(error).font(.footnote).foregroundStyle(Theme.bad)
                         Button("Tłumacz jeszcze raz") { Task { await translate() } }
@@ -392,7 +483,7 @@ struct NewsArticleView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(16)
-                .themedCard(radius: 18)
+                .themedCard(radius: 22)
             }
             .padding(.horizontal, 20)
             .padding(.top, 8)
@@ -402,7 +493,7 @@ struct NewsArticleView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         .containerBackground(for: .navigation) { NightGlow() }
-        .task { await translate() }
+        .task { await open() }
         .sheet(item: pickedWord) { word in
             NewsWordSheet(word: word.text, sentence: sentence(for: word.text))
                 .presentationDetents([.medium])
@@ -416,15 +507,26 @@ struct NewsArticleView: View {
         )
     }
 
-    private var tokens: [String] {
-        german.split { !$0.isLetter && $0 != "-" && !"äöüÄÖÜß".contains($0) }
+    private var blocks: [String] {
+        let parts = german.components(separatedBy: "\n").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+        return parts.isEmpty ? [item.title] : parts
+    }
+
+    private func words(_ text: String) -> [String] {
+        text.split { !$0.isLetter && $0 != "-" && !"äöüÄÖÜß".contains($0) }
             .map(String.init)
             .filter { $0.count > 1 }
     }
 
+    private func open() async {
+        full = await NewsFeed.fullText(link: item.link, fallback: item.body)
+        loadingText = false
+        await translate()
+    }
+
     private func sentence(for word: String) -> String {
         let parts = german.components(separatedBy: CharacterSet(charactersIn: ".!?"))
-        return parts.first { $0.localizedCaseInsensitiveContains(word) }?.trimmingCharacters(in: .whitespaces) ?? item.title
+        return parts.first { $0.localizedCaseInsensitiveContains(word) }?.trimmingCharacters(in: .whitespacesAndNewlines) ?? item.title
     }
 
     private func translate() async {
@@ -433,7 +535,8 @@ struct NewsArticleView: View {
         error = ""
         defer { translating = false }
         do {
-            let result = try await NewsFeed.polish("\(item.title)\n\(german)")
+            let clip = String(german.prefix(3500))
+            let result = try await NewsFeed.polish("\(item.title)\n\(clip)")
             polishTitle = result.title
             polishText = result.text
         } catch {
