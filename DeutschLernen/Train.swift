@@ -441,8 +441,8 @@ struct ListenView: View {
     private func loadDeck(forceAll: Bool) {
         let heard = forceAll ? [] : (UserDefaults.standard.stringArray(forKey: "heardListen") ?? [])
         if forceAll { UserDefaults.standard.removeObject(forKey: "heardListen") }
-        let fresh = CoachData.listen.filter { !heard.contains($0.de) }
-        deck = (fresh.isEmpty ? CoachData.listen : fresh).shuffled()
+        let fresh = (CoachData.listen + DailyPack.listen).filter { !heard.contains($0.de) }
+        deck = (fresh.isEmpty ? (CoachData.listen + DailyPack.listen) : fresh).shuffled()
         index = 0
         picked = nil
         showPL = false
@@ -478,15 +478,21 @@ struct ListenView: View {
 struct PronounceView: View {
     @EnvironmentObject var store: LearningStore
     @StateObject private var mic = Mic()
+    @State private var deck: [CoachData.Prompt] = []
     @State private var index = 0
     @State private var parts: [(word: String, ok: Bool)] = []
 
-    private var item: CoachData.Prompt { CoachData.say[index % CoachData.say.count] }
+    private var item: CoachData.Prompt {
+        deck.indices.contains(index) ? deck[index] : CoachData.Prompt(pl: "Gotowe na dziś.", de: "Das war alles.")
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(item.pl).font(.headline)
             Text(item.de).font(.title2.bold())
+            Text("\(min(index + 1, max(deck.count, 1))) z \(deck.count)")
+                .font(.footnote)
+                .foregroundStyle(Theme.text2)
             Button { Talk.de(item.de, rate: 0.42) } label: {
                 Label("Posłuchaj", systemImage: "speaker.wave.2")
             }
@@ -511,10 +517,15 @@ struct PronounceView: View {
                 }
                 .buttonStyle(.glassProminent)
                 .tint(mic.listening ? Ink.clay : Ink.brass)
-                Button("Następne") {
+                Button(index + 1 >= deck.count ? "Od nowa" : "Następne") {
                     mic.stop()
                     parts = []
-                    index += 1
+                    if index + 1 >= deck.count {
+                        deck = DailyPack.say.shuffled()
+                        index = 0
+                    } else {
+                        index += 1
+                    }
                 }
                 .buttonStyle(.glass)
             }
@@ -525,6 +536,9 @@ struct PronounceView: View {
         .padding()
         .navigationTitle("Wymowa")
         .containerBackground(for: .navigation) { NightGlow() }
+        .onAppear {
+            if deck.isEmpty { deck = DailyPack.say.shuffled() }
+        }
         .onChange(of: mic.listening) { was, now in
             guard was, !now else { return }
             let heard = mic.text.trimmingCharacters(in: .whitespacesAndNewlines)

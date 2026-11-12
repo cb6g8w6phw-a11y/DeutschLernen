@@ -211,7 +211,7 @@ final class LearningStore: ObservableObject {
            let saved = try? JSONDecoder().decode(Saved.self, from: data) {
             words = saved.words
             stats = saved.stats
-            let catalog = SeedContent.words + LifePack.words
+            let catalog = SeedContent.words + LifePack.words + DailyPack.words
             let known = Set(words.map { Normalizer.clean($0.de) })
             let extra = catalog.filter { !known.contains(Normalizer.clean($0.de)) }
             if !extra.isEmpty {
@@ -219,7 +219,7 @@ final class LearningStore: ObservableObject {
                 save()
             }
         } else {
-            words = SeedContent.words + LifePack.words
+            words = SeedContent.words + LifePack.words + DailyPack.words
             stats = [:]
         }
         if let data = try? Data(contentsOf: journalURL),
@@ -354,7 +354,7 @@ final class LearningStore: ObservableObject {
     }
 
     func reset() {
-        words = SeedContent.words
+        words = SeedContent.words + LifePack.words + DailyPack.words
         stats = [:]
         save()
     }

@@ -96,7 +96,12 @@ struct MatchGame: View {
     }
 
     private func deal() {
-        let pack = Array(store.words.shuffled().prefix(4))
+        var recent = UserDefaults.standard.stringArray(forKey: "recentPairs") ?? []
+        let pool = store.words.filter { !recent.contains($0.de) }
+        let pack = Array((pool.isEmpty ? store.words : pool).shuffled().prefix(4))
+        recent.append(contentsOf: pack.map(\.de))
+        if recent.count > 80 { recent = Array(recent.suffix(80)) }
+        UserDefaults.standard.set(recent, forKey: "recentPairs")
         var next: [PairCard] = []
         for word in pack {
             next.append(PairCard(text: word.de, key: word.de, word: word))
@@ -189,8 +194,16 @@ struct OrderGame: View {
     }
 
     private func load() {
-        let pick = store.words.shuffled().first { sentenceWords($0.ex).count >= 3 && sentenceWords($0.ex).count <= 8 }
+        var recent = UserDefaults.standard.stringArray(forKey: "recentSentences") ?? []
+        let poolWords = store.words.filter { !recent.contains($0.de) }
+        let source = poolWords.isEmpty ? store.words : poolWords
+        let pick = source.shuffled().first { sentenceWords($0.ex).count >= 3 && sentenceWords($0.ex).count <= 8 }
         word = pick ?? store.words.first
+        if let word {
+            recent.append(word.de)
+            if recent.count > 80 { recent = Array(recent.suffix(80)) }
+            UserDefaults.standard.set(recent, forKey: "recentSentences")
+        }
         let parts = sentenceWords(word?.ex ?? "").map { Piece(text: $0) }.shuffled()
         pool = parts
         built = []

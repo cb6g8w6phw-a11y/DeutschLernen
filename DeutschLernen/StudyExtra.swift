@@ -9,35 +9,26 @@ struct GrammarItem {
 }
 
 enum GrammarBank {
-    static let all: [GrammarItem] = [
-        GrammarItem(title: "Der, die, das", prompt: "___ Tisch", options: ["der", "die", "das"], answer: 0, why: "Tisch jest rodzaju męskiego: der Tisch."),
-        GrammarItem(title: "Der, die, das", prompt: "___ Tür", options: ["der", "die", "das"], answer: 1, why: "Tür jest rodzaju żeńskiego: die Tür."),
-        GrammarItem(title: "Der, die, das", prompt: "___ Auto", options: ["der", "die", "das"], answer: 2, why: "Auto jest rodzaju nijakiego: das Auto."),
-        GrammarItem(title: "bin, habe, mache", prompt: "Ich ___ 26 Jahre alt.", options: ["bin", "habe", "mache"], answer: 0, why: "Wiek: ich bin … Jahre alt. Nie „ich habe Jahre”."),
-        GrammarItem(title: "bin, habe, mache", prompt: "Ich ___ heute Frühschicht.", options: ["bin", "habe", "mache"], answer: 1, why: "Masz zmianę: ich habe Frühschicht."),
-        GrammarItem(title: "bin, habe, mache", prompt: "Ich ___ die Palette fertig.", options: ["bin", "habe", "mache"], answer: 2, why: "Robisz coś: ich mache die Palette fertig."),
-        GrammarItem(title: "Czas przeszły", prompt: "Gestern ___ ich gearbeitet.", options: ["bin", "habe", "werde"], answer: 1, why: "arbeiten w czasie przeszłym: ich habe gearbeitet."),
-        GrammarItem(title: "Czas przeszły", prompt: "Gestern ___ ich zu spät gekommen.", options: ["bin", "habe", "werde"], answer: 0, why: "kommen bierze sein: ich bin gekommen."),
-        GrammarItem(title: "Czas przyszły", prompt: "Morgen ___ ich früher kommen.", options: ["habe", "bin", "werde"], answer: 2, why: "Jutro: ich werde früher kommen."),
-        GrammarItem(title: "Szyk zdania", prompt: "Dziś pracuję.", options: ["Heute arbeite ich.", "Heute ich arbeite.", "Ich heute arbeite."], answer: 0, why: "Po Heute czasownik jest drugi: Heute arbeite ich.")
-    ]
+    static let all: [GrammarItem] = DailyPack.grammar
 }
 
 struct GrammarView: View {
+    @State private var deck: [GrammarItem] = []
     @State private var index = 0
     @State private var picked: Int?
     @State private var hits = 0
 
-    private var item: GrammarItem { GrammarBank.all[min(index, GrammarBank.all.count - 1)] }
-    private var finished: Bool { index >= GrammarBank.all.count }
+    private var item: GrammarItem { deck.indices.contains(index) ? deck[index] : GrammarBank.all[0] }
+    private var finished: Bool { !deck.isEmpty && index >= deck.count }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             if finished {
                 Text("Gotowe")
                     .font(.largeTitle.bold())
-                Text("Trafione \(hits) z \(GrammarBank.all.count).")
+                Text("Trafione \(hits) z \(deck.count).")
                 Button("Jeszcze raz") {
+                    deck = GrammarBank.all.shuffled()
                     index = 0
                     picked = nil
                     hits = 0
@@ -45,7 +36,7 @@ struct GrammarView: View {
                 .primaryButton()
             } else {
                 Text(item.title).font(.caption).foregroundStyle(Theme.text2)
-                Text("\(index + 1) z \(GrammarBank.all.count)")
+                Text("\(index + 1) z \(deck.count)")
                     .font(.footnote)
                     .foregroundStyle(Theme.text2)
                 Text(item.prompt).font(.title2.bold())
@@ -58,7 +49,7 @@ struct GrammarView: View {
                 }
                 if picked != nil {
                     Text(item.why).foregroundStyle(Theme.text2)
-                    Button(index + 1 >= GrammarBank.all.count ? "Zakończ" : "Dalej") {
+                    Button(index + 1 >= deck.count ? "Zakończ" : "Dalej") {
                         index += 1
                         picked = nil
                     }
@@ -70,6 +61,9 @@ struct GrammarView: View {
         .padding(20)
         .navigationTitle("Gramatyka")
         .containerBackground(for: .navigation) { NightGlow() }
+        .onAppear {
+            if deck.isEmpty { deck = GrammarBank.all.shuffled() }
+        }
     }
 
     private func pick(_ i: Int) {
@@ -170,7 +164,7 @@ struct MistakeReview: View {
     }
 
     private func reload(reshuffle: Bool) {
-        var rows = Self.classics.filter { classicHits($0.id) < 2 }
+        var rows = DailyPack.fixes.filter { classicHits($0.id) < 2 }
         for slip in store.journal.mistakes where !slip.fix.isEmpty && slip.hits < 2 {
             rows.append(FixItem(id: slip.id, wrong: slip.text, right: slip.fix, why: "Twój błąd. Zostaje, aż trafisz dwa razy."))
         }
@@ -229,27 +223,23 @@ struct MistakeReview: View {
 }
 
 struct DictationView: View {
-    private let lines: [(de: String, pl: String)] = [
-        ("Ich bin krank.", "Jestem chory."),
-        ("Ich habe heute Frühschicht.", "Mam dziś poranną zmianę."),
-        ("Der Chef ist noch nicht da.", "Szefa jeszcze nie ma."),
-        ("Ich brauche eine Pause.", "Potrzebuję przerwy."),
-        ("Können Sie das bitte wiederholen?", "Może pan to powtórzyć?")
-    ]
+    @State private var deck: [(de: String, pl: String)] = []
     @State private var index = 0
     @State private var input = ""
     @State private var note = ""
+
+    private var line: (de: String, pl: String) { deck.indices.contains(index) ? deck[index] : ("", "") }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Posłuchaj zdania i zapisz je po niemiecku.")
                 .font(.subheadline)
                 .foregroundStyle(Theme.text2)
-            Text("\(index + 1) z \(lines.count)")
+            Text("\(min(index + 1, max(deck.count, 1))) z \(deck.count) · pula 100")
                 .font(.footnote)
                 .foregroundStyle(Theme.text2)
-            VoiceControls(text: lines[index].de)
-            Button("Odtwórz dyktando") { Talk.de(lines[index].de) }
+            VoiceControls(text: line.de)
+            Button("Odtwórz dyktando") { Talk.de(line.de) }
                 .primaryButton()
             PaceButtons()
             TextField("Zapisz, co usłyszałeś", text: $input, axis: .vertical)
@@ -260,14 +250,15 @@ struct DictationView: View {
                 .primaryButton()
             if !note.isEmpty {
                 Text(note).font(.headline)
-                Text(lines[index].pl).foregroundStyle(Theme.text2)
+                Text(line.pl).foregroundStyle(Theme.text2)
             }
-            if index + 1 < lines.count, note.hasPrefix("Dobrze") {
+            if index + 1 < deck.count, note.hasPrefix("Dobrze") {
                 Button("Następne") {
+                    let next = deck[index + 1]
                     index += 1
                     input = ""
                     note = ""
-                    Talk.de(lines[index].de)
+                    Talk.de(next.de)
                 }
                 .ghostButton()
             }
@@ -276,19 +267,24 @@ struct DictationView: View {
         .padding(20)
         .navigationTitle("Dyktando")
         .containerBackground(for: .navigation) { NightGlow() }
-        .onAppear { Talk.de(lines[0].de) }
+        .onAppear {
+            if deck.isEmpty {
+                deck = DailyPack.lines.shuffled()
+                Talk.de(deck[0].de)
+            }
+        }
         .onDisappear { Talk.stop() }
     }
 
     private func check() {
         let heard = input.lowercased().filter { $0.isLetter || $0.isNumber || $0 == " " }
-        let wanted = lines[index].de.lowercased().filter { $0.isLetter || $0.isNumber || $0 == " " }
+        let wanted = line.de.lowercased().filter { $0.isLetter || $0.isNumber || $0 == " " }
         if heard.split(separator: " ").joined(separator: " ") == wanted.split(separator: " ").joined(separator: " ") {
             note = "Dobrze."
             UINotificationFeedbackGenerator().notificationOccurred(.success)
         } else {
-            note = "Jeszcze nie. Poprawnie: \(lines[index].de)"
-            Talk.de(lines[index].de)
+            note = "Jeszcze nie. Poprawnie: \(line.de)"
+            Talk.de(line.de)
             UINotificationFeedbackGenerator().notificationOccurred(.error)
         }
     }

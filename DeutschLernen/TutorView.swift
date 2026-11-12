@@ -38,6 +38,7 @@ struct TutorView: View {
     @ObservedObject private var speaker = Speaker.shared
     @State private var popped = false
     @State private var showVoices = false
+    @State private var situation = 0
     var launch: TalkLaunch? = nil
 
     private let people = ["Marek", "Lena", "Piotr", "Kierownik", "Sklep", "Telefon", "Lekarz", "Agencja"]
@@ -54,6 +55,19 @@ struct TutorView: View {
                                 Spacer(minLength: 24)
                             }
                             if launch == nil { peopleRow }
+                            if launch == nil {
+                                Button {
+                                    let line = DailyPack.lines[situation % DailyPack.lines.count]
+                                    situation += 1
+                                    hint = "Powiedz po niemiecku: \(line.pl)"
+                                } label: {
+                                    Text("Sytuacja \((situation % DailyPack.lines.count) + 1) z 100")
+                                        .font(.subheadline.weight(.semibold))
+                                        .frame(maxWidth: .infinity, minHeight: 40)
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(Theme.accent)
+                            }
                             ForEach(turns) { t in
                                 bubble(t).id(t.id)
                             }
