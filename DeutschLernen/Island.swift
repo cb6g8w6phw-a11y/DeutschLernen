@@ -17,11 +17,16 @@ enum IslandPrefs {
 }
 
 enum Ping {
+    static func arm() {
+        UNUserNotificationCenter.current().delegate = NotifyBox.shared
+    }
+
     static func status() async -> UNAuthorizationStatus {
         await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
     }
 
     static func allow() async -> Bool {
+        arm()
         let center = UNUserNotificationCenter.current()
         let current = await center.notificationSettings().authorizationStatus
         if current == .denied {
@@ -33,14 +38,52 @@ enum Ping {
             return false
         }
         if current == .notDetermined {
-            let ok = (try? await center.requestAuthorization(options: [.alert, .sound])) ?? false
-            return ok
+            return (try? await center.requestAuthorization(options: [.alert, .sound, .badge])) ?? false
         }
         return true
     }
 
+    static func poke(reviews: Int) async -> String {
+        arm()
+        let ok = await allow()
+        guard ok else { return "Brak zgody. Otwieram ustawienia iPhone’a." }
+        await schedule(reviews: reviews)
+        let sent = await fireNow(reviews: reviews)
+        let island = await Island.force(reviews: reviews)
+        return sent + " " + island
+    }
+
     static func plan(reviews: Int) {
+        arm()
         Task { await schedule(reviews: reviews) }
+    }
+
+    private static func fireNow(reviews: Int) async -> String {
+        let center = UNUserNotificationCenter.current()
+        let pair = DayLines.today()
+        let goal = UserDefaults.standard.integer(forKey: "dailyGoal")
+        let target = goal == 0 ? 20 : goal
+        let left = max(0, target - reviews)
+        let content = UNMutableNotificationContent()
+        content.sound = .default
+        if IslandPrefs.on(IslandPrefs.evening), Calendar.current.component(.hour, from: Date()) >= 18, left > 0 {
+            content.title = "Zostało \(left) słówek"
+            content.body = "\(pair.0) — \(pair.1)"
+        } else if IslandPrefs.on(IslandPrefs.sentence) {
+            content.title = "Zdanie na dziś"
+            content.body = "\(pair.0) — \(pair.1)"
+        } else {
+            content.title = "Deutsch"
+            content.body = "Powiadomienia działają. Włącz zdanie albo wieczór, jeśli chcesz treść."
+        }
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
+        content.interruptionLevel = .active
+        do {
+            try await center.add(UNNotificationRequest(identifier: "line-now", content: content, trigger: trigger))
+            return "Za 2 sekundy wyjdzie banner, także gdy aplikacja jest otwarta."
+        } catch {
+            return "Banner nie wyszedł: \(error.localizedDescription)."
+        }
     }
 
     private static func schedule(reviews: Int) async {
@@ -90,11 +133,30 @@ enum Ping {
     }
 }
 
+final class NotifyBox: NSObject, UNUserNotificationCenterDelegate {
+    static let shared = NotifyBox()
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
+        [.banner, .sound, .list]
+    }
+}
+
+@MainActor
+final class IslandNow: ObservableObject {
+    static let shared = IslandNow()
+    @Published var text = ""
+    @Published var visible = false
+}
+
 enum Island {
     private static let gate = IslandGate()
 
     static func rest(reviews: Int) {
         Task { await gate.rest(reviews: reviews) }
+    }
+
+    static func force(reviews: Int) async -> String {
+        await gate.force(reviews: reviews)
     }
 
     static func sync(reviews: Int) {
@@ -120,10 +182,26 @@ enum Island {
 
 private actor IslandGate {
     private var mode = "line"
+    private var last = "Wyspa jeszcze nie była wołana."
 
     func rest(reviews: Int) async {
         guard mode == "line" else { return }
         await showLine(reviews)
+    }
+
+    func force(reviews: Int) async -> String {
+        mode = "line"
+        let any = IslandPrefs.on(IslandPrefs.sentence)
+            || IslandPrefs.on(IslandPrefs.evening)
+            || IslandPrefs.on(IslandPrefs.lesson)
+            || IslandPrefs.on(IslandPrefs.speak)
+            || IslandPrefs.on(IslandPrefs.voice)
+        guard any else {
+            await stop()
+            return "Włącz chociaż jedną rzecz w „Co na wyspie”."
+        }
+        await showLine(reviews)
+        return last
     }
 
     func sync(reviews: Int) async {
@@ -193,6 +271,8 @@ private actor IslandGate {
         for activity in Activity<StudyAttributes>.activities {
             await activity.end(nil, dismissalPolicy: .immediate)
         }
+        await mirror(nil)
+        last = "Wyspa schowana, bo te rzeczy są wyłączone."
     }
 
     private func line(_ reviews: Int) -> StudyAttributes.ContentState {
@@ -209,19 +289,35 @@ private actor IslandGate {
     }
 
     private func push(_ state: StudyAttributes.ContentState) async {
-        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+        await mirror(state)
         let content = ActivityContent(state: state, staleDate: nil)
         let running = Activity<StudyAttributes>.activities
-        if let first = running.first {
-            await first.update(content)
-            for extra in running.dropFirst() {
-                await extra.end(nil, dismissalPolicy: .immediate)
-            }
-            return
-        }
         do {
-            _ = try Activity.request(attributes: StudyAttributes(id: "deutsch"), content: content, pushType: nil)
-        } catch {}
+            if let first = running.first {
+                await first.update(content)
+                for extra in running.dropFirst() {
+                    await extra.end(nil, dismissalPolicy: .immediate)
+                }
+            } else {
+                _ = try Activity.request(attributes: StudyAttributes(id: "deutsch"), content: content, pushType: nil)
+            }
+            if ActivityAuthorizationInfo().areActivitiesEnabled {
+                last = "Wyspa systemowa wstaje po wyjściu na pulpit. W aplikacji jest pasek u góry."
+            } else {
+                last = "iPhone ma wyłączone aktywności na żywo. Włącz je: Ustawienia telefonu, ta aplikacja, Aktywności na żywo. Pasek u góry i tak widać."
+            }
+        } catch {
+            last = "Wyspa systemowa nie wstała: \(error.localizedDescription). Pasek u góry jest wymuszony w aplikacji. W LiveContainer prawdziwa wyspa często nie działa."
+        }
+    }
+
+    private func mirror(_ state: StudyAttributes.ContentState?) async {
+        let text = state?.de ?? ""
+        let visible = state != nil
+        await MainActor.run {
+            IslandNow.shared.text = text
+            IslandNow.shared.visible = visible
+        }
     }
 
     private func clip(_ text: String) -> String {

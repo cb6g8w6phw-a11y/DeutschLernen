@@ -21,6 +21,7 @@ struct SettingsView: View {
     @State private var testNote = ""
     @State private var confirmReset = false
     @State private var notifyNote = "Sprawdzam zgodę…"
+    @State private var notifyOn = false
 
     var body: some View {
         NavigationStack {
@@ -40,12 +41,12 @@ struct SettingsView: View {
                         .font(.footnote).foregroundStyle(.secondary)
                 }
                 Section {
-                    Text("iPhone musi zezwolić na powiadomienia. Rano przyjdzie zdanie, o 18:00 informacja ile słówek zostało. Bez zgody przypomnienia nie wyjdą.")
+                    Text("Stuknij „Pokaż teraz”. Za 2 sekundy ma wyskoczyć banner, nawet w otwartej aplikacji. Pasek pod zegarem jest wymuszony. Prawdziwa wyspa iPhone’a pojawia się dopiero po wyjściu na pulpit.")
                         .font(.footnote).foregroundStyle(.secondary)
                     Button {
                         Task { await askNotify() }
                     } label: {
-                        Text("Zezwól na powiadomienia")
+                        Text(notifyOn ? "Pokaż teraz" : "Zezwól na powiadomienia")
                             .frame(maxWidth: .infinity, minHeight: 44)
                     }
                     Text(notifyNote).font(.footnote).foregroundStyle(.secondary)
@@ -160,8 +161,8 @@ struct SettingsView: View {
     }
 
     private func askNotify() async {
-        let ok = await Ping.allow()
-        if ok { Ping.plan(reviews: store.reviewsToday) }
+        notifyNote = "Wymuszam banner i wyspę…"
+        notifyNote = await Ping.poke(reviews: store.reviewsToday)
         await refreshNotify()
     }
 
@@ -169,12 +170,18 @@ struct SettingsView: View {
         let current = await Ping.status()
         switch current {
         case .authorized, .provisional, .ephemeral:
-            notifyNote = "Zgoda jest. Powiadomienia wyjdą według przełączników niżej."
+            notifyOn = true
+            if notifyNote.hasPrefix("Sprawdzam") || notifyNote.hasPrefix("Zgoda") {
+                notifyNote = "Zgoda jest. Stuknij „Pokaż teraz”, inaczej nic nie wyskoczy od razu."
+            }
         case .denied:
+            notifyOn = false
             notifyNote = "Zgoda odrzucona. Stuknij przycisk, otworzą się ustawienia iPhone’a."
         case .notDetermined:
+            notifyOn = false
             notifyNote = "Jeszcze niepytany. Stuknij przycisk, iPhone pokaże pytanie o zgodę."
         @unknown default:
+            notifyOn = false
             notifyNote = "Nie udało się sprawdzić zgody."
         }
     }
