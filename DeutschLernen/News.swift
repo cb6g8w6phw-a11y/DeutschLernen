@@ -110,17 +110,37 @@ enum NewsFeed {
     static func polish(_ german: String) async throws -> (title: String, text: String) {
         let reply = try await Gemini.send(
             messages: [GeminiMessage(role: "user", text: german)],
-            system: "Przetłumacz cały niemiecki news na prosty polski. Nie skracaj do jednego zdania. Pierwsza linia zaczyna się od TYTUŁ: a zaraz potem TEKST: i cały przekład."
+            system: "Przetłumacz cały niemiecki news na prosty polski. Nie skracaj. Zostaw wszystkie zdania. Odpowiedz dokładnie tak, dwie części:\nTYTUŁ: krótki tytuł\nTEKST:\npełny przekład, kilka akapitów."
         )
         var title = ""
-        var text = ""
-        for line in reply.components(separatedBy: .newlines) {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if trimmed.hasPrefix("TYTUŁ:") { title = String(trimmed.dropFirst(6)).trimmingCharacters(in: .whitespaces) }
-            else if trimmed.hasPrefix("TEKST:") { text = String(trimmed.dropFirst(6)).trimmingCharacters(in: .whitespaces) }
-            else if !text.isEmpty, !trimmed.isEmpty { text += " " + trimmed }
+        var lines: [String] = []
+        var seenText = false
+        for raw in reply.components(separatedBy: .newlines) {
+            let line = raw.trimmingCharacters(in: .whitespaces)
+            if line.isEmpty { continue }
+            let key = line.uppercased()
+            if key.hasPrefix("TYTUŁ:") || key.hasPrefix("TYTUL:") {
+                title = String(line.drop(while: { $0 != ":" }).dropFirst()).trimmingCharacters(in: .whitespaces)
+                continue
+            }
+            if key.hasPrefix("TEKST:") || key.hasPrefix("TŁUMACZENIE:") || key.hasPrefix("TLUMACZENIE:") {
+                seenText = true
+                let rest = String(line.drop(while: { $0 != ":" }).dropFirst()).trimmingCharacters(in: .whitespaces)
+                if !rest.isEmpty { lines.append(rest) }
+                continue
+            }
+            if title.isEmpty && !seenText && lines.isEmpty {
+                title = line
+                seenText = true
+                continue
+            }
+            lines.append(line)
         }
-        if title.isEmpty && text.isEmpty { return ("", reply.trimmingCharacters(in: .whitespacesAndNewlines)) }
+        var text = lines.joined(separator: "\n\n")
+        if text.isEmpty {
+            let clean = reply.trimmingCharacters(in: .whitespacesAndNewlines)
+            text = title.isEmpty ? clean : clean.replacingOccurrences(of: title, with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+        }
         return (title, text)
     }
 
@@ -442,13 +462,14 @@ struct NewsArticleView: View {
                     ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
                         FlowLayout(spacing: 2) {
                             ForEach(Array(words(block).enumerated()), id: \.offset) { _, token in
-                                Button { picked = token } label: {
+                                Button { picked = cleanToken(token) } label: {
                                     Text(token + " ")
                                         .font(.body)
                                         .foregroundStyle(Theme.text)
                                         .multilineTextAlignment(.leading)
                                 }
                                 .buttonStyle(.plain)
+                                .disabled(cleanToken(token).count < 2)
                             }
                         }
                     }
@@ -479,6 +500,7 @@ struct NewsArticleView: View {
                         Text(polishText.isEmpty ? "Brak tłumaczenia." : polishText)
                             .font(.body)
                             .foregroundStyle(Theme.text2)
+                            .lineSpacing(4)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -513,9 +535,11 @@ struct NewsArticleView: View {
     }
 
     private func words(_ text: String) -> [String] {
-        text.split { !$0.isLetter && $0 != "-" && !"äöüÄÖÜß".contains($0) }
-            .map(String.init)
-            .filter { $0.count > 1 }
+        text.split(separator: " ").map(String.init).filter { !$0.isEmpty }
+    }
+
+    private func cleanToken(_ token: String) -> String {
+        token.trimmingCharacters(in: CharacterSet.punctuationCharacters.union(.symbols))
     }
 
     private func open() async {
