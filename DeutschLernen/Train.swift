@@ -32,7 +32,26 @@ enum CoachData {
         ListenQ(de: "Die Lieferung kommt erst um zehn.", pl: "Dostawa przyjedzie dopiero o dziesiątej.", question: "Kiedy jest dostawa?", options: ["O siódmej", "Już stoi", "Dopiero o dziesiątej"], answer: 2),
         ListenQ(de: "Kannst du den Transporter alleine beladen?", pl: "Czy możesz sam załadować busa?", question: "O co pyta?", options: ["Czy sam załadujesz busa", "Czy masz prawo jazdy na busa", "Czy bus jest zepsuty"], answer: 0),
         ListenQ(de: "Ich bin krank und komme heute nicht.", pl: "Jestem chory i dziś nie przyjdę.", question: "Co mówi pracownik?", options: ["Jest chory i dziś nie przyjdzie", "Spóźni się 10 minut", "Skończył robotę"], answer: 0),
-        ListenQ(de: "Der Chef sagt, dass du morgen um sieben Uhr anfangen sollst.", pl: "Szef mówi, że masz jutro zacząć o siódmej.", question: "O której masz zacząć?", options: ["O 6:00", "O 7:00", "O 9:00"], answer: 1)
+        ListenQ(de: "Der Chef sagt, dass du morgen um sieben Uhr anfangen sollst.", pl: "Szef mówi, że masz jutro zacząć o siódmej.", question: "O której masz zacząć?", options: ["O 6:00", "O 7:00", "O 9:00"], answer: 1),
+        ListenQ(de: "Die Pause ist um neun, fünfzehn Minuten.", pl: "Przerwa jest o dziewiątej, piętnaście minut.", question: "Kiedy jest przerwa?", options: ["O dziewiątej, 15 minut", "O dwunastej, godzina", "Nie ma przerwy"], answer: 0),
+        ListenQ(de: "Zieh die Sicherheitsschuhe an, bevor du in die Halle gehst.", pl: "Załóż buty ochronne, zanim wejdziesz na halę.", question: "Co masz zrobić przed wejściem?", options: ["Założyć buty ochronne", "Zadzwonić do szefa", "Zostawić kask"], answer: 0),
+        ListenQ(de: "Der Lkw steht an Tor drei. Bitte entladen.", pl: "Ciężarówka stoi przy bramie trzy. Proszę rozładować.", question: "Gdzie stoi ciężarówka?", options: ["Przy bramie 1", "Przy bramie 3", "Na parkingu gości"], answer: 1),
+        ListenQ(de: "Wir brauchen noch zehn Paletten, nicht fünf.", pl: "Potrzebujemy jeszcze dziesięć palet, nie pięć.", question: "Ile palet?", options: ["Pięć", "Dziesięć", "Dwadzieścia"], answer: 1),
+        ListenQ(de: "Kannst du die Spätschicht übernehmen? Der Kollege ist krank.", pl: "Możesz wziąć popołudniową zmianę? Kolega jest chory.", question: "O co prosi?", options: ["Żebyś wziął popołudniową zmianę", "Żebyś poszedł do lekarza", "Żebyś skończył wcześniej"], answer: 0),
+        ListenQ(de: "Die Sendung ist beschädigt. Mach ein Foto und sag dem Chef Bescheid.", pl: "Przesyłka jest uszkodzona. Zrób zdjęcie i powiedz szefowi.", question: "Co z przesyłką?", options: ["Jest w drodze", "Jest uszkodzona", "Już poszła do klienta"], answer: 1),
+        ListenQ(de: "Fahr nicht mit dem Stapler, wenn die Batterie rot ist.", pl: "Nie jedź wózkiem, kiedy bateria jest na czerwono.", question: "Kiedy nie wolno jechać wózkiem?", options: ["Gdy bateria jest czerwona", "Gdy jest przerwa", "Gdy szef patrzy"], answer: 0),
+        ListenQ(de: "Der Arzt hat morgen um elf Zeit.", pl: "Lekarz ma jutro czas o jedenastej.", question: "O której jest lekarz?", options: ["O ósmej", "O jedenastej", "O trzeciej"], answer: 1),
+        ListenQ(de: "Die Miete ist 450 Euro warm, inklusive Heizung.", pl: "Czynsz to 450 euro z mediami, z ogrzewaniem.", question: "Ile kosztuje pokój?", options: ["450 euro z ogrzewaniem", "450 euro plus prąd", "350 euro"], answer: 0),
+        ListenQ(de: "Haben Sie eine Karte? Bar geht heute nicht.", pl: "Ma pan kartę? Gotówką dziś się nie da.", question: "Jak można zapłacić?", options: ["Tylko gotówką", "Kartą", "Przelewem za tydzień"], answer: 1),
+        ListenQ(de: "Der Bus nach Burgwedel fährt um Viertel nach sechs.", pl: "Autobus do Burgwedel jedzie piętnaście po szóstej.", question: "O której jest autobus?", options: ["6:15", "6:45", "7:15"], answer: 0),
+        ListenQ(de: "Bitte den Helm aufsetzen. Ohne Helm darfst du nicht hoch.", pl: "Proszę założyć kask. Bez kasku nie wolno iść na górę.", question: "Czego nie wolno?", options: ["Iść na górę bez kasku", "Pić wody", "Rozmawiać"], answer: 0),
+        ListenQ(de: "Wir montieren zuerst links, dann rechts.", pl: "Najpierw montujemy z lewej, potem z prawej.", question: "Od której strony zaczynacie?", options: ["Od prawej", "Od lewej", "Od środka"], answer: 1),
+        ListenQ(de: "Ruf mich an, wenn du auf dem Hof bist.", pl: "Zadzwoń, jak będziesz na placu.", question: "Kiedy masz zadzwonić?", options: ["Jak będziesz na placu", "Jutro rano", "Po fajrancie"], answer: 0),
+        ListenQ(de: "Die Schrauben liegen im Regal B, Fach vier.", pl: "Śruby leżą w regale B, półka cztery.", question: "Gdzie są śruby?", options: ["Regał A, półka 2", "Regał B, półka 4", "W aucie"], answer: 1),
+        ListenQ(de: "Heute ist Inventur. Zähl bitte die Kisten in Reihe zwei.", pl: "Dziś jest inwentaryzacja. Policz proszę skrzynki w rzędzie dwa.", question: "Co masz policzyć?", options: ["Skrzynki w rzędzie 2", "Ludzi na zmianie", "Kilometry"], answer: 0),
+        ListenQ(de: "Ich habe das Werkzeug schon zurückgebracht.", pl: "Już oddałem narzędzie.", question: "Co zrobił z narzędziem?", options: ["Zgubił je", "Oddał je", "Kupił nowe"], answer: 1),
+        ListenQ(de: "Die Schicht dauert bis 14 Uhr, nicht bis 16.", pl: "Zmiana trwa do 14, nie do 16.", question: "Do której trwa zmiana?", options: ["Do 14", "Do 16", "Do 18"], answer: 0),
+        ListenQ(de: "Pass auf den nassen Boden auf. Da kann man ausrutschen.", pl: "Uważaj na mokrą podłogę. Można się poślizgnąć.", question: "Na co uważać?", options: ["Na mokrą podłogę", "Na zamknięte drzwi", "Na przerwę"], answer: 0)
     ]
 
     static let build: [Line] = [
@@ -287,6 +306,7 @@ struct TodayView: View {
 
 struct ListenView: View {
     @EnvironmentObject var store: LearningStore
+    @State private var deck: [CoachData.ListenQ] = []
     @State private var index = 0
     @State private var speed: Float = 0.46
     @State private var voice = ""
@@ -295,34 +315,31 @@ struct ListenView: View {
     @State private var saved = false
     @State private var voices: [(id: String, name: String)] = []
 
-    private var item: CoachData.ListenQ { CoachData.listen[min(index, CoachData.listen.count - 1)] }
-    private var finished: Bool { index >= CoachData.listen.count }
+    private var item: CoachData.ListenQ? { index < deck.count ? deck[index] : nil }
+    private var finished: Bool { !deck.isEmpty && index >= deck.count }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                if finished {
-                    Text("Gotowe")
+                if finished || item == nil {
+                    Text(deck.isEmpty ? "Ładuję…" : "Gotowe")
                         .font(.largeTitle.bold())
                     Text("Trafione: \(store.journal.listenOk) z \(store.journal.listenTries)")
                         .font(.title3)
-                    Text("Możesz odsłuchać zestaw jeszcze raz.")
+                    Text("Następnym razem będą inne polecenia. Te zrobione dziś nie wracają od razu.")
                         .font(.body)
                         .foregroundStyle(Theme.text2)
                     Button {
-                        index = 0
-                        picked = nil
-                        showPL = false
-                        saved = false
+                        loadDeck(forceAll: true)
                     } label: {
-                        Text("Jeszcze raz").primaryButton()
+                        Text("Jeszcze raz, inna kolejność").primaryButton()
                     }
                     .buttonStyle(.plain)
-                } else {
+                } else if let item {
                     Text("Posłuchaj polecenia. Potem odpowiedz, co z niego wynika. Nie musisz znać każdego słowa.")
                         .font(.subheadline)
                         .foregroundStyle(Theme.text2)
-                    Text("\(index + 1) z \(CoachData.listen.count)")
+                    Text("\(index + 1) z \(deck.count) · w banku \(CoachData.listen.count)")
                         .font(.footnote)
                         .foregroundStyle(Theme.text2)
                     Picker("Tempo", selection: $speed) {
@@ -354,14 +371,14 @@ struct ListenView: View {
                         .font(.title3.bold())
                         .foregroundStyle(Theme.text)
                     ForEach(item.options.indices, id: \.self) { i in
-                        Button { choose(i) } label: {
+                        Button { choose(i, item) } label: {
                             Text(item.options[i])
                                 .font(.body.weight(.semibold))
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 16)
                                 .frame(minHeight: 56)
-                                .background(fill(i), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                .background(fill(i, item), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                                 .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.25), lineWidth: 1.5))
                         }
                         .buttonStyle(.plain)
@@ -394,8 +411,8 @@ struct ListenView: View {
                         .themedCard(radius: 16)
                     }
                     if picked != nil {
-                        Button { advance() } label: {
-                            Text(index + 1 >= CoachData.listen.count ? "Zakończ" : "Dalej").primaryButton()
+                        Button { advance(item) } label: {
+                            Text(index + 1 >= deck.count ? "Zakończ" : "Dalej").primaryButton()
                         }
                         .buttonStyle(.plain)
                     }
@@ -413,6 +430,7 @@ struct ListenView: View {
         .navigationTitle("Słuchanie")
         .containerBackground(for: .navigation) { NightGlow() }
         .onAppear {
+            if deck.isEmpty { loadDeck(forceAll: false) }
             voices = AVSpeechSynthesisVoice.speechVoices()
                 .filter { $0.language.hasPrefix("de") }
                 .map { ($0.identifier, $0.name) }
@@ -420,7 +438,18 @@ struct ListenView: View {
         .onDisappear { Talk.stop() }
     }
 
-    private func choose(_ i: Int) {
+    private func loadDeck(forceAll: Bool) {
+        let heard = forceAll ? [] : (UserDefaults.standard.stringArray(forKey: "heardListen") ?? [])
+        if forceAll { UserDefaults.standard.removeObject(forKey: "heardListen") }
+        let fresh = CoachData.listen.filter { !heard.contains($0.de) }
+        deck = (fresh.isEmpty ? CoachData.listen : fresh).shuffled()
+        index = 0
+        picked = nil
+        showPL = false
+        saved = false
+    }
+
+    private func choose(_ i: Int, _ item: CoachData.ListenQ) {
         guard picked == nil else { return }
         picked = i
         let ok = i == item.answer
@@ -428,14 +457,17 @@ struct ListenView: View {
         store.noteListen(ok: ok)
     }
 
-    private func advance() {
+    private func advance(_ item: CoachData.ListenQ) {
+        var heard = UserDefaults.standard.stringArray(forKey: "heardListen") ?? []
+        if !heard.contains(item.de) { heard.append(item.de) }
+        UserDefaults.standard.set(heard, forKey: "heardListen")
         picked = nil
         showPL = false
         saved = false
         index += 1
     }
 
-    private func fill(_ i: Int) -> Color {
+    private func fill(_ i: Int, _ item: CoachData.ListenQ) -> Color {
         guard let picked else { return Color.white.opacity(0.08) }
         if i == item.answer { return Theme.ok.opacity(0.85) }
         if i == picked { return Theme.bad.opacity(0.85) }

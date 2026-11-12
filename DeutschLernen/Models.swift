@@ -78,6 +78,35 @@ struct StoredMistake: Codable, Identifiable, Hashable {
     var text: String
     var fix: String
     var day: String
+    var hits: Int
+
+    init(id: String, text: String, fix: String, day: String, hits: Int = 0) {
+        self.id = id
+        self.text = text
+        self.fix = fix
+        self.day = day
+        self.hits = hits
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        text = try c.decode(String.self, forKey: .text)
+        fix = try c.decodeIfPresent(String.self, forKey: .fix) ?? ""
+        day = try c.decodeIfPresent(String.self, forKey: .day) ?? ""
+        hits = try c.decodeIfPresent(Int.self, forKey: .hits) ?? 0
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(text, forKey: .text)
+        try c.encode(fix, forKey: .fix)
+        try c.encode(day, forKey: .day)
+        try c.encode(hits, forKey: .hits)
+    }
+
+    private enum CodingKeys: String, CodingKey { case id, text, fix, day, hits }
 }
 
 struct Journal: Codable {
@@ -281,20 +310,26 @@ final class LearningStore: ObservableObject {
             if sa.box != sb.box { return sa.box < sb.box }
             return sa.wrong > sb.wrong
         }
-        var out = Array(reviews.prefix(size))
-        if out.count < size {
-            let fresh = pool.filter { stats[$0.de] == nil }.shuffled()
-            out += fresh.prefix(size - out.count)
+        let reviewCap = min(reviews.count, max(2, size / 2))
+        var out = Array(reviews.prefix(reviewCap))
+        let recent = Set(UserDefaults.standard.stringArray(forKey: "recentNewWords") ?? [])
+        func take(_ list: [Word]) {
+            for word in list where out.count < size && !out.contains(where: { $0.de == word.de }) {
+                out.append(word)
+            }
         }
-        if out.count < size {
-            let more = pool.filter { w in
-                !out.contains(where: { $0.de == w.de }) && (stats[w.de]?.days.count ?? 0) < 3
-            }.shuffled()
-            out += more.prefix(size - out.count)
-        }
+        take(pool.filter { stats[$0.de] == nil && !recent.contains($0.de) }.shuffled())
+        take(pool.filter { stats[$0.de] == nil }.shuffled())
+        take(pool.filter { word in
+            (stats[word.de]?.days.count ?? 0) < 3 && !recent.contains(word.de)
+        }.shuffled())
         if out.isEmpty {
             out = Array(pool.shuffled().prefix(max(size, 1)))
         }
+        var memory = UserDefaults.standard.stringArray(forKey: "recentNewWords") ?? []
+        for word in out where stats[word.de] == nil { memory.append(word.de) }
+        if memory.count > 120 { memory = Array(memory.suffix(120)) }
+        UserDefaults.standard.set(memory, forKey: "recentNewWords")
         return out
     }
 
@@ -442,6 +477,17 @@ final class LearningStore: ObservableObject {
         if journal.mistakes.contains(where: { $0.day == journal.day && $0.text == text }) { return }
         journal.mistakes.insert(StoredMistake(id: UUID().uuidString, text: text, fix: fix, day: journal.day), at: 0)
         if journal.mistakes.count > 40 { journal.mistakes = Array(journal.mistakes.prefix(40)) }
+        publishJournal()
+    }
+
+    func gradeMistake(_ id: String, ok: Bool) {
+        guard let index = journal.mistakes.firstIndex(where: { $0.id == id }) else { return }
+        if ok {
+            journal.mistakes[index].hits += 1
+            if journal.mistakes[index].hits >= 2 { journal.mistakes.remove(at: index) }
+        } else {
+            journal.mistakes[index].hits = 0
+        }
         publishJournal()
     }
 

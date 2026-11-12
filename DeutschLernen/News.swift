@@ -7,19 +7,60 @@ struct NewsItem: Identifiable, Hashable, Codable {
     var body: String
     var source: String
     var link: String
+    var category: String
+    var image: String
+
+    init(id: String, title: String, body: String, source: String, link: String, category: String = "Świat", image: String = "") {
+        self.id = id
+        self.title = title
+        self.body = body
+        self.source = source
+        self.link = link
+        self.category = category
+        self.image = image
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        title = try c.decode(String.self, forKey: .title)
+        body = try c.decodeIfPresent(String.self, forKey: .body) ?? ""
+        source = try c.decodeIfPresent(String.self, forKey: .source) ?? ""
+        link = try c.decodeIfPresent(String.self, forKey: .link) ?? ""
+        category = try c.decodeIfPresent(String.self, forKey: .category) ?? "Świat"
+        image = try c.decodeIfPresent(String.self, forKey: .image) ?? ""
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(title, forKey: .title)
+        try c.encode(body, forKey: .body)
+        try c.encode(source, forKey: .source)
+        try c.encode(link, forKey: .link)
+        try c.encode(category, forKey: .category)
+        try c.encode(image, forKey: .image)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, title, body, source, link, category, image
+    }
 }
 
 enum NewsFeed {
     static func load() async throws -> [NewsItem] {
-        let sources = [
-            ("DW", "https://rss.dw.com/xml/rss-de-welt"),
-            ("Tagesschau", "https://www.tagesschau.de/xml/rss2/")
+        let sources: [(String, String, String)] = [
+            ("Świat", "DW", "https://rss.dw.com/xml/rss-de-welt"),
+            ("Niemcy", "Tagesschau", "https://www.tagesschau.de/inland/index~rss2.xml"),
+            ("Świat", "Tagesschau", "https://www.tagesschau.de/ausland/index~rss2.xml"),
+            ("Pieniądze", "Tagesschau", "https://www.tagesschau.de/wirtschaft/index~rss2.xml"),
+            ("Sport", "Sportschau", "https://www.sportschau.de/sportschauindex100~rss2.xml")
         ]
         var all: [NewsItem] = []
         var lastError: Error?
-        for (name, url) in sources {
+        for (category, name, url) in sources {
             do {
-                all += try await fetch(name, url)
+                all += try await fetch(name, url, category: category)
             } catch {
                 lastError = error
             }
@@ -27,10 +68,10 @@ enum NewsFeed {
         var seen = Set<String>()
         let unique = all.filter { seen.insert(Normalizer.clean($0.title)).inserted }
         if unique.isEmpty, let lastError { throw lastError }
-        return Array(unique.prefix(24))
+        return Array(unique.prefix(40))
     }
 
-    private static func fetch(_ source: String, _ url: String) async throws -> [NewsItem] {
+    private static func fetch(_ source: String, _ url: String, category: String) async throws -> [NewsItem] {
         var request = URLRequest(url: URL(string: url)!)
         request.timeoutInterval = 20
         request.setValue("DeutschLernen/4.8", forHTTPHeaderField: "User-Agent")
@@ -38,7 +79,7 @@ enum NewsFeed {
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
             throw URLError(.badServerResponse)
         }
-        let parser = RSSParser(source: source)
+        let parser = RSSParser(source: source, category: category)
         let xml = XMLParser(data: data)
         xml.delegate = parser
         guard xml.parse() else { throw xml.parserError ?? URLError(.cannotParseResponse) }
@@ -187,7 +228,7 @@ enum NewsFeed {
 }
 
 enum NewsDay {
-    private static let storeKey = "newsDayCache"
+    private static let storeKey = "newsDayCache2"
 
     private struct Box: Codable {
         var day: String
@@ -315,24 +356,34 @@ final class NewsClock: ObservableObject {
 
 private final class RSSParser: NSObject, XMLParserDelegate {
     let source: String
+    let category: String
     var items: [NewsItem] = []
     private var inside = false
     private var element = ""
     private var title = ""
     private var body = ""
     private var link = ""
+    private var image = ""
 
-    init(source: String) { self.source = source }
+    init(source: String, category: String) {
+        self.source = source
+        self.category = category
+    }
 
     func parser(_ parser: XMLParser, didStartElement name: String, namespaceURI: String?, qualifiedName: String?, attributes: [String: String] = [:]) {
-        element = name.lowercased()
+        element = (qualifiedName ?? name).lowercased()
         if element == "item" || element == "entry" {
             inside = true
             title = ""
             body = ""
             link = ""
+            image = ""
         }
         if inside, element == "link", let href = attributes["href"], link.isEmpty { link = href }
+        if inside, image.isEmpty, let url = attributes["url"], url.hasPrefix("http"),
+           element == "enclosure" || element.hasSuffix("content") || element.hasSuffix("thumbnail") {
+            image = url
+        }
     }
 
     func parser(_ parser: XMLParser, foundCharacters string: String) {
@@ -350,8 +401,9 @@ private final class RSSParser: NSObject, XMLParserDelegate {
         if end == "item" || end == "entry" {
             let cleanTitle = Self.plain(title)
             let cleanBody = Self.plain(body)
+            let shot = image.isEmpty ? Self.picture(body) : image
             if !cleanTitle.isEmpty {
-                items.append(NewsItem(id: link.isEmpty ? cleanTitle : link, title: cleanTitle, body: cleanBody, source: source, link: link))
+                items.append(NewsItem(id: link.isEmpty ? cleanTitle : link, title: cleanTitle, body: cleanBody, source: source, link: link, category: category, image: shot))
             }
             inside = false
         }
@@ -382,10 +434,23 @@ private final class RSSParser: NSObject, XMLParserDelegate {
         }
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+
+    private static func picture(_ raw: String) -> String {
+        guard let regex = try? NSRegularExpression(pattern: "src=\"(https:[^\"]+)\""),
+              let match = regex.firstMatch(in: raw, range: NSRange(raw.startIndex..., in: raw)),
+              let range = Range(match.range(at: 1), in: raw) else { return "" }
+        return String(raw[range])
+    }
 }
 
 struct NewsListView: View {
     @ObservedObject private var clock = NewsClock.shared
+    @State private var topic = "Wszystko"
+    private let topics = ["Wszystko", "Świat", "Niemcy", "Pieniądze", "Sport"]
+
+    private var shown: [NewsItem] {
+        topic == "Wszystko" ? clock.items : clock.items.filter { $0.category == topic }
+    }
 
     var body: some View {
         ScrollView {
@@ -393,28 +458,51 @@ struct NewsListView: View {
                 Text(clock.caption)
                     .font(.subheadline)
                     .foregroundStyle(Theme.text2)
-                if clock.loading, clock.items.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(topics, id: \.self) { name in
+                            Button { topic = name } label: {
+                                Text(name)
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(topic == name ? Theme.ink : Theme.text)
+                                    .padding(.horizontal, 14)
+                                    .frame(minHeight: 36)
+                                    .background(topic == name ? AnyShapeStyle(Theme.gradient) : AnyShapeStyle(Theme.card), in: Capsule())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                if clock.loading, shown.isEmpty {
                     ProgressView("Pobieram wiadomości…")
                         .tint(Theme.accent)
                         .foregroundStyle(Theme.text2)
                         .frame(maxWidth: .infinity, minHeight: 120)
                 }
-                if !clock.loading, clock.items.isEmpty {
-                    Text("Jeszcze nic nie doszło. Jak jest internet, aplikacja sama spróbuje ponownie.")
+                if !clock.loading, shown.isEmpty {
+                    Text(topic == "Wszystko" ? "Jeszcze nic nie doszło. Jak jest internet, aplikacja sama spróbuje ponownie." : "W tej kategorii jeszcze nic nie ma. Pociągnij w dół.")
                         .font(.footnote)
                         .foregroundStyle(Theme.bad)
                 }
-                ForEach(clock.items) { item in
+                ForEach(shown) { item in
                     NavigationLink {
                         NewsArticleView(item: item)
                     } label: {
                         HStack(alignment: .top, spacing: 12) {
-                            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                .fill(Theme.gradient)
-                                .frame(width: 4)
+                            if let url = URL(string: item.image), !item.image.isEmpty {
+                                AsyncImage(url: url) { phase in
+                                    if let image = phase.image {
+                                        image.resizable().scaledToFill()
+                                    } else {
+                                        Theme.card2
+                                    }
+                                }
+                                .frame(width: 84, height: 84)
+                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            }
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack {
-                                    Text(item.source.uppercased())
+                                    Text(item.category.uppercased())
                                         .font(.caption2.weight(.bold))
                                         .foregroundStyle(Theme.accent)
                                         .padding(.horizontal, 8)
@@ -426,7 +514,7 @@ struct NewsListView: View {
                                         .foregroundStyle(Theme.text2)
                                 }
                                 Text(item.title)
-                                    .font(.title3.weight(.bold))
+                                    .font(.headline.weight(.bold))
                                     .foregroundStyle(Theme.text)
                                     .multilineTextAlignment(.leading)
                                 if !item.body.isEmpty {
@@ -439,7 +527,7 @@ struct NewsListView: View {
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(16)
+                        .padding(14)
                         .themedCard(radius: 22)
                     }
                     .buttonStyle(.plain)
@@ -472,7 +560,19 @@ struct NewsArticleView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text(item.source.uppercased())
+                if let url = URL(string: item.image), !item.image.isEmpty {
+                    AsyncImage(url: url) { phase in
+                        if let image = phase.image {
+                            image.resizable().scaledToFill()
+                        } else {
+                            Theme.card2
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 190)
+                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                }
+                Text(item.category.uppercased())
                     .font(.caption2.weight(.bold))
                     .foregroundStyle(Theme.accent)
                     .padding(.horizontal, 8)
@@ -537,6 +637,15 @@ struct NewsArticleView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(16)
                 .themedCard(radius: 22)
+                NavigationLink {
+                    NewsTalkView(title: item.title, facts: german)
+                } label: {
+                    Label("Pogadaj: o co chodziło?", systemImage: "bubble.left.and.bubble.right.fill")
+                        .frame(maxWidth: .infinity, minHeight: 52)
+                        .background(Theme.gradient, in: Capsule())
+                        .foregroundStyle(Theme.ink)
+                }
+                .buttonStyle(.plain)
             }
             .padding(.horizontal, 20)
             .padding(.top, 8)
@@ -598,6 +707,74 @@ struct NewsArticleView: View {
             polishText = result.text
         } catch {
             self.error = "Nie udało się przetłumaczyć. Sprawdź klucz Groq albo Gemini w ustawieniach."
+        }
+    }
+}
+
+struct NewsTalkView: View {
+    let title: String
+    let facts: String
+    @State private var lines: [(id: UUID, mine: Bool, text: String)] = []
+    @State private var draft = ""
+    @State private var busy = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(lines, id: \.id) { line in
+                        Text(line.text)
+                            .font(.body)
+                            .foregroundStyle(Theme.text)
+                            .padding(12)
+                            .frame(maxWidth: .infinity, alignment: line.mine ? .trailing : .leading)
+                            .background(line.mine ? Theme.accent.opacity(0.35) : Theme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                    if busy { ProgressView().tint(Theme.accent) }
+                }
+                .padding(16)
+                .padding(.bottom, 80)
+            }
+            HStack(spacing: 8) {
+                TextField("Odpowiedz po niemiecku", text: $draft)
+                    .padding(12)
+                    .background(Theme.card, in: Capsule())
+                    .foregroundStyle(Theme.text)
+                Button("Wyślij") { Task { await send() } }
+                    .disabled(busy || draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .foregroundStyle(Theme.accent)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+        }
+        .navigationTitle("O co chodziło?")
+        .navigationBarTitleDisplayMode(.inline)
+        .containerBackground(for: .navigation) { NightGlow() }
+        .task {
+            guard lines.isEmpty else { return }
+            lines.append((UUID(), false, "Worum geht es in dem Artikel? Sag es mit einem kurzen Satz auf Deutsch."))
+        }
+    }
+
+    private func send() async {
+        let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty, !busy else { return }
+        draft = ""
+        lines.append((UUID(), true, text))
+        busy = true
+        defer { busy = false }
+        let history = lines.map { GeminiMessage(role: $0.mine ? "user" : "model", text: $0.text) }
+        let system = """
+        Jesteś cierpliwym nauczycielem niemieckiego dla Polaka na A2. Uczeń przeczytał news.
+        Tytuł: \(title)
+        Najważniejsze: \(String(facts.prefix(900)))
+        Sprawdź, czy wie, o co chodziło. Jak jest blisko, pochwal krótko po polsku w nawiasie i dopytaj o jeden fakt. Jak pudłuje, podaj prostą poprawną odpowiedź po niemiecku i jedno zdanie po polsku. Maksymalnie 3 zdania.
+        """
+        do {
+            let reply = try await Gemini.send(messages: history, system: system)
+            lines.append((UUID(), false, reply))
+        } catch {
+            lines.append((UUID(), false, "Nie udało się dopytać. Sprawdź internet albo klucz."))
         }
     }
 }
