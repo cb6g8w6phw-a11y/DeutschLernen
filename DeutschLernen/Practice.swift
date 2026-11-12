@@ -106,6 +106,24 @@ struct PracticeView: View {
                         .themedCard(radius: 18)
                     }
                     .buttonStyle(.plain)
+                    NavigationLink {
+                        CaptureView()
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title2)
+                                .foregroundStyle(Theme.ok)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Z życia").font(.headline).foregroundStyle(Theme.text)
+                                Text("Wklej tekst, zdjęcie albo głosówkę i naucz się z tego").font(.caption).foregroundStyle(Theme.text2)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right").foregroundStyle(Theme.text2)
+                        }
+                        .padding(16)
+                        .themedCard(radius: 18)
+                    }
+                    .buttonStyle(.plain)
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
                         ForEach(PracticeData.modes, id: \.2) { mode in
                             NavigationLink {

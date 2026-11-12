@@ -51,6 +51,7 @@ struct MoreView: View {
                 more("Słuchanie", "ear", Color(hex: "5AC8FA")) { ListenView() }
                 more("Generator zdań", "text.badge.checkmark", Color(hex: "FF6B9A")) { SentenceView() }
                 more("Słówka z filmu", "play.rectangle", Theme.accent) { ClipView() }
+                more("Z życia", "plus.circle.fill", Theme.ok) { CaptureView() }
                 more("Z twojego życia", "sparkles", Theme.orange) { LifeView() }
                 more("Skan zdjęcia", "camera", Color(hex: "5AC8FA")) { ScanView() }
                 more("Ustawienia i klucz", "gear", Color(hex: "FF6B9A")) { SettingsView() }

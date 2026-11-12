@@ -224,10 +224,33 @@ enum NewsFeed {
     }
 
     static func polish(_ german: String) async throws -> (title: String, text: String) {
+        let system = """
+        Przetłumacz cały podany news na prosty polski.
+        Każde zdanie odpowiedzi ma być po polsku. Nie kopiuj niemieckich zdań i nie cytuj oryginału.
+        Bez komentarza i bez markdownu. Format:
+        TYTUŁ: polski tytuł
+        TEKST:
+        zdanie po polsku
+        zdanie po polsku
+        """
         let reply = try await Gemini.send(
             messages: [GeminiMessage(role: "user", text: german)],
-            system: "Przetłumacz ten krótki news na prosty polski. Zostaw wszystkie podane zdania, nic nie dopisuj. Odpowiedz tak:\nTYTUŁ: krótki tytuł\nTEKST:\npełny przekład tych zdań."
+            system: system
         )
+        var parsed = splitPolish(reply, source: german)
+        if !usablePolish(parsed.text) {
+            let again = try await Gemini.send(
+                messages: [GeminiMessage(role: "user", text: "Przetłumacz to wyłącznie na polski. Zero niemieckiego:\n\(german)")],
+                system: "Odpowiadasz tylko po polsku. Pierwsza linia: TYTUŁ: polski tytuł. Potem TEKST: i same polskie zdania."
+            )
+            let second = splitPolish(again, source: german)
+            if usablePolish(second.text) { parsed = second }
+        }
+        guard usablePolish(parsed.text) else { throw URLError(.cannotDecodeContentData) }
+        return parsed
+    }
+
+    private static func splitPolish(_ reply: String, source: String) -> (title: String, text: String) {
         var title = ""
         var lines: [String] = []
         var seenText = false
@@ -252,12 +275,39 @@ enum NewsFeed {
             }
             lines.append(line)
         }
-        var text = lines.joined(separator: "\n\n")
-        if text.isEmpty {
-            let clean = reply.trimmingCharacters(in: .whitespacesAndNewlines)
-            text = title.isEmpty ? clean : clean.replacingOccurrences(of: title, with: "").trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-        return (title, text)
+        let kept = lines.filter { keepPolish($0, source: source) }
+        let text = kept.joined(separator: "\n\n")
+        let cleanTitle = keepPolish(title, source: source) ? title : ""
+        return (cleanTitle, text)
+    }
+
+    private static func keepPolish(_ line: String, source: String) -> Bool {
+        let bit = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard bit.count > 2 else { return false }
+        let folded = Normalizer.clean(bit)
+        let origin = Normalizer.clean(source)
+        if folded.count > 12, origin.contains(folded) { return false }
+        return polishMarks(bit) >= germanMarks(bit)
+    }
+
+    private static func usablePolish(_ text: String) -> Bool {
+        let body = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard body.count > 20 else { return false }
+        return polishMarks(body) > germanMarks(body)
+    }
+
+    private static func polishMarks(_ text: String) -> Int {
+        score(text, words: ["i", "w", "na", "się", "sie", "nie", "jest", "że", "ze", "do", "po", "oraz", "ale", "już", "juz", "też", "tez", "dla", "od", "przez", "który", "to", "są", "sa"])
+    }
+
+    private static func germanMarks(_ text: String) -> Int {
+        score(text, words: ["der", "die", "das", "und", "ist", "ein", "eine", "nicht", "mit", "von", "zu", "auf", "für", "fur", "wird", "sind", "nach", "bei", "auch", "oder", "den", "dem", "des", "im", "am"])
+    }
+
+    private static func score(_ text: String, words: [String]) -> Int {
+        let bits = Normalizer.clean(text).split(whereSeparator: { !$0.isLetter }).map(String.init)
+        let bag = Set(words)
+        return bits.filter { bag.contains($0) }.count
     }
 
     static func meaning(_ word: String, sentence: String) async throws -> String {

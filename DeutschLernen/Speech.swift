@@ -397,6 +397,7 @@ final class Mic: ObservableObject {
     @Published var level: Double = 0
     @Published var wantsPrompt = false
 
+    private var prefer = "de-DE"
     private var recognizer = SFSpeechRecognizer(locale: Locale(identifier: "de-DE"))
     private var engine: AVAudioEngine?
     private var request: SFSpeechAudioBufferRecognitionRequest?
@@ -409,6 +410,10 @@ final class Mic: ObservableObject {
     private var meter = Meter()
     private var generation = 0
     private var heardError: String?
+
+    func arm(_ locale: String) {
+        prefer = locale
+    }
 
     func toggle() {
         if listening {
@@ -577,7 +582,7 @@ final class Mic: ObservableObject {
     }
 
     private func pickRecognizer() {
-        for id in ["de-DE", "pl-PL", Locale.current.identifier] {
+        for id in [prefer, "de-DE", "pl-PL", Locale.current.identifier] {
             if let r = SFSpeechRecognizer(locale: Locale(identifier: id)), r.isAvailable {
                 recognizer = r
                 return

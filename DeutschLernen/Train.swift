@@ -133,6 +133,7 @@ struct TodayView: View {
                         bigTile("Gry", "Pary, zdania, czas", "gamecontroller", Color(hex: "FFD60A")) { GamesHome() }
                         bigTile("Dyktando", "Usłysz i zapisz", "pencil.line", Color(hex: "5AC8FA")) { DictationView() }
                         bigTile("Wiadomości", "Czytaj i dodawaj słowa", "newspaper", Theme.orange) { NewsListView() }
+                        bigTile("Z życia", "Tekst, zdjęcie, głos", "plus.circle.fill", Theme.ok) { CaptureView() }
                     }
                     NavigationLink { DailyRunView() } label: {
                         Text("Pełna lekcja: zdania, powtórki, scena").primaryButton()
