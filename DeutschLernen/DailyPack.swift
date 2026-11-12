@@ -259,6 +259,7 @@ enum DailyPack {
             FixItem(id: "langsam", wrong: "Mehr langsam, bitte.", right: "Langsamer, bitte.", why: "Wolniej: langsamer.")
         ]
         let who = ["ich", "du", "er", "wir", "ihr", "sie"]
+        let verbs: [(String, [String], [String])] = [
             ("machen", ["mache", "machst", "macht", "machen", "macht", "machen"], ["macht", "mache", "machen", "macht", "machen", "macht"]),
             ("kommen", ["komme", "kommst", "kommt", "kommen", "kommt", "kommen"], ["kommt", "komme", "kommen", "kommt", "kommen", "kommt"]),
             ("fahren", ["fahre", "fährst", "fährt", "fahren", "fahrt", "fahren"], ["fährt", "fahre", "fahren", "fährt", "fahren", "fährt"]),
@@ -269,7 +270,6 @@ enum DailyPack {
             ("sprechen", ["spreche", "sprichst", "spricht", "sprechen", "sprecht", "sprechen"], ["spricht", "spreche", "sprechen", "spricht", "sprechen", "spricht"]),
             ("lesen", ["lese", "liest", "liest", "lesen", "lest", "lesen"], ["liest", "lese", "lesen", "liest", "lesen", "liest"])
         ]
-        let who = ["ich", "du", "er", "wir", "ihr", "sie"]
         var n = 0
         for verb in verbs {
             for i in 0..<6 where rows.count < 100 {
