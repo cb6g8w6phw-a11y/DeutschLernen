@@ -476,6 +476,20 @@ final class LearningStore: ObservableObject {
     func levelCounts() -> [(name: String, count: Int)] {
         [("A1", FreqBank.count("A1")), ("A2", FreqBank.count("A2")), ("B1", FreqBank.count("B1")), ("B2", FreqBank.count("B2"))]
     }
+
+    func bandProgress() -> [(name: String, known: Int, total: Int)] {
+        var levelOf: [String: String] = [:]
+        for word in words { levelOf[word.de] = word.level }
+        for word in FreqBank.all where levelOf[word.de] == nil { levelOf[word.de] = word.level }
+        var known = ["A1": 0, "A2": 0, "B1": 0, "B2": 0]
+        for (de, stat) in stats where stat.days.count >= 3 {
+            let level = known[levelOf[de] ?? ""] != nil ? (levelOf[de] ?? "A2") : "A2"
+            known[level, default: 0] += 1
+        }
+        return ["A1", "A2", "B1", "B2"].map { name in
+            (name, known[name] ?? 0, max(FreqBank.count(name), 1))
+        }
+    }
     var wordOfDay: Word? {
         guard !words.isEmpty else { return nil }
         let day = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1

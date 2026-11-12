@@ -12,12 +12,18 @@ struct StatsView: View {
     @EnvironmentObject var store: LearningStore
     @State private var generating = false
     @State private var message = ""
+    @AppStorage("goalLevel") private var goalLevel = "A2"
+    @AppStorage("dailyMinutes") private var dailyMinutes = 15
+    @AppStorage("goalDays") private var goalDays = 90
+
+    private let ladder = ["A1", "A2", "B1", "B2"]
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     levelCard
+                    goalCard
                     summary
                     topics
                     activity
@@ -35,21 +41,83 @@ struct StatsView: View {
     }
 
     private var levelCard: some View {
-        let level: String
-        switch store.masteredCount {
-        case 0..<40: level = "A1"
-        case 40..<120: level = "A1–A2"
-        case 120..<220: level = "A2"
-        default: level = "B1"
+        let bands = store.bandProgress()
+        let now = bands.first { Double($0.known) / Double($0.total) < 0.8 }?.name ?? "B2"
+        let current = bands.first { $0.name == now } ?? bands[0]
+        let percent = Int((Double(current.known) / Double(current.total)) * 100)
+        let left = max(0, current.total - current.known)
+        return VStack(alignment: .leading, spacing: 10) {
+            Text("Teraz: \(now)").font(.title2.bold())
+            Text("Znasz \(percent)% poziomu \(now). Zostało \(left) słów, żeby go domknąć.")
+            Text("Opanowane: \(store.masteredCount) na trzech dniach. W nauce: \(store.learningCount).")
+                .foregroundStyle(Theme.text2)
+            bandBar(current.known, current.total)
+            ForEach(bands, id: \.name) { band in
+                let share = Int((Double(band.known) / Double(max(band.total, 1))) * 100)
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(band.name == now ? "\(band.name) · tu jesteś" : band.name)
+                            .font(.subheadline.weight(band.name == now ? .bold : .regular))
+                        Spacer()
+                        Text("\(band.known)/\(band.total) · \(share)%")
+                            .font(.caption)
+                            .foregroundStyle(Theme.text2)
+                    }
+                    bandBar(band.known, band.total)
+                }
+            }
         }
-        return VStack(alignment: .leading, spacing: 8) {
-            Text("Poziom \(level)").font(.title2.bold())
-            Text("Znasz \(store.masteredCount) słów na trzech dniach. W nauce: \(store.learningCount).")
-            Text("Błędy zapisane: \(store.journal.mistakes.count). Nauka w tym miesiącu: \(store.talkLabel). Wymowa: \(store.journal.said) prób.")
+        .padding(16)
+        .themedCard()
+    }
+
+    private var goalCard: some View {
+        let bands = store.bandProgress()
+        let index = ladder.firstIndex(of: goalLevel) ?? 1
+        let slice = bands.prefix(index + 1)
+        let known = slice.reduce(0) { $0 + $1.known }
+        let total = slice.reduce(0) { $0 + $1.total }
+        let left = max(0, total - known)
+        let percent = total == 0 ? 0 : Int((Double(known) / Double(total)) * 100)
+        let perDay = max(1, dailyMinutes / 3)
+        let daysNeeded = Int(ceil(Double(left) / Double(perDay)))
+        let minutesToMakeIt = max(5, Int(ceil(Double(left) / Double(max(goalDays, 1)))) * 3)
+        return VStack(alignment: .leading, spacing: 12) {
+            Text("Cel: \(goalLevel)").font(.title3.bold())
+            Text("Masz \(percent)% drogi do \(goalLevel). Zostało \(left) słów.")
+            bandBar(known, total)
+            Picker("Na jaki poziom", selection: $goalLevel) {
+                ForEach(ladder, id: \.self) { Text($0).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            Stepper("Dziennie: \(dailyMinutes) min", value: $dailyMinutes, in: 5...90, step: 5)
+            Stepper("Chcę zdążyć w: \(goalDays) dni", value: $goalDays, in: 14...365, step: 7)
+            Text(paceLine(daysNeeded: daysNeeded, left: left, perDay: perDay, minutesToMakeIt: minutesToMakeIt))
+                .font(.footnote)
                 .foregroundStyle(Theme.text2)
         }
         .padding(16)
         .themedCard()
+    }
+
+    private func paceLine(daysNeeded: Int, left: Int, perDay: Int, minutesToMakeIt: Int) -> String {
+        if left == 0 { return "Ten cel już masz. Ustaw wyższy poziom." }
+        if daysNeeded <= goalDays {
+            return "Przy \(dailyMinutes) min dziennie wychodzi około \(perDay) słów. Cel za około \(daysNeeded) dni, a dałeś sobie \(goalDays)."
+        }
+        return "Przy \(dailyMinutes) min cel zajmie około \(daysNeeded) dni. Żeby zdążyć w \(goalDays), rób około \(minutesToMakeIt) min dziennie."
+    }
+
+    private func bandBar(_ known: Int, _ total: Int) -> some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Theme.track)
+                Capsule()
+                    .fill(Theme.gradient)
+                    .frame(width: max(6, geo.size.width * CGFloat(known) / CGFloat(max(total, 1))))
+            }
+        }
+        .frame(height: 10)
     }
 
     private var summary: some View {
