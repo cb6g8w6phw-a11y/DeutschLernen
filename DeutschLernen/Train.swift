@@ -749,14 +749,8 @@ struct WordsView: View {
     @State private var deck = false
 
     private var filtered: [Word] {
-        store.words.filter { word in
-            let bandOK: Bool
-            switch band {
-            case "A1": bandOK = word.level == "A1"
-            case "A2": bandOK = word.level == "A2"
-            case "Powtórka": bandOK = (store.stats[word.de]?.due ?? .distantFuture) <= Date()
-            default: bandOK = true
-            }
+        store.catalog(level: band == "Wszystkie" || band == "Powtórka" ? "wszystkie" : band).filter { word in
+            let bandOK = band != "Powtórka" || (store.stats[word.de]?.due ?? .distantFuture) <= Date()
             let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
             let textOK = q.isEmpty || word.de.localizedCaseInsensitiveContains(q) || word.pl.localizedCaseInsensitiveContains(q)
             return bandOK && textOK
@@ -771,9 +765,10 @@ struct WordsView: View {
                 Text("Wszystkie").tag("Wszystkie")
                 Text("A1").tag("A1")
                 Text("A2").tag("A2")
-                Text("Powtórka").tag("Powtórka")
+                Text("B1").tag("B1")
+                Text("B2").tag("B2")
             }
-            .pickerStyle(.segmented)
+            .pickerStyle(.menu)
             HStack {
                 Text("\(filtered.count) słówek").font(.footnote).foregroundStyle(Ink.muted)
                 Spacer()

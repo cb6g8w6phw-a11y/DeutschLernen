@@ -95,9 +95,11 @@ struct QuizView: View {
             Picker("Poziom", selection: $band) {
                 Text("A1").tag("A1")
                 Text("A2").tag("A2")
-                Text("Oba").tag("oba")
+                Text("A1–A2").tag("oba")
+                Text("B1").tag("B1")
+                Text("B2").tag("B2")
             }
-            .pickerStyle(.segmented)
+            .pickerStyle(.menu)
             Picker("Tryb", selection: $drill) {
                 Text("Słówka").tag("slowa")
                 Text("Zdania").tag("zdania")
@@ -394,7 +396,7 @@ struct QuizView: View {
             options = ([flip ? w.exPl : w.ex] + wrong).shuffled()
             if !flip { loadSimilar(w.ex) }
         } else {
-            let pool = store.words.filter { $0.de != w.de && (band == "oba" || $0.level == band) }
+            let pool = store.catalog(level: band).filter { $0.de != w.de }
             let same = pool.filter { $0.topic == w.topic }.shuffled()
             let rest = pool.filter { $0.topic != w.topic }.shuffled()
             let distractors = Array((same + rest).prefix(3))

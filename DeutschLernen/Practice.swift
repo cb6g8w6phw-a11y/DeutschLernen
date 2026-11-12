@@ -451,10 +451,12 @@ struct PlanView: View {
             Picker("Poziom", selection: $band) {
                 Text("A1").tag("A1")
                 Text("A2").tag("A2")
-                Text("Oba").tag("oba")
+                Text("A1–A2").tag("oba")
+                Text("B1").tag("B1")
+                Text("B2").tag("B2")
             }
-            .pickerStyle(.segmented)
-            Text("Ten poziom jest używany w lekcjach i powtórkach.")
+            .pickerStyle(.menu)
+            Text("W bazie jest 10 000 najczęstszych słów: A1 1500, A2 2000, B1 3000, B2 3500. Sesja bierze tylko Twój poziom.")
                 .font(.footnote)
                 .foregroundStyle(Theme.text2)
             Spacer()

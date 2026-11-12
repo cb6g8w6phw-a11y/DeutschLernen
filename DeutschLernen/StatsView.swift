@@ -125,7 +125,8 @@ struct StatsView: View {
     }
 
     private var skills: some View {
-        let words = store.words.isEmpty ? 0 : Double(store.masteredCount) / Double(store.words.count)
+        let studied = max(store.stats.count, 1)
+        let words = Double(store.masteredCount) / Double(studied)
         let listen = store.journal.listenTries == 0 ? 0 : Double(store.journal.listenOk) / Double(store.journal.listenTries)
         let talk = min(1, Double(store.monthTalkSeconds) / 1800)
         let scenes = Scenarios.all.isEmpty ? 0 : Double(store.journal.scenes.count) / Double(Scenarios.all.count)
@@ -144,6 +145,9 @@ struct StatsView: View {
                     .frame(height: 8)
                 }
             }
+            Text("Baza: \(FreqBank.all.count) najczęstszych słów, A1–B2. W nauce: \(store.stats.count).")
+                .font(.footnote)
+                .foregroundStyle(Ink.muted)
             Text("Rozmowa w tym miesiącu: \(store.talkLabel) · Dzień \(store.planDay)/30")
                 .font(.footnote)
                 .foregroundStyle(Ink.muted)

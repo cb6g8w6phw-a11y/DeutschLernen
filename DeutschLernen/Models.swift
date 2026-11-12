@@ -293,14 +293,9 @@ final class LearningStore: ObservableObject {
         save()
     }
 
-    /// Sesja: najpierw słabe/zaległe powtórki, potem kilka nowych słówek.
+    /// Sesja: najpierw słabe/zaległe powtórki, potem kilka nowych z puli 10 000.
     func nextSession(size: Int = 8, maxNew: Int = 4, level: String = "oba") -> [Word] {
-        let pool: [Word]
-        switch level {
-        case "A1": pool = words.filter { $0.level == "A1" }
-        case "A2": pool = words.filter { $0.level == "A2" }
-        default: pool = words
-        }
+        let pool = catalog(level: level)
         let now = Date()
         let reviews = pool.filter { w in
             if let s = stats[w.de] { return s.due <= now }
@@ -327,10 +322,43 @@ final class LearningStore: ObservableObject {
             out = Array(pool.shuffled().prefix(max(size, 1)))
         }
         var memory = UserDefaults.standard.stringArray(forKey: "recentNewWords") ?? []
-        for word in out where stats[word.de] == nil { memory.append(word.de) }
-        if memory.count > 120 { memory = Array(memory.suffix(120)) }
+        for word in out where stats[word.de] == nil {
+            memory.append(word.de)
+            keep(word)
+        }
+        if memory.count > 400 { memory = Array(memory.suffix(400)) }
         UserDefaults.standard.set(memory, forKey: "recentNewWords")
         return out
+    }
+
+    func catalog(level: String) -> [Word] {
+        let allow = Self.bands(level)
+        var seen = Set<String>()
+        var out: [Word] = []
+        for word in FreqBank.all + words {
+            if !allow.isEmpty && !allow.contains(word.level) { continue }
+            let key = word.de.lowercased()
+            if seen.insert(key).inserted { out.append(word) }
+        }
+        return out
+    }
+
+    static func bands(_ level: String) -> Set<String> {
+        switch level {
+        case "A1": return ["A1"]
+        case "A2": return ["A2"]
+        case "B1": return ["B1"]
+        case "B2": return ["B2"]
+        case "oba": return ["A1", "A2"]
+        default: return []
+        }
+    }
+
+    private func keep(_ word: Word) {
+        let key = Normalizer.clean(word.de)
+        guard !words.contains(where: { Normalizer.clean($0.de) == key }) else { return }
+        words.append(word)
+        save()
     }
 
     func addWords(_ new: [Word]) -> Int {
@@ -446,9 +474,7 @@ final class LearningStore: ObservableObject {
     }
 
     func levelCounts() -> [(name: String, count: Int)] {
-        let a1 = words.filter { $0.level == "A1" }.count
-        let a2 = words.filter { $0.level == "A2" }.count
-        return [("A1", a1), ("A2", a2), ("Inne", max(0, words.count - a1 - a2))]
+        [("A1", FreqBank.count("A1")), ("A2", FreqBank.count("A2")), ("B1", FreqBank.count("B1")), ("B2", FreqBank.count("B2"))]
     }
     var wordOfDay: Word? {
         guard !words.isEmpty else { return nil }
