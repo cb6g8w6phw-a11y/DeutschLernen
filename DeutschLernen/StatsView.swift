@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 struct AIWord: Decodable {
     let de: String
@@ -12,18 +13,25 @@ struct StatsView: View {
     @EnvironmentObject var store: LearningStore
     @State private var generating = false
     @State private var message = ""
+    @State private var showPace = false
     @AppStorage("goalLevel") private var goalLevel = "A2"
-    @AppStorage("dailyMinutes") private var dailyMinutes = 15
+    @AppStorage("dailyMinutes") private var dailyMinutes = 20
     @AppStorage("goalDays") private var goalDays = 90
+    @AppStorage("didPickPace") private var didPickPace = false
+    @AppStorage("ritualHistory") private var ritualHistory = ""
+    @AppStorage("ritualStreak") private var ritualStreak = 0
+    @AppStorage("ritualBest") private var ritualBest = 0
 
     private let ladder = ["A1", "A2", "B1", "B2"]
+    private let minuteChoices = [10, 20, 30, 60]
+    private let deadlineChoices = [30, 90, 180, 365]
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     levelCard
-                    goalCard
+                    dailyCard
                     summary
                     topics
                     activity
@@ -37,62 +45,145 @@ struct StatsView: View {
             .navigationTitle("Postęp")
             .containerBackground(for: .navigation) { NightGlow() }
             .toolbarBackground(.hidden, for: .navigationBar)
+            .sheet(isPresented: $showPace) {
+                PaceSheet(
+                    minutes: $dailyMinutes,
+                    goalDays: $goalDays,
+                    goalLevel: goalLevel,
+                    bands: journey(),
+                    ladder: ladder,
+                    minuteChoices: minuteChoices,
+                    deadlineChoices: deadlineChoices
+                )
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(Theme.bg)
+            }
+            .onAppear {
+                if !minuteChoices.contains(dailyMinutes) {
+                    dailyMinutes = minuteChoices.min { abs($0 - dailyMinutes) < abs($1 - dailyMinutes) } ?? 20
+                }
+                if !deadlineChoices.contains(goalDays) {
+                    goalDays = deadlineChoices.min { abs($0 - goalDays) < abs($1 - goalDays) } ?? 90
+                }
+                seedRitual()
+                if !didPickPace { showPace = true }
+            }
+            .onChange(of: showPace) { _, open in
+                if !open { didPickPace = true }
+            }
         }
+    }
+
+    fileprivate struct BandStat {
+        let name: String
+        let mastered: Int
+        let learning: Int
+        let total: Int
+        var gate: Int { Int((Double(total) * 0.8).rounded(.up)) }
+        var gap: Int { max(0, gate - mastered) }
+        var softPercent: Int {
+            let score = Double(mastered) + Double(learning) * 0.5
+            return min(100, Int((score / Double(max(total, 1))) * 100))
+        }
+    }
+
+    private func journey() -> [BandStat] {
+        var levelOf: [String: String] = [:]
+        for word in store.words { levelOf[word.de] = word.level }
+        for word in FreqBank.all where levelOf[word.de] == nil { levelOf[word.de] = word.level }
+        var mastered = ["A1": 0, "A2": 0, "B1": 0, "B2": 0]
+        var learning = ["A1": 0, "A2": 0, "B1": 0, "B2": 0]
+        for (de, stat) in store.stats {
+            let raw = levelOf[de] ?? "A2"
+            let level = mastered[raw] != nil ? raw : "A2"
+            if stat.days.count >= 3 {
+                mastered[level, default: 0] += 1
+            } else if stat.correct + stat.wrong > 0 || !stat.days.isEmpty {
+                learning[level, default: 0] += 1
+            }
+        }
+        return ladder.map { name in
+            BandStat(
+                name: name,
+                mastered: mastered[name] ?? 0,
+                learning: learning[name] ?? 0,
+                total: max(FreqBank.count(name), 1)
+            )
+        }
+    }
+
+    private func currentBand(_ bands: [BandStat]) -> BandStat {
+        bands.first { $0.mastered < $0.gate } ?? bands[bands.count - 1]
+    }
+
+    private func goalTotals(_ bands: [BandStat]) -> (already: Int, need: Int) {
+        let index = ladder.firstIndex(of: goalLevel) ?? 1
+        let slice = bands.prefix(index + 1)
+        let need = slice.reduce(0) { $0 + $1.gate }
+        let already = slice.reduce(0) { $0 + min($1.mastered, $1.gate) }
+        return (already, need)
     }
 
     private var levelCard: some View {
-        let bands = store.bandProgress()
-        let now = bands.first { Double($0.known) / Double($0.total) < 0.8 }?.name ?? "B2"
-        let current = bands.first { $0.name == now } ?? bands[0]
-        let percent = Int((Double(current.known) / Double(current.total)) * 100)
-        let left = max(0, current.total - current.known)
-        return VStack(alignment: .leading, spacing: 10) {
-            Text("Teraz: \(now)").font(.title2.bold())
-            Text("Znasz \(percent)% poziomu \(now). Zostało \(left) słów, żeby go domknąć.")
-            Text("Opanowane: \(store.masteredCount) na trzech dniach. W nauce: \(store.learningCount).")
-                .foregroundStyle(Theme.text2)
-            bandBar(current.known, current.total)
-            ForEach(bands, id: \.name) { band in
-                let share = Int((Double(band.known) / Double(max(band.total, 1))) * 100)
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(band.name == now ? "\(band.name) · tu jesteś" : band.name)
-                            .font(.subheadline.weight(band.name == now ? .bold : .regular))
-                        Spacer()
-                        Text("\(band.known)/\(band.total) · \(share)%")
-                            .font(.caption)
-                            .foregroundStyle(Theme.text2)
-                    }
-                    bandBar(band.known, band.total)
+        let bands = journey()
+        let now = currentBand(bands)
+        let totals = goalTotals(bands)
+        let left = max(0, totals.need - totals.already)
+        let percent = totals.need == 0 ? 100 : Int((Double(totals.already) / Double(totals.need)) * 100)
+        let days = left == 0 ? 0 : Int(ceil(Double(left) / Double(max(1, dailyMinutes / 3))))
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("JESTEŚ").font(.caption.weight(.semibold)).foregroundStyle(Theme.text2)
+                    Text(now.name).font(.system(size: 40, weight: .bold, design: .rounded))
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("CELUJESZ").font(.caption.weight(.semibold)).foregroundStyle(Theme.text2)
+                    Text(goalLevel).font(.system(size: 40, weight: .bold, design: .rounded)).foregroundStyle(Theme.orange)
                 }
             }
-        }
-        .padding(16)
-        .themedCard()
-    }
-
-    private var goalCard: some View {
-        let bands = store.bandProgress()
-        let index = ladder.firstIndex(of: goalLevel) ?? 1
-        let slice = bands.prefix(index + 1)
-        let known = slice.reduce(0) { $0 + $1.known }
-        let total = slice.reduce(0) { $0 + $1.total }
-        let left = max(0, total - known)
-        let percent = total == 0 ? 0 : Int((Double(known) / Double(total)) * 100)
-        let perDay = max(1, dailyMinutes / 3)
-        let daysNeeded = Int(ceil(Double(left) / Double(perDay)))
-        let minutesToMakeIt = max(5, Int(ceil(Double(left) / Double(max(goalDays, 1)))) * 3)
-        return VStack(alignment: .leading, spacing: 12) {
-            Text("Cel: \(goalLevel)").font(.title3.bold())
-            Text("Masz \(percent)% drogi do \(goalLevel). Zostało \(left) słów.")
-            bandBar(known, total)
+            Text("Znasz \(now.softPercent)% poziomu \(now.name). Opanowane \(now.mastered), w nauce \(now.learning). Do progu \(now.name) zostało \(now.gap) słów.")
+                .font(.subheadline)
             Picker("Na jaki poziom", selection: $goalLevel) {
                 ForEach(ladder, id: \.self) { Text($0).tag($0) }
             }
             .pickerStyle(.segmented)
-            Stepper("Dziennie: \(dailyMinutes) min", value: $dailyMinutes, in: 5...90, step: 5)
-            Stepper("Chcę zdążyć w: \(goalDays) dni", value: $goalDays, in: 14...365, step: 7)
-            Text(paceLine(daysNeeded: daysNeeded, left: left, perDay: perDay, minutesToMakeIt: minutesToMakeIt))
+            ForEach(bands, id: \.name) { band in
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(band.name == now.name ? "\(band.name) · tu jesteś" : band.name)
+                            .font(.subheadline.weight(band.name == now.name ? .bold : .regular))
+                        Spacer()
+                        Text("\(band.mastered)/\(band.total) · \(band.softPercent)%")
+                            .font(.caption)
+                            .foregroundStyle(Theme.text2)
+                    }
+                    bandBar(band.softPercent, 100)
+                    if let goalIndex = ladder.firstIndex(of: goalLevel),
+                       let bandIndex = ladder.firstIndex(of: band.name),
+                       bandIndex <= goalIndex {
+                        Text(band.gap == 0 ? "Próg tego poziomu już masz." : "Do progu zostało \(band.gap) opanowanych słów.")
+                            .font(.caption)
+                            .foregroundStyle(Theme.text2)
+                    }
+                }
+            }
+            Text("Droga do \(goalLevel): \(percent)%. Zostało \(left) słów, żeby domknąć poziomy po drodze.")
+                .font(.footnote)
+                .foregroundStyle(Theme.text2)
+            Button {
+                showPace = true
+            } label: {
+                Text("Ile czasu dziennie? 10 · 20 · 30 · 60 min")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.plain)
+            .padding(.vertical, 12)
+            .background(Theme.gradient, in: Capsule())
+            .foregroundStyle(Theme.ink)
+            Text(forecastLine(days: days, left: left))
                 .font(.footnote)
                 .foregroundStyle(Theme.text2)
         }
@@ -100,12 +191,125 @@ struct StatsView: View {
         .themedCard()
     }
 
-    private func paceLine(daysNeeded: Int, left: Int, perDay: Int, minutesToMakeIt: Int) -> String {
-        if left == 0 { return "Ten cel już masz. Ustaw wyższy poziom." }
-        if daysNeeded <= goalDays {
-            return "Przy \(dailyMinutes) min dziennie wychodzi około \(perDay) słów. Cel za około \(daysNeeded) dni, a dałeś sobie \(goalDays)."
+    private var dailyCard: some View {
+        let today = Self.dayKey()
+        let claimed = ritualSet().contains(today)
+        let marks = weekMarks()
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("Codzienny ogień", systemImage: "flame.fill")
+                    .font(.headline)
+                    .foregroundStyle(claimed ? Theme.orange : Theme.text)
+                Spacer()
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text(Theme.dni(max(ritualStreak, store.streak))).font(.headline)
+                    Text("seria").font(.caption).foregroundStyle(Theme.text2)
+                }
+            }
+            HStack {
+                ForEach(marks, id: \.key) { mark in
+                    VStack(spacing: 4) {
+                        Circle()
+                            .fill(mark.on ? AnyShapeStyle(Theme.gradient) : AnyShapeStyle(Theme.track))
+                            .frame(width: 28, height: 28)
+                        Text(mark.label).font(.system(size: 10)).foregroundStyle(Theme.text2)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            if claimed, let word = store.wordOfDay {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(word.de).font(.title3.bold())
+                    Text(word.pl).foregroundStyle(Theme.text2)
+                    Text("Masz dziś. Jutro słowo zgaśnie, jeśli nie wpadniesz.")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.text2)
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Theme.card2, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            } else {
+                Text("Jedno wejście trzyma serię. Odbierz słowo dnia, zanim dzień się zamknie.")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.text2)
+                Button {
+                    claimRitual()
+                } label: {
+                    Text("Odbierz słowo dnia")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
+                .padding(.vertical, 12)
+                .background(Theme.accent, in: Capsule())
+                .foregroundStyle(Theme.ink)
+            }
+            if ritualBest > 0 {
+                Text("Najdłuższa seria ognia: \(Theme.dni(ritualBest)).")
+                    .font(.caption)
+                    .foregroundStyle(Theme.text2)
+            }
         }
-        return "Przy \(dailyMinutes) min cel zajmie około \(daysNeeded) dni. Żeby zdążyć w \(goalDays), rób około \(minutesToMakeIt) min dziennie."
+        .padding(16)
+        .themedCard()
+    }
+
+    private func forecastLine(days: Int, left: Int) -> String {
+        if left == 0 { return "Ten cel już masz. Ustaw wyższy poziom." }
+        let when = Self.pretty(days)
+        let needMin = max(5, Int((Double(left) / Double(max(goalDays, 1))).rounded(.up)) * 3)
+        if days <= goalDays {
+            return "Przy \(dailyMinutes) min dziennie \(goalLevel) wypada \(when). Termin \(Self.deadlineName(goalDays)) się zgadza."
+        }
+        return "Przy \(dailyMinutes) min \(goalLevel) wypada \(when). Żeby zdążyć w \(Self.deadlineName(goalDays)), rób około \(needMin) min."
+    }
+
+    private func ritualSet() -> Set<String> {
+        Set(ritualHistory.split(separator: ",").map { String($0) })
+    }
+
+    private func seedRitual() {
+        guard ritualHistory.isEmpty, store.streak > 0 else {
+            ritualStreak = max(ritualStreak, store.streak)
+            ritualBest = max(ritualBest, ritualStreak)
+            return
+        }
+        var keys: [String] = []
+        for offset in 1...min(store.streak, 14) {
+            if let date = Calendar.current.date(byAdding: .day, value: -offset, to: Date()) {
+                keys.append(Self.dayKey(date))
+            }
+        }
+        ritualHistory = keys.joined(separator: ",")
+        ritualStreak = store.streak
+        ritualBest = max(ritualBest, store.streak)
+    }
+
+    private func claimRitual() {
+        let today = Self.dayKey()
+        var hist = ritualSet()
+        guard !hist.contains(today) else { return }
+        let yesterday = Self.dayKey(Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date())
+        if hist.contains(yesterday) {
+            ritualStreak = max(ritualStreak, store.streak) + 1
+        } else if ritualStreak == 0 {
+            ritualStreak = max(store.streak, 1)
+        } else {
+            ritualStreak = 1
+        }
+        ritualBest = max(ritualBest, ritualStreak)
+        hist.insert(today)
+        ritualHistory = hist.sorted().suffix(40).joined(separator: ",")
+        Haptic.good()
+    }
+
+    private func weekMarks() -> [(key: String, label: String, on: Bool)] {
+        let hist = ritualSet()
+        let cal = Calendar.current
+        return (0..<7).reversed().compactMap { offset in
+            guard let date = cal.date(byAdding: .day, value: -offset, to: Date()) else { return nil }
+            let key = Self.dayKey(date)
+            return (key, "\(cal.component(.day, from: date))", hist.contains(key))
+        }
     }
 
     private func bandBar(_ known: Int, _ total: Int) -> some View {
@@ -118,6 +322,33 @@ struct StatsView: View {
             }
         }
         .frame(height: 10)
+    }
+
+    private static func dayKey(_ date: Date = Date()) -> String {
+        let f = DateFormatter()
+        f.calendar = Calendar(identifier: .gregorian)
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = .current
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: date)
+    }
+
+    private static func pretty(_ days: Int) -> String {
+        let date = Calendar.current.date(byAdding: .day, value: days, to: Date()) ?? Date()
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "pl_PL")
+        f.dateStyle = .long
+        return f.string(from: date)
+    }
+
+    private static func deadlineName(_ days: Int) -> String {
+        switch days {
+        case 30: return "1 miesiąc"
+        case 90: return "3 miesiące"
+        case 180: return "pół roku"
+        case 365: return "rok"
+        default: return "\(days) dni"
+        }
     }
 
     private var summary: some View {
@@ -309,6 +540,185 @@ struct StatsView: View {
             message = "⚠️ Nie wyszła lista słówek. Stuknij jeszcze raz."
         }
     }
+}
+
+private struct PaceSheet: View {
+    @Binding var minutes: Int
+    @Binding var goalDays: Int
+    let goalLevel: String
+    let bands: [StatsView.BandStat]
+    let ladder: [String]
+    let minuteChoices: [Int]
+    let deadlineChoices: [Int]
+    @Environment(\.dismiss) private var dismiss
+
+    private var slice: [StatsView.BandStat] {
+        let index = ladder.firstIndex(of: goalLevel) ?? 0
+        return Array(bands.prefix(index + 1))
+    }
+
+    private var need: Int { slice.reduce(0) { $0 + $1.gate } }
+    private var already: Int { slice.reduce(0) { $0 + min($1.mastered, $1.gate) } }
+    private var left: Int { max(0, need - already) }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Jak szybko chcesz dojść do \(goalLevel)?")
+                    .font(.title2.bold())
+                Text("Cztery dawki. Wykres pokazuje, ile procent celu masz po kolejnych miesiącach.")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.text2)
+                HStack(spacing: 8) {
+                    ForEach(minuteChoices, id: \.self) { choice in
+                        Button {
+                            minutes = choice
+                        } label: {
+                            VStack(spacing: 0) {
+                                Text("\(choice)").font(.title2.bold())
+                                Text("min").font(.caption)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background {
+                                if minutes == choice {
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.gradient)
+                                } else {
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.track)
+                                }
+                            }
+                            .foregroundStyle(minutes == choice ? Theme.ink : Theme.text)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                Text(headline)
+                    .font(.subheadline)
+                chart
+                    .frame(height: 200)
+                Text("miesiące od dziś · % drogi do \(goalLevel)")
+                    .font(.caption2)
+                    .foregroundStyle(Theme.text2)
+                    .frame(maxWidth: .infinity)
+                Text("Chcę zdążyć w").font(.headline)
+                HStack(spacing: 8) {
+                    ForEach(deadlineChoices, id: \.self) { choice in
+                        Button {
+                            goalDays = choice
+                        } label: {
+                            Text(StatsView.deadlineLabel(choice))
+                                .font(.caption.weight(.semibold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .background(Capsule().fill(goalDays == choice ? Theme.text : Theme.track))
+                                .foregroundStyle(goalDays == choice ? Theme.ink : Theme.text2)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                Text(verdict)
+                    .font(.footnote)
+                    .foregroundStyle(Theme.text2)
+                ForEach(slice, id: \.name) { band in
+                    let per = max(1, minutes / 3)
+                    let bandDays = band.gap == 0 ? 0 : Int(ceil(Double(band.gap) / Double(per)))
+                    Text(band.gap == 0
+                         ? "\(band.name): próg zamknięty"
+                         : "\(band.name): \(band.gap) słów · około \(bandDays) dni przy \(minutes) min")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.text2)
+                }
+                Button {
+                    dismiss()
+                } label: {
+                    Text("Biorę to tempo")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
+                .padding(.vertical, 14)
+                .background(Theme.gradient, in: Capsule())
+                .foregroundStyle(Theme.ink)
+            }
+            .padding(20)
+        }
+    }
+
+    private var headline: String {
+        if left == 0 { return "Poziom \(goalLevel) już siedzi. Podnieś cel." }
+        let per = max(1, minutes / 3)
+        let days = Int(ceil(Double(left) / Double(per)))
+        return "Przy \(minutes) min (\(per) słów dziennie) \(goalLevel) około \(StatsView.prettyDate(days))."
+    }
+
+    private var verdict: String {
+        let per = max(1, minutes / 3)
+        let days = left == 0 ? 0 : Int(ceil(Double(left) / Double(per)))
+        if days <= goalDays { return "To tempo mieści się w terminie \(StatsView.deadlineLabel(goalDays))." }
+        let needMin = max(5, Int((Double(left) / Double(max(goalDays, 1))).rounded(.up)) * 3)
+        return "W \(StatsView.deadlineLabel(goalDays)) to tempo nie dowozi \(goalLevel). Trzeba około \(needMin) min dziennie, albo dłuższy termin."
+    }
+
+    private var chart: some View {
+        let samples = samples()
+        return Chart(samples) { sample in
+            LineMark(
+                x: .value("Miesiąc", sample.month),
+                y: .value("Cel", sample.percent)
+            )
+            .foregroundStyle(by: .value("Dawka", sample.tempo))
+            .interpolationMethod(.monotone)
+            .lineStyle(StrokeStyle(lineWidth: sample.minutes == minutes ? 3 : 1.4))
+        }
+        .chartYScale(domain: 0...100)
+        .chartForegroundStyleScale([
+            "10 min": Color.white.opacity(0.45),
+            "20 min": Theme.accent,
+            "30 min": Color(hex: "C4B5FD"),
+            "60 min": Theme.orange,
+        ])
+        .chartXAxis {
+            AxisMarks(values: [0, 3, 6, 12, 24]) { value in
+                AxisGridLine()
+                AxisValueLabel {
+                    if let month = value.as(Int.self) {
+                        Text("\(month)")
+                    }
+                }
+            }
+        }
+        .chartYAxis {
+            AxisMarks(position: .leading)
+        }
+        .chartLegend(position: .bottom, spacing: 8)
+    }
+
+    private func samples() -> [PaceSample] {
+        let marks = [0, 1, 2, 3, 4, 6, 9, 12, 18, 24]
+        var out: [PaceSample] = []
+        let base = max(need, 1)
+        for choice in minuteChoices {
+            let per = max(1, choice / 3)
+            for month in marks {
+                let gained = month * 30 * per
+                let pct = min(100, Int((Double(already + gained) / Double(base)) * 100))
+                out.append(PaceSample(minutes: choice, month: month, percent: pct))
+            }
+        }
+        return out
+    }
+}
+
+private struct PaceSample: Identifiable {
+    let minutes: Int
+    let month: Int
+    let percent: Int
+    var tempo: String { "\(minutes) min" }
+    var id: String { "\(minutes)-\(month)" }
+}
+
+extension StatsView {
+    fileprivate static func prettyDate(_ days: Int) -> String { pretty(days) }
+    fileprivate static func deadlineLabel(_ days: Int) -> String { deadlineName(days) }
 }
 
 enum WordJSON {
