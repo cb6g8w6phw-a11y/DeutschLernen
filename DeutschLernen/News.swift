@@ -50,31 +50,75 @@ struct NewsItem: Identifiable, Hashable, Codable {
 enum NewsFeed {
     static func load() async throws -> [NewsItem] {
         let sources: [(String, String, String)] = [
-            ("Świat", "DW", "https://rss.dw.com/xml/rss-de-welt"),
-            ("Niemcy", "Tagesschau", "https://www.tagesschau.de/inland/index~rss2.xml"),
             ("Świat", "Tagesschau", "https://www.tagesschau.de/ausland/index~rss2.xml"),
+            ("Świat", "DW", "https://rss.dw.com/xml/rss-de-all"),
+            ("Świat", "SPIEGEL", "https://www.spiegel.de/politik/index.rss"),
+            ("Niemcy", "Tagesschau", "https://www.tagesschau.de/inland/index~rss2.xml"),
+            ("Niemcy", "SPIEGEL", "https://www.spiegel.de/politik/deutschland/index.rss"),
+            ("Niemcy", "SZ", "https://rss.sueddeutsche.de/rss/Politik"),
             ("Pieniądze", "Tagesschau", "https://www.tagesschau.de/wirtschaft/index~rss2.xml"),
-            ("Sport", "Sportschau", "https://www.sportschau.de/sportschauindex100~rss2.xml")
+            ("Pieniądze", "Handelsblatt", "https://www.handelsblatt.com/contentexport/feed/schlagzeilen"),
+            ("Pieniądze", "ZEIT", "https://newsfeed.zeit.de/wirtschaft/index"),
+            ("Sport", "Sportschau", "https://www.sportschau.de/index~rss2.xml"),
+            ("Sport", "SPIEGEL", "https://www.spiegel.de/sport/index.rss"),
+            ("Sport", "ZEIT", "https://newsfeed.zeit.de/sport/index"),
+            ("Technologia", "heise", "https://www.heise.de/rss/heise.rdf"),
+            ("Technologia", "Golem", "https://www.golem.de/rss.php?feed=RSS2.0"),
+            ("Technologia", "ZEIT", "https://newsfeed.zeit.de/digital/index")
         ]
         var all: [NewsItem] = []
-        var lastError: Error?
-        for (category, name, url) in sources {
-            do {
-                all += try await fetch(name, url, category: category)
-            } catch {
-                lastError = error
+        await withTaskGroup(of: [NewsItem].self) { group in
+            for (category, name, url) in sources {
+                group.addTask {
+                    let batch = (try? await fetch(name, url, category: category)) ?? []
+                    return Array(batch.filter(useful).prefix(8))
+                }
+            }
+            for await batch in group {
+                all += batch
             }
         }
         var seen = Set<String>()
         let unique = all.filter { seen.insert(Normalizer.clean($0.title)).inserted }
-        if unique.isEmpty, let lastError { throw lastError }
-        return Array(unique.prefix(40))
+        if unique.isEmpty { throw URLError(.cannotParseResponse) }
+        return mix(unique)
+    }
+
+    static func mix(_ items: [NewsItem]) -> [NewsItem] {
+        let order = ["Świat", "Niemcy", "Pieniądze", "Sport", "Technologia"]
+        var buckets: [String: [NewsItem]] = [:]
+        for item in items {
+            buckets[item.category, default: []].append(item)
+        }
+        for key in buckets.keys {
+            buckets[key] = Array(buckets[key, default: []].prefix(18))
+        }
+        var mixed: [NewsItem] = []
+        var pending = true
+        while pending {
+            pending = false
+            for key in order {
+                guard var list = buckets[key], !list.isEmpty else { continue }
+                mixed.append(list.removeFirst())
+                buckets[key] = list
+                pending = true
+            }
+        }
+        return mixed
+    }
+
+    private static func useful(_ item: NewsItem) -> Bool {
+        let title = item.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard title.count >= 16 else { return false }
+        let low = title.lowercased()
+        if low == "der spiegel" || low.hasPrefix("n-tv.de") || low == "kicker" { return false }
+        return true
     }
 
     private static func fetch(_ source: String, _ url: String, category: String) async throws -> [NewsItem] {
         var request = URLRequest(url: URL(string: url)!)
         request.timeoutInterval = 20
-        request.setValue("DeutschLernen/4.8", forHTTPHeaderField: "User-Agent")
+        request.setValue("Mozilla/5.0", forHTTPHeaderField: "User-Agent")
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
             throw URLError(.badServerResponse)
@@ -228,7 +272,7 @@ enum NewsFeed {
 }
 
 enum NewsDay {
-    private static let storeKey = "newsDayCache2"
+    private static let storeKey = "newsDayCache3"
 
     private struct Box: Codable {
         var day: String
@@ -259,11 +303,10 @@ enum NewsDay {
     }
 
     private static func merge(_ fresh: [NewsItem]) -> [NewsItem] {
-        var items = cached()
-        var seen = Set(items.map { Normalizer.clean($0.title) })
-        let added = fresh.filter { seen.insert(Normalizer.clean($0.title)).inserted }
-        items = added + items
-        items = Array(items.prefix(40))
+        var items = fresh + cached()
+        var seen = Set<String>()
+        items = items.filter { seen.insert(Normalizer.clean($0.title)).inserted }
+        items = Array(NewsFeed.mix(items).prefix(100))
         let next = Box(day: today(), items: items, updated: Date())
         if let data = try? JSONEncoder().encode(next) {
             UserDefaults.standard.set(data, forKey: storeKey)
@@ -364,6 +407,7 @@ private final class RSSParser: NSObject, XMLParserDelegate {
     private var body = ""
     private var link = ""
     private var image = ""
+    private var extra = ""
 
     init(source: String, category: String) {
         self.source = source
@@ -378,6 +422,7 @@ private final class RSSParser: NSObject, XMLParserDelegate {
             body = ""
             link = ""
             image = ""
+            extra = ""
         }
         if inside, element == "link", let href = attributes["href"], link.isEmpty { link = href }
         if inside, image.isEmpty, let url = attributes["url"], url.hasPrefix("http"),
@@ -392,18 +437,21 @@ private final class RSSParser: NSObject, XMLParserDelegate {
         case "title": title += string
         case "description", "summary": body += string
         case "link": link += string
-        default: break
+        default:
+            if element.hasSuffix("encoded") { extra += string }
         }
     }
 
     func parser(_ parser: XMLParser, didEndElement name: String, namespaceURI: String?, qualifiedName: String?) {
         let end = name.lowercased()
         if end == "item" || end == "entry" {
+            let raw = extra.count > body.count ? extra : body
             let cleanTitle = Self.plain(title)
-            let cleanBody = Self.plain(body)
-            let shot = image.isEmpty ? Self.picture(body) : image
+            let cleanBody = Self.plain(raw)
+            let cleanLink = link.trimmingCharacters(in: .whitespacesAndNewlines)
+            let shot = image.isEmpty ? Self.picture(extra.isEmpty ? body : extra) : image
             if !cleanTitle.isEmpty {
-                items.append(NewsItem(id: link.isEmpty ? cleanTitle : link, title: cleanTitle, body: cleanBody, source: source, link: link, category: category, image: shot))
+                items.append(NewsItem(id: cleanLink.isEmpty ? cleanTitle : cleanLink, title: cleanTitle, body: cleanBody, source: source, link: cleanLink, category: category, image: shot))
             }
             inside = false
         }
@@ -446,7 +494,7 @@ private final class RSSParser: NSObject, XMLParserDelegate {
 struct NewsListView: View {
     @ObservedObject private var clock = NewsClock.shared
     @State private var topic = "Wszystko"
-    private let topics = ["Wszystko", "Świat", "Niemcy", "Pieniądze", "Sport"]
+    private let topics = ["Wszystko", "Świat", "Niemcy", "Pieniądze", "Sport", "Technologia"]
 
     private var shown: [NewsItem] {
         topic == "Wszystko" ? clock.items : clock.items.filter { $0.category == topic }
