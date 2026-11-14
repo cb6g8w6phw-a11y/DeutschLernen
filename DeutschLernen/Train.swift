@@ -123,32 +123,32 @@ struct TodayView: View {
                         .font(.system(size: 40, weight: .bold))
                     Text("Gotowy na dzisiejszą lekcję?")
                         .foregroundStyle(Theme.text2)
+                    goalCard
                     skillPills
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
-                        chip("Zwroty", "text.bubble", "FF7AD9") { PhraseView() }
-                        chip("Zeszyt", "book.closed", "FF9F43") { NotebookView() }
-                        chip("Egzamin", "checkmark.seal", "3DDC97") { ExamView() }
-                        chip("Mówienie", "mic.fill", "7C5CFF") { TutorView() }
-                        chip("Słówka", "rectangle.stack.fill", "3DDCFF") { StudyView() }
-                        chip("Słuchanie", "headphones", "5B8CFF") { ListenView() }
-                        chip("Gramatyka", "textformat", "3DDC97") { GrammarView() }
-                        chip("Wymowa", "waveform", "FF6B9A") { PronounceView() }
-                        chip("Postępy", "chart.bar.fill", "FFB020") { StatsView() }
-                        chip("Błędy", "exclamationmark.bubble", "FF5A5A") { MistakeReview() }
-                        chip("Gry", "gamecontroller", "FFD60A") { GamesHome() }
-                        chip("Dyktando", "pencil.line", "46C2FF") { DictationView() }
-                        chip("Wiadomości", "newspaper", "FF8A4C") { NewsListView() }
-                        chip("Z życia", "plus.circle.fill", "2EE6A6") { CaptureView() }
-                        chip("Shadowing", "ear", "6AA8FF") { ShadowView() }
-                        chip("Jak mówią", "quote.bubble", "C084FC") { StreetView() }
-                        chip("Trener", "wrench.and.screwdriver", "FF6A4A") { RepairView() }
-                        chip("W pracy", "hammer", "F0A05A") { WorkHubView() }
-                        chip("Plan dnia", "calendar", "34D399") { DayPlanView() }
-                        chip("Offline", "arrow.down.circle", "8B7CFF") { OfflineView() }
-                        chip("Ratunek", "exclamationmark.bubble", "F5C451") { RescueView() }
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                        tile("Mówienie", "Ćwicz rozmowę", "mic.fill") { TutorView() }
+                        tile("Słówka", "Najpierw zdanie", "rectangle.stack.fill") { StudyView() }
+                        tile("Słuchanie", "Rozumiej Niemców", "headphones") { ListenView() }
+                        tile("Postępy", "Sprawdzaj wyniki", "chart.bar.fill") { StatsView() }
+                        tile("Gramatyka", "Krótko, na przykładach", "textformat") { GrammarView() }
+                        tile("Wymowa", "Powiedz i popraw", "waveform") { PronounceView() }
+                        tile("Błędy", "To, co mylisz", "exclamationmark.bubble") { MistakeReview() }
+                        tile("Gry", "Pary, zdania, czas", "gamecontroller") { GamesHome() }
+                        tile("Dyktando", "Usłysz i zapisz", "pencil.line") { DictationView() }
+                        tile("Wiadomości", "Czytaj i dodawaj", "newspaper") { NewsListView() }
+                        tile("Z życia", "Tekst, zdjęcie, głos", "plus.circle.fill") { CaptureView() }
+                        tile("Zwroty", "Całe zdanie", "text.bubble") { PhraseView() }
+                        tile("Zeszyt", "Trudne zdania", "book.closed") { NotebookView() }
+                        tile("Egzamin", "Co 7 dni", "checkmark.seal") { ExamView() }
+                        tile("Shadowing", "Powtórz na głos", "ear") { ShadowView() }
+                        tile("Jak mówią", "Potoczne zwroty", "quote.bubble") { StreetView() }
+                        tile("Trener", "Twoje błędy", "wrench.and.screwdriver") { RepairView() }
+                        tile("W pracy", "Szef i kask", "hammer") { WorkHubView() }
+                        tile("Plan dnia", "Słabsza umiejętność", "calendar") { DayPlanView() }
+                        tile("Offline", "Bez sieci", "arrow.down.circle") { OfflineView() }
+                        tile("Ratunek", "Powtórz, wolniej", "exclamationmark.bubble") { RescueView() }
                     }
                     LessonPath()
-                    goalCard
                     NavigationLink { DailyRunView() } label: {
                         Text("Pełna lekcja: zdania, powtórki, scena").primaryButton()
                     }
@@ -198,8 +198,8 @@ struct TodayView: View {
             goalRow("Słuchanie", goals[2].1) { ListenView() }
             goalRow("Powtórka błędów", goals[3].1) { MistakeReview() }
         }
-        .padding(14)
-        .themedCard()
+        .padding(12)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     private func goalRow<Dest: View>(_ title: String, _ done: Bool, @ViewBuilder dest: () -> Dest) -> some View {
@@ -215,21 +215,25 @@ struct TodayView: View {
         .buttonStyle(.plain)
     }
 
-    private func chip<Dest: View>(_ title: String, _ icon: String, _ hex: String, @ViewBuilder dest: () -> Dest) -> some View {
-        let ink: Color = hex == "FFD60A" || hex == "F5C451" ? Theme.ink : .white
-        return NavigationLink { dest() } label: {
-            VStack(spacing: 6) {
+    private func tile<Dest: View>(_ title: String, _ text: String, _ icon: String, @ViewBuilder dest: () -> Dest) -> some View {
+        NavigationLink { dest() } label: {
+            VStack(alignment: .leading, spacing: 3) {
                 Image(systemName: icon)
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Theme.accent)
                 Text(title)
-                    .font(.caption.weight(.bold))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.text)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                Text(text)
+                    .font(.caption2)
+                    .foregroundStyle(Theme.text2)
+                    .lineLimit(1)
             }
-            .foregroundStyle(ink)
-            .frame(maxWidth: .infinity)
-            .frame(height: 72)
-            .background(Color(hex: hex), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -238,33 +242,33 @@ struct TodayView: View {
         let journal = store.journal
         return ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                pill("Słuch", journal.skillListenOK, journal.skillListenBad, "5B8CFF")
-                pill("Gramatyka", journal.skillGrammarOK, journal.skillGrammarBad, "3DDC97")
-                pill("Mówienie", journal.skillSpeakOK, journal.skillSpeakBad, "7C5CFF")
-                pill("Zdania", journal.skillSentenceOK, journal.skillSentenceBad, "FF7AD9")
-                pill("Słówka", journal.skillVocabOK, journal.skillVocabBad, "3DDCFF")
+                pill("Słuch", journal.skillListenOK, journal.skillListenBad)
+                pill("Gramatyka", journal.skillGrammarOK, journal.skillGrammarBad)
+                pill("Mówienie", journal.skillSpeakOK, journal.skillSpeakBad)
+                pill("Zdania", journal.skillSentenceOK, journal.skillSentenceBad)
+                pill("Słówka", journal.skillVocabOK, journal.skillVocabBad)
             }
         }
     }
 
-    private func pill(_ name: String, _ ok: Int, _ bad: Int, _ hex: String) -> some View {
+    private func pill(_ name: String, _ ok: Int, _ bad: Int) -> some View {
         let total = ok + bad
         let label = total == 0 ? "brak" : "\(ok * 100 / total)%"
-        let width = total == 0 ? 0.0 : 74 * Double(ok) / Double(total)
-        return VStack(alignment: .leading, spacing: 6) {
+        let width = total == 0 ? 0.0 : 64 * Double(ok) / Double(total)
+        return VStack(alignment: .leading, spacing: 5) {
             HStack(spacing: 6) {
-                Text(name).font(.caption.weight(.bold))
-                Text(label).font(.caption.weight(.heavy))
+                Text(name).font(.caption.weight(.semibold))
+                Text(label).font(.caption.weight(.bold))
             }
+            .foregroundStyle(Theme.text)
             ZStack(alignment: .leading) {
-                Capsule().fill(Color.white.opacity(0.28)).frame(width: 74, height: 5)
-                Capsule().fill(Color.white).frame(width: width, height: 5)
+                Capsule().fill(Color.white.opacity(0.16)).frame(width: 64, height: 4)
+                Capsule().fill(Theme.accent).frame(width: width, height: 4)
             }
         }
-        .foregroundStyle(.white)
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(Color(hex: hex), in: Capsule())
+        .glassEffect(.regular, in: Capsule())
     }
 
     private var plan: some View {

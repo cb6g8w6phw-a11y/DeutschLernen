@@ -18,25 +18,11 @@ enum Theme {
     }
 
     static var background: some View {
-        ZStack {
-            LinearGradient(
-                colors: [Color(hex: "1B2340"), Color(hex: "12141F"), Color(hex: "1A1428")],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            RadialGradient(
-                colors: [Color(hex: "3E7CFF").opacity(0.35), .clear],
-                center: .topLeading,
-                startRadius: 10,
-                endRadius: 380
-            )
-            RadialGradient(
-                colors: [Color(hex: "FF8A5B").opacity(0.22), .clear],
-                center: .bottomTrailing,
-                startRadius: 10,
-                endRadius: 320
-            )
-        }
+        LinearGradient(
+            colors: [Color(hex: "1C1730"), Color(hex: "100E18")],
+            startPoint: .top,
+            endPoint: .bottom
+        )
     }
 
     static func dni(_ n: Int) -> String {
