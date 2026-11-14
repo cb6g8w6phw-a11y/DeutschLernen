@@ -32,6 +32,7 @@ struct StatsView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     levelCard
                     dailyCard
+                    resultCard
                     summary
                     topics
                     activity
@@ -248,6 +249,32 @@ struct StatsView: View {
                     .font(.caption)
                     .foregroundStyle(Theme.text2)
             }
+        }
+        .padding(16)
+        .themedCard()
+    }
+
+    private var resultCard: some View {
+        let ok = store.journal.todayOK
+        let bad = store.journal.todayBad
+        let total = ok + bad
+        let pct = total == 0 ? 0 : Int((Double(ok) / Double(total)) * 100)
+        return VStack(alignment: .leading, spacing: 8) {
+            Text("Wynik powtórek").font(.headline)
+            if total == 0 {
+                Text("Dziś jeszcze nie ma oceny. Każda odpowiedź w nauce, luce i wymowie wpadnie tutaj.")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.text2)
+            } else {
+                Text("\(ok) dobrych, \(bad) złych")
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                Text("Skuteczność dziś: \(pct)%. Słupki niżej to liczba odpowiedzi, ten procent mówi, czy siada.")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.text2)
+            }
+            Text("Opanowane \(store.masteredCount). Słowo siada dopiero po 3 różnych dniach dobrych odpowiedzi, nie po jednym stuknięciu.")
+                .font(.footnote)
+                .foregroundStyle(Theme.text2)
         }
         .padding(16)
         .themedCard()
