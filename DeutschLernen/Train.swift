@@ -151,6 +151,15 @@ struct TodayView: View {
                         bigTile("Wiadomości", "Czytaj i dodawaj słowa", "newspaper", Theme.orange) { NewsListView() }
                         bigTile("Z życia", "Tekst, zdjęcie, głos", "plus.circle.fill", Theme.ok) { CaptureView() }
                     }
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                        bigTile("Shadowing", "Powtórz zdanie na głos", "ear", Color(hex: "5AC8FA")) { ShadowView() }
+                        bigTile("Jak mówią", "Potoczne zwroty", "quote.bubble", Theme.accent) { StreetView() }
+                        bigTile("Trener", "Twoje powtarzane błędy", "wrench.and.screwdriver", Color(hex: "FF453A")) { RepairView() }
+                        bigTile("W pracy", "Szef, polecenie, kask", "hammer", Theme.orange) { WorkHubView() }
+                        bigTile("Plan dnia", "Z najsłabszej umiejętności", "calendar", Theme.ok) { DayPlanView() }
+                        bigTile("Offline", "Dialogi bez sieci", "arrow.down.circle", Color(hex: "8B6CF0")) { OfflineView() }
+                        bigTile("Nie rozumiem", "Powtórz, wolniej", "exclamationmark.bubble", Color(hex: "FFD60A")) { RescueView() }
+                    }
                     NavigationLink { DailyRunView() } label: {
                         Text("Pełna lekcja: zdania, powtórki, scena").primaryButton()
                     }
