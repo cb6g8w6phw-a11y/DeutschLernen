@@ -62,7 +62,7 @@ struct QuizView: View {
                     saidWell = true
                     score += 1
                     Haptic.good()
-                    store.grade(w, .easy)
+                    store.grade(w, .easy, produced: true)
                 } else {
                     sayNote = "Jeszcze raz, wolniej: \(w.ex)"
                 }
@@ -546,7 +546,7 @@ struct QuizView: View {
             score += 1
             explain = "\(teachSentence(w)) — \(w.pl)"
             Haptic.good()
-            store.grade(w, .easy)
+            store.grade(w, .easy, produced: typing)
         } else {
             explain = "Poprawnie: \(w.de). \(teachSentence(w))"
             Haptic.bad()
