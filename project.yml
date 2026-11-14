@@ -29,7 +29,7 @@ targets:
         INFOPLIST_KEY_NSSupportsLiveActivities: YES
         INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates: YES
         MARKETING_VERSION: "8.0"
-        CURRENT_PROJECT_VERSION: "69"
+        CURRENT_PROJECT_VERSION: "70"
         SWIFT_VERSION: "5.0"
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_FILE: DeutschLernen/Info.plist
@@ -49,7 +49,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.DeutschLernen.widget
         GENERATE_INFOPLIST_FILE: NO
         MARKETING_VERSION: "8.0"
-        CURRENT_PROJECT_VERSION: "69"
+        CURRENT_PROJECT_VERSION: "70"
         SWIFT_VERSION: "5.0"
         SKIP_INSTALL: YES
         TARGETED_DEVICE_FAMILY: "1"

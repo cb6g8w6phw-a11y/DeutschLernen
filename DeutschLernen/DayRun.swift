@@ -281,7 +281,7 @@ struct DailyRunView: View {
     }
 
     private func lessonWords() -> [Word] {
-        let ranked = DayLines.all.map { pair -> (Word, Int) in
+        let ranked = LessonLines.all.map { pair -> (Word, Int) in
             let word = Word(de: pair.de, pl: pair.pl, ex: pair.de, exPl: pair.pl, topic: "Zwroty", level: "A1")
             return (word, store.stats[pair.de]?.days.count ?? 0)
         }.sorted { $0.1 < $1.1 }
@@ -289,7 +289,7 @@ struct DailyRunView: View {
     }
 
     private func meanings(_ right: String) -> [String] {
-        var pool = DayLines.all.map(\.pl).filter { $0 != right }
+        var pool = LessonLines.all.map(\.pl).filter { $0 != right }
         pool.shuffle()
         var rows = Array(pool.prefix(2))
         rows.append(right)
@@ -399,7 +399,7 @@ struct DailyRunView: View {
     }
 }
 
-enum DayLines {
+enum LessonLines {
     static let all: [(de: String, pl: String)] = [
         ("Ich verstehe nicht.", "Nie rozumiem."),
         ("Können Sie das wiederholen?", "Czy może Pan powtórzyć?"),
