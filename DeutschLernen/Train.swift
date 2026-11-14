@@ -123,6 +123,18 @@ struct TodayView: View {
                         .font(.system(size: 40, weight: .bold))
                     Text("Gotowy na dzisiejszą lekcję?")
                         .foregroundStyle(Theme.text2)
+                    NavigationLink { CourseView() } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Zacznij lekcję").font(.headline).foregroundStyle(Theme.text)
+                            Text("Najpierw wyjaśnienie po polsku. Sprawdzian dopiero, gdy umiesz napisać zdanie sam.")
+                                .font(.caption)
+                                .foregroundStyle(Theme.text2)
+                        }
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .themedCard()
+                    }
+                    .buttonStyle(.plain)
                     goalCard
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                         bigTile("Mówienie", "Ćwicz rozmowę", "mic.fill", Theme.accent) { TutorView() }
