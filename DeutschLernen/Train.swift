@@ -123,48 +123,32 @@ struct TodayView: View {
                         .font(.system(size: 40, weight: .bold))
                     Text("Gotowy na dzisiejszą lekcję?")
                         .foregroundStyle(Theme.text2)
+                    skillPills
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
+                        chip("Zwroty", "text.bubble", "FF7AD9") { PhraseView() }
+                        chip("Zeszyt", "book.closed", "FF9F43") { NotebookView() }
+                        chip("Egzamin", "checkmark.seal", "3DDC97") { ExamView() }
+                        chip("Mówienie", "mic.fill", "7C5CFF") { TutorView() }
+                        chip("Słówka", "rectangle.stack.fill", "3DDCFF") { StudyView() }
+                        chip("Słuchanie", "headphones", "5B8CFF") { ListenView() }
+                        chip("Gramatyka", "textformat", "3DDC97") { GrammarView() }
+                        chip("Wymowa", "waveform", "FF6B9A") { PronounceView() }
+                        chip("Postępy", "chart.bar.fill", "FFB020") { StatsView() }
+                        chip("Błędy", "exclamationmark.bubble", "FF5A5A") { MistakeReview() }
+                        chip("Gry", "gamecontroller", "FFD60A") { GamesHome() }
+                        chip("Dyktando", "pencil.line", "46C2FF") { DictationView() }
+                        chip("Wiadomości", "newspaper", "FF8A4C") { NewsListView() }
+                        chip("Z życia", "plus.circle.fill", "2EE6A6") { CaptureView() }
+                        chip("Shadowing", "ear", "6AA8FF") { ShadowView() }
+                        chip("Jak mówią", "quote.bubble", "C084FC") { StreetView() }
+                        chip("Trener", "wrench.and.screwdriver", "FF6A4A") { RepairView() }
+                        chip("W pracy", "hammer", "F0A05A") { WorkHubView() }
+                        chip("Plan dnia", "calendar", "34D399") { DayPlanView() }
+                        chip("Offline", "arrow.down.circle", "8B7CFF") { OfflineView() }
+                        chip("Ratunek", "exclamationmark.bubble", "F5C451") { RescueView() }
+                    }
                     LessonPath()
-                    if ExamLog.due() {
-                        NavigationLink { ExamView() } label: {
-                            Text("Egzamin kontrolny jest do zrobienia. Słuch, gramatyka, mówienie, zdania.")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(Theme.text)
-                                .padding(14)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .themedCard()
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                        bigTile("Zwroty", "Całe zdanie, nie słówko", "text.bubble", Theme.accent) { PhraseView() }
-                        bigTile("Zeszyt", "Zdania, które nie weszły", "book.closed", Theme.orange) { NotebookView() }
-                        bigTile("Egzamin", ExamLog.due() ? "Pora na pomiar" : "Co 7 dni", "checkmark.seal", Theme.ok) { ExamView() }
-                    }
                     goalCard
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                        bigTile("Mówienie", "Ćwicz rozmowę", "mic.fill", Theme.accent) { TutorView() }
-                        bigTile("Słówka", "Najpierw zdanie, potem sam", "rectangle.stack.fill", Color(hex: "5AC8FA")) { StudyView() }
-                        bigTile("Słuchanie", "Rozumiej Niemców", "headphones", Color(hex: "8B6CF0")) { ListenView() }
-                        bigTile("Postępy", "Sprawdzaj wyniki", "chart.bar.fill", Theme.orange) { StatsView() }
-                    }
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                        bigTile("Gramatyka", "Krótko, na przykładach", "textformat", Theme.ok) { GrammarView() }
-                        bigTile("Wymowa", "Powiedz i popraw", "waveform", Color(hex: "FF6B9A")) { PronounceView() }
-                        bigTile("Błędy", "To, co mylisz", "exclamationmark.bubble", Color(hex: "FF453A")) { MistakeReview() }
-                        bigTile("Gry", "Pary, zdania, czas", "gamecontroller", Color(hex: "FFD60A")) { GamesHome() }
-                        bigTile("Dyktando", "Usłysz i zapisz", "pencil.line", Color(hex: "5AC8FA")) { DictationView() }
-                        bigTile("Wiadomości", "Czytaj i dodawaj słowa", "newspaper", Theme.orange) { NewsListView() }
-                        bigTile("Z życia", "Tekst, zdjęcie, głos", "plus.circle.fill", Theme.ok) { CaptureView() }
-                    }
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                        bigTile("Shadowing", "Powtórz zdanie na głos", "ear", Color(hex: "5AC8FA")) { ShadowView() }
-                        bigTile("Jak mówią", "Potoczne zwroty", "quote.bubble", Theme.accent) { StreetView() }
-                        bigTile("Trener", "Twoje powtarzane błędy", "wrench.and.screwdriver", Color(hex: "FF453A")) { RepairView() }
-                        bigTile("W pracy", "Szef, polecenie, kask", "hammer", Theme.orange) { WorkHubView() }
-                        bigTile("Plan dnia", "Z najsłabszej umiejętności", "calendar", Theme.ok) { DayPlanView() }
-                        bigTile("Offline", "Dialogi bez sieci", "arrow.down.circle", Color(hex: "8B6CF0")) { OfflineView() }
-                        bigTile("Nie rozumiem", "Powtórz, wolniej", "exclamationmark.bubble", Color(hex: "FFD60A")) { RescueView() }
-                    }
                     NavigationLink { DailyRunView() } label: {
                         Text("Pełna lekcja: zdania, powtórki, scena").primaryButton()
                     }
@@ -231,20 +215,56 @@ struct TodayView: View {
         .buttonStyle(.plain)
     }
 
-    private func bigTile<Dest: View>(_ title: String, _ text: String, _ icon: String, _ tint: Color, @ViewBuilder dest: () -> Dest) -> some View {
-        NavigationLink { dest() } label: {
-            VStack(alignment: .leading, spacing: 8) {
+    private func chip<Dest: View>(_ title: String, _ icon: String, _ hex: String, @ViewBuilder dest: () -> Dest) -> some View {
+        let ink: Color = hex == "FFD60A" || hex == "F5C451" ? Theme.ink : .white
+        return NavigationLink { dest() } label: {
+            VStack(spacing: 6) {
                 Image(systemName: icon)
-                    .font(.title3)
-                    .foregroundStyle(tint)
-                Text(title).font(.headline).foregroundStyle(Theme.text)
-                Text(text).font(.caption).foregroundStyle(Theme.text2)
+                    .font(.system(size: 16, weight: .bold))
+                Text(title)
+                    .font(.caption.weight(.bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
-            .frame(maxWidth: .infinity, minHeight: 110, alignment: .leading)
-            .padding(14)
-            .themedCard(radius: 18)
+            .foregroundStyle(ink)
+            .frame(maxWidth: .infinity)
+            .frame(height: 72)
+            .background(Color(hex: hex), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
         .buttonStyle(.plain)
+    }
+
+    private var skillPills: some View {
+        let journal = store.journal
+        return ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                pill("Słuch", journal.skillListenOK, journal.skillListenBad, "5B8CFF")
+                pill("Gramatyka", journal.skillGrammarOK, journal.skillGrammarBad, "3DDC97")
+                pill("Mówienie", journal.skillSpeakOK, journal.skillSpeakBad, "7C5CFF")
+                pill("Zdania", journal.skillSentenceOK, journal.skillSentenceBad, "FF7AD9")
+                pill("Słówka", journal.skillVocabOK, journal.skillVocabBad, "3DDCFF")
+            }
+        }
+    }
+
+    private func pill(_ name: String, _ ok: Int, _ bad: Int, _ hex: String) -> some View {
+        let total = ok + bad
+        let label = total == 0 ? "brak" : "\(ok * 100 / total)%"
+        let width = total == 0 ? 0.0 : 74 * Double(ok) / Double(total)
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Text(name).font(.caption.weight(.bold))
+                Text(label).font(.caption.weight(.heavy))
+            }
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.white.opacity(0.28)).frame(width: 74, height: 5)
+                Capsule().fill(Color.white).frame(width: width, height: 5)
+            }
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color(hex: hex), in: Capsule())
     }
 
     private var plan: some View {
