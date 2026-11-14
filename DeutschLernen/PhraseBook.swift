@@ -310,6 +310,7 @@ struct ExamView: View {
     @State private var heard = ""
     @State private var parts: [(word: String, ok: Bool)] = []
     @State private var report: [String] = []
+    @State private var deck: [FixItem] = []
     @State private var alive = true
     @FocusState private var writing: Bool
 
@@ -339,19 +340,51 @@ struct ExamView: View {
             guard alive, step == 4, was, !now else { return }
             heard = mic.text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !heard.isEmpty else { return }
-            parts = Heard.parts(target: "Ich mache das später.", heard: heard)
+            parts = Heard.parts(target: piece(4).right, heard: heard)
+        }
+        .onAppear {
+            if deck.isEmpty { deck = MistakeReview.nextEight(store: store) }
         }
         .onDisappear { alive = false; mic.stop(); Talk.stop() }
     }
 
     @ViewBuilder private var content: some View {
         switch step {
-        case 0: listenStep("Die Pause ist um neun.", "Kiedy jest przerwa?", ["O dziewiątej", "O szóstej", "W południe"], 0)
-        case 1: listenStep("Hol bitte die Schaufel.", "Co masz zrobić?", ["Przynieść łopatę", "Iść do lekarza", "Zostać w aucie"], 0)
-        case 2: grammarStep("Ich brauche ___ Schaufel.", ["eine", "ein", "einen"], 0, "die Schaufel, więc eine.")
-        case 3: grammarStep("Ich sehe ___ Chef.", ["den", "dem", "der"], 0, "sehen bierze biernik: den Chef.")
+        case 0: pairStep(piece(0), "Słuchanie. Odtwórz i wybierz dobre zdanie.", "listen", play: true)
+        case 1: pairStep(piece(1), "Słuchanie. Drugie zdanie, też z twoich błędów.", "listen", play: true)
+        case 2: pairStep(piece(2), "Gramatyka. Które zdanie jest dobre?", "grammar", play: false)
+        case 3: pairStep(piece(3), "Gramatyka. Najczęstsza pomyłka.", "grammar", play: false)
         case 4: speakStep
         default: sentenceStep
+        }
+    }
+
+    private func piece(_ index: Int) -> FixItem {
+        if deck.indices.contains(index) { return deck[index] }
+        let fallback = MistakeReview.nextEight(store: store)
+        if fallback.indices.contains(index) { return fallback[index] }
+        return FixItem(id: "fallback", wrong: "Ich weiß ihn.", right: "Ich kenne ihn.", why: "Osobę: kennen.")
+    }
+
+    private func pairStep(_ item: FixItem, _ title: String, _ skill: String, play: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title).font(.headline)
+            if play {
+                Button { Talk.de(item.right, rate: 0.46) } label: { Label("Odtwórz dobre", systemImage: "speaker.wave.2.fill") }
+                    .buttonStyle(.glass)
+            }
+            Button(item.wrong) { guard picked == nil else { return }; picked = 0 }
+                .frame(maxWidth: .infinity, minHeight: 52)
+                .foregroundStyle(Theme.text)
+                .background(fill(0, answer: 1), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            Button(item.right) { guard picked == nil else { return }; picked = 1 }
+                .frame(maxWidth: .infinity, minHeight: 52)
+                .foregroundStyle(Theme.text)
+                .background(fill(1, answer: 1), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            if picked != nil {
+                Text(item.why).foregroundStyle(Theme.text2)
+                Button("Dalej") { commit(answer: 1, skill: skill) }.primaryButton()
+            }
         }
     }
 
@@ -382,8 +415,9 @@ struct ExamView: View {
 
     private var speakStep: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Mówienie. Powiedz całe zdanie.").font(.headline)
-            Text("Zrobię to później.").font(.title3.bold())
+            Text("Mówienie. Powiedz poprawne zdanie.").font(.headline)
+            Text(piece(4).right).font(.title3.bold())
+            Text(piece(4).why).foregroundStyle(Theme.text2)
             if !parts.isEmpty {
                 SaidWords(parts: parts)
                 Text(heard.isEmpty ? "" : "Usłyszałem: \(heard)").font(.footnote).foregroundStyle(Theme.text2)
@@ -397,7 +431,7 @@ struct ExamView: View {
             Button("Zalicz mówienie") {
                 let ok = !parts.isEmpty && parts.allSatisfy(\.ok)
                 if ok { speak = 1 }
-                if !ok { HardBook.add(de: "Ich mache das später.", pl: "Zrobię to później.") }
+                if !ok { HardBook.add(de: piece(4).right, pl: piece(4).why) }
                 store.noteSaid(ok: ok)
                 step += 1
             }
@@ -408,8 +442,9 @@ struct ExamView: View {
 
     private var sentenceStep: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Budowanie zdania.").font(.headline)
-            Text("Co mam zrobić?").font(.title3.bold())
+            Text("Napisz dobre zdanie.").font(.headline)
+            Text(piece(5).why).font(.title3.bold())
+            Text("Zła wersja: \(piece(5).wrong)").font(.footnote).foregroundStyle(Theme.text2)
             TextField("Całe zdanie", text: $typed)
                 .textFieldStyle(.roundedBorder)
                 .textInputAutocapitalization(.never)
@@ -455,8 +490,9 @@ struct ExamView: View {
 
     private func finishSentence() {
         writing = false
-        let ok = Normalizer.same(typed, "Was muss ich machen?")
-        if ok { sentence = 1 } else { HardBook.add(de: "Was muss ich machen?", pl: "Co mam zrobić?") }
+        let target = piece(5).right
+        let ok = Normalizer.same(typed, target)
+        if ok { sentence = 1 } else { HardBook.add(de: target, pl: piece(5).why) }
         store.noteSkill("sentence", ok: ok)
         let snap = ExamSnap(day: LearningStore.dayKey(), listen: listen, grammar: grammar, speak: speak, sentence: sentence)
         let previous = ExamLog.all().last

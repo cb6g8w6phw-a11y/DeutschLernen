@@ -134,7 +134,7 @@ struct MistakeReview: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             if let item {
-                Text("Zostaje, aż trafisz 2 razy. Potem znika.")
+                Text("Tylko 8 najczęstszych. Jak trafisz 2 razy, znika.")
                     .font(.subheadline)
                     .foregroundStyle(Theme.text2)
                 Text("\(index + 1) z \(round.count)").font(.footnote).foregroundStyle(Theme.text2)
@@ -178,11 +178,18 @@ struct MistakeReview: View {
     }
 
     private func reload(reshuffle: Bool) {
-        var rows = DailyPack.fixes.filter { classicHits($0.id) < 2 }
-        for slip in store.journal.mistakes where !slip.fix.isEmpty && slip.hits < 2 {
+        var rows: [FixItem] = []
+        let personal = store.journal.mistakes
+            .filter { !$0.fix.isEmpty && $0.hits < 2 }
+            .sorted { $0.hits < $1.hits }
+        for slip in personal where rows.count < 8 && !rows.contains(where: { $0.id == slip.id }) {
             rows.append(FixItem(id: slip.id, wrong: slip.text, right: slip.fix, why: "Twój błąd. Zostaje, aż trafisz dwa razy."))
         }
-        round = reshuffle ? rows.shuffled() : rows
+        let classics = (reshuffle ? Self.classics.shuffled() : Self.classics)
+        for item in classics where classicHits(item.id) < 2 && rows.count < 8 && !rows.contains(where: { $0.id == item.id }) {
+            rows.append(item)
+        }
+        round = rows
         index = 0
         picked = nil
         note = ""
@@ -203,8 +210,7 @@ struct MistakeReview: View {
         if store.journal.mistakes.contains(where: { $0.id == item.id }) {
             store.gradeMistake(item.id, ok: ok)
             if let left = store.journal.mistakes.first(where: { $0.id == item.id })?.hits {
-                note = ok ? "Zostaje. Trafienie \(left) z 2." : "Źle, więc licznik od zera. Zostaje."
-                round.append(item)
+                note = ok ? "Zostaje. Trafienie \(left) z 2." : "Źle. Zostaje w tych 8."
             } else {
                 note = "Opanowane. Już nie wraca."
             }
@@ -215,9 +221,22 @@ struct MistakeReview: View {
                 UserDefaults.standard.set(data, forKey: "classicHits")
             }
             let left = map[item.id] ?? 0
-            note = ok ? (left >= 2 ? "Opanowane. Już nie wraca." : "Zostaje. Trafienie \(left) z 2.") : "Źle, więc licznik od zera. Zostaje."
-            if !ok || left < 2 { round.append(item) }
+            note = ok ? (left >= 2 ? "Opanowane. Już nie wraca." : "Zostaje. Trafienie \(left) z 2.") : "Źle. Zostaje w tych 8."
         }
+    }
+
+    static func nextEight(store: LearningStore) -> [FixItem] {
+        var rows: [FixItem] = []
+        let personal = store.journal.mistakes
+            .filter { !$0.fix.isEmpty && $0.hits < 2 }
+            .sorted { $0.hits < $1.hits }
+        for slip in personal where rows.count < 8 && !rows.contains(where: { $0.id == slip.id }) {
+            rows.append(FixItem(id: slip.id, wrong: slip.text, right: slip.fix, why: "Twój błąd."))
+        }
+        for item in classics where rows.count < 8 && !rows.contains(where: { $0.id == item.id }) {
+            rows.append(item)
+        }
+        return rows
     }
 
     private func classicHits(_ id: String) -> Int { classicHitsMap()[id] ?? 0 }

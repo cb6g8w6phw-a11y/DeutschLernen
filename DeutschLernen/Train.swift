@@ -102,8 +102,125 @@ enum CoachData {
     ]
 }
 
+enum HomeLayout {
+    static let seed: [PracticeSlot] = [
+        PracticeSlot(id: "pisanie", onHome: true),
+        PracticeSlot(id: "slowka", onHome: true),
+        PracticeSlot(id: "mowienie", onHome: true),
+        PracticeSlot(id: "sluchanie", onHome: true),
+        PracticeSlot(id: "bledy", onHome: true),
+        PracticeSlot(id: "egzamin", onHome: true),
+        PracticeSlot(id: "gramatyka", onHome: false),
+        PracticeSlot(id: "postepy", onHome: false),
+        PracticeSlot(id: "wymowa", onHome: false),
+        PracticeSlot(id: "zwroty", onHome: false),
+        PracticeSlot(id: "zeszyt", onHome: false),
+        PracticeSlot(id: "zycie", onHome: false),
+        PracticeSlot(id: "gry", onHome: false),
+        PracticeSlot(id: "dyktando", onHome: false),
+        PracticeSlot(id: "wiadomosci", onHome: false),
+        PracticeSlot(id: "shadowing", onHome: false),
+        PracticeSlot(id: "mowia", onHome: false),
+        PracticeSlot(id: "trener", onHome: false),
+        PracticeSlot(id: "praca", onHome: false),
+        PracticeSlot(id: "plan", onHome: false),
+        PracticeSlot(id: "offline", onHome: false),
+        PracticeSlot(id: "ratunek", onHome: false)
+    ]
+
+    static func load() -> [PracticeSlot] {
+        let known = Set(seed.map(\.id))
+        guard let data = UserDefaults.standard.data(forKey: "homeLayout"),
+              let saved = try? JSONDecoder().decode([PracticeSlot].self, from: data) else { return seed }
+        var rows = saved.filter { known.contains($0.id) }
+        for item in seed where !rows.contains(where: { $0.id == item.id }) {
+            rows.append(item)
+        }
+        return rows
+    }
+
+    static func save(_ slots: [PracticeSlot]) {
+        if let data = try? JSONEncoder().encode(slots) {
+            UserDefaults.standard.set(data, forKey: "homeLayout")
+        }
+    }
+
+    static func title(_ id: String) -> String {
+        switch id {
+        case "pisanie": return "Pisanie"
+        case "slowka": return "Słówka"
+        case "mowienie": return "Mówienie"
+        case "sluchanie": return "Słuchanie"
+        case "bledy": return "Błędy"
+        case "egzamin": return "Egzamin"
+        case "gramatyka": return "Gramatyka"
+        case "postepy": return "Postępy"
+        case "wymowa": return "Wymowa"
+        case "zwroty": return "Zwroty"
+        case "zeszyt": return "Zeszyt"
+        case "zycie": return "Z życia"
+        case "gry": return "Gry"
+        case "dyktando": return "Dyktando"
+        case "wiadomosci": return "Wiadomości"
+        case "shadowing": return "Shadowing"
+        case "mowia": return "Jak mówią"
+        case "trener": return "Trener"
+        case "praca": return "W pracy"
+        case "plan": return "Plan dnia"
+        case "offline": return "Offline"
+        default: return "Ratunek"
+        }
+    }
+}
+
+struct HomeArrange: View {
+    @Binding var slots: [PracticeSlot]
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(slots) { slot in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(HomeLayout.title(slot.id))
+                            Text(slot.onHome ? "Na głównej" : "Schowane")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Button(slot.onHome ? "Schowaj" : "Na główną") { toggle(slot.id) }
+                            .font(.caption.weight(.semibold))
+                    }
+                }
+                .onMove(perform: move)
+            }
+            .environment(\.editMode, .constant(.active))
+            .navigationTitle("Co na głównej")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Gotowe") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private func move(_ source: IndexSet, _ destination: Int) {
+        slots.move(fromOffsets: source, toOffset: destination)
+    }
+
+    private func toggle(_ id: String) {
+        guard let index = slots.firstIndex(where: { $0.id == id }) else { return }
+        if slots[index].onHome, slots.filter(\.onHome).count <= 2 { return }
+        slots[index].onHome.toggle()
+    }
+}
+
 struct TodayView: View {
     @EnvironmentObject var store: LearningStore
+    @State private var homeSlots = HomeLayout.load()
+    @State private var arrangingHome = false
 
     var body: some View {
         NavigationStack {
@@ -118,33 +235,21 @@ struct TodayView: View {
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
                             .background(Theme.ok.opacity(0.25), in: Capsule())
+                        Button { arrangingHome = true } label: {
+                            Text("Wybierz")
+                                .font(.subheadline.weight(.semibold))
+                                .padding(.horizontal, 12)
+                                .frame(minHeight: 34)
+                        }
+                        .buttonStyle(.glass)
                     }
                     goalCard
                     LessonPath()
                     skillPills
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                        tile("Pisanie", "Po polsku, do nauki", "square.and.pencil") { WriteLearnView() }
-                        tile("Mówienie", "Ćwicz rozmowę", "mic.fill") { TutorView() }
-                        tile("Słówka", "Najpierw zdanie", "rectangle.stack.fill") { StudyView() }
-                        tile("Słuchanie", "Rozumiej Niemców", "headphones") { ListenView() }
-                        tile("Postępy", "Sprawdzaj wyniki", "chart.bar.fill") { StatsView() }
-                        tile("Gramatyka", "Krótko, na przykładach", "textformat") { GrammarView() }
-                        tile("Wymowa", "Powiedz i popraw", "waveform") { PronounceView() }
-                        tile("Błędy", "To, co mylisz", "exclamationmark.bubble") { MistakeReview() }
-                        tile("Gry", "Pary, zdania, czas", "gamecontroller") { GamesHome() }
-                        tile("Dyktando", "Usłysz i zapisz", "pencil.line") { DictationView() }
-                        tile("Wiadomości", "Czytaj i dodawaj", "newspaper") { NewsListView() }
-                        tile("Z życia", "Tekst, zdjęcie, głos", "plus.circle.fill") { CaptureView() }
-                        tile("Zwroty", "Całe zdanie", "text.bubble") { PhraseView() }
-                        tile("Zeszyt", "Trudne zdania", "book.closed") { NotebookView() }
-                        tile("Egzamin", "Co 7 dni", "checkmark.seal") { ExamView() }
-                        tile("Shadowing", "Powtórz na głos", "ear") { ShadowView() }
-                        tile("Jak mówią", "Potoczne zwroty", "quote.bubble") { StreetView() }
-                        tile("Trener", "Twoje błędy", "wrench.and.screwdriver") { RepairView() }
-                        tile("W pracy", "Szef i kask", "hammer") { WorkHubView() }
-                        tile("Plan dnia", "Słabsza umiejętność", "calendar") { DayPlanView() }
-                        tile("Offline", "Bez sieci", "arrow.down.circle") { OfflineView() }
-                        tile("Ratunek", "Powtórz, wolniej", "exclamationmark.bubble") { RescueView() }
+                        ForEach(homeSlots.filter(\.onHome)) { slot in
+                            homeTile(slot.id)
+                        }
                     }
                     NavigationLink { DailyRunView() } label: {
                         Text("Pełna lekcja: zdania, powtórki, scena").primaryButton()
@@ -158,6 +263,38 @@ struct TodayView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
             .containerBackground(for: .navigation) { NightGlow() }
+            .sheet(isPresented: $arrangingHome) {
+                HomeArrange(slots: $homeSlots)
+            }
+            .onChange(of: homeSlots) { _, next in HomeLayout.save(next) }
+        }
+    }
+
+    @ViewBuilder
+    private func homeTile(_ id: String) -> some View {
+        switch id {
+        case "pisanie": tile("Pisanie", "Po polsku, do nauki", "square.and.pencil") { WriteLearnView() }
+        case "mowienie": tile("Mówienie", "Ćwicz rozmowę", "mic.fill") { TutorView() }
+        case "slowka": tile("Słówka", "Najpierw zdanie", "rectangle.stack.fill") { StudyView() }
+        case "sluchanie": tile("Słuchanie", "Rozumiej Niemców", "headphones") { ListenView() }
+        case "postepy": tile("Postępy", "Sprawdzaj wyniki", "chart.bar.fill") { StatsView() }
+        case "gramatyka": tile("Gramatyka", "Krótko, na przykładach", "textformat") { GrammarView() }
+        case "wymowa": tile("Wymowa", "Powiedz i popraw", "waveform") { PronounceView() }
+        case "bledy": tile("Błędy", "8 najczęstszych", "exclamationmark.bubble") { MistakeReview() }
+        case "gry": tile("Gry", "Pary, zdania, czas", "gamecontroller") { GamesHome() }
+        case "dyktando": tile("Dyktando", "Usłysz i zapisz", "pencil.line") { DictationView() }
+        case "wiadomosci": tile("Wiadomości", "Czytaj i dodawaj", "newspaper") { NewsListView() }
+        case "zycie": tile("Z życia", "Tekst, zdjęcie, głos", "plus.circle.fill") { CaptureView() }
+        case "zwroty": tile("Zwroty", "Całe zdanie", "text.bubble") { PhraseView() }
+        case "zeszyt": tile("Zeszyt", "Trudne zdania", "book.closed") { NotebookView() }
+        case "egzamin": tile("Egzamin", "Z twoich błędów", "checkmark.seal") { ExamView() }
+        case "shadowing": tile("Shadowing", "Powtórz na głos", "ear") { ShadowView() }
+        case "mowia": tile("Jak mówią", "Potoczne zwroty", "quote.bubble") { StreetView() }
+        case "trener": tile("Trener", "Twoje błędy", "wrench.and.screwdriver") { RepairView() }
+        case "praca": tile("W pracy", "Szef i kask", "hammer") { WorkHubView() }
+        case "plan": tile("Plan dnia", "Słabsza umiejętność", "calendar") { DayPlanView() }
+        case "offline": tile("Offline", "Bez sieci", "arrow.down.circle") { OfflineView() }
+        default: tile("Ratunek", "Powtórz, wolniej", "exclamationmark.bubble") { RescueView() }
         }
     }
 
