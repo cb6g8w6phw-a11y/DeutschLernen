@@ -306,14 +306,21 @@ final class LearningStore: ObservableObject {
         switch g {
         case .hard:
             s.wrong += 1
-            s.due = Date()
+            if s.days.count > 1 { s.days.removeLast() }
+            s.box = min(s.days.count, 5)
+            s.due = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
             UserDefaults.standard.set(w.de, forKey: "lastMiss")
         case .mid, .easy:
             s.correct += 1
             if produced, !s.days.contains(today) { s.days.append(today) }
             s.box = min(s.days.count, 5)
-            let step = s.days.count
-            let gap = step >= 4 ? 14 : (step >= 3 ? 7 : (step == 2 ? 3 : 1))
+            let gap: Int
+            switch s.days.count {
+            case 0, 1: gap = 1
+            case 2: gap = 3
+            case 3: gap = 7
+            default: gap = 14
+            }
             let wait = produced ? gap : 1
             s.due = Calendar.current.date(byAdding: .day, value: wait, to: Date()) ?? Date()
             UserDefaults.standard.set(w.de, forKey: "lastHit")
@@ -326,6 +333,8 @@ final class LearningStore: ObservableObject {
     func scheduleTomorrow(_ w: Word) {
         var s = stats[w.de] ?? WordStat()
         s.wrong += 1
+        if s.days.count > 1 { s.days.removeLast() }
+        s.box = min(s.days.count, 5)
         s.due = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
         stats[w.de] = s
         UserDefaults.standard.set(w.de, forKey: "lastMiss")

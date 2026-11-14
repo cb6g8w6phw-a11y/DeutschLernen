@@ -17,6 +17,7 @@ struct TalkLaunch: Hashable {
     var de: String
     var pl: String
     var say: String
+    var keep: String = ""
 }
 
 struct TutorView: View {
@@ -674,8 +675,14 @@ struct TutorView: View {
 
     private func systemPrompt() -> String {
         let who: String
+        var lock = ""
         if let launch {
             who = launch.who
+            lock = """
+            Zostań w tej roli i w tym miejscu do końca rozmowy. Nie przeskakuj na restaurację, sklep, lekarza ani inny temat.
+            Uczeń właśnie poznał te zdania. Wpleć je po jednym w sytuację, nie czytaj ich jak listy:
+            \(launch.keep)
+            """
         } else {
         switch persona {
         case "Lena":
@@ -714,6 +721,8 @@ struct TutorView: View {
         SAY: zdanie dla niego
         ERR: krótki błąd po polsku | poprawne zdanie
         ERR tylko wtedy, gdy uczeń powiedział coś źle.
+        Zostań przy roli z początku rozmowy. Nie zmieniaj miejsca ani zawodu w trakcie.
+        \(lock)
         Postępy: \(store.progressSummary())
         """
     }

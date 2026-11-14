@@ -18,6 +18,8 @@ struct DailyRunView: View {
     @State private var reviewHits = 0
     @State private var phraseHits = 0
     @State private var said = false
+    @State private var voice = 0
+    @State private var options: [String] = []
     @State private var held = false
     @FocusState private var writing: Bool
     @AppStorage("band") private var band = "A1"
@@ -46,13 +48,29 @@ struct DailyRunView: View {
         .onChange(of: mic.listening) { was, now in
             guard phase == 2, was, !now else { return }
             let heard = mic.text.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !heard.isEmpty, let word = words.first else { return }
+            let failed = heard.isEmpty || mic.note.contains("Nie rozpoznałem") || mic.note.contains("Nie ma nagrania")
+            guard let word = words.first else { return }
             let line = word.ex.isEmpty ? word.de : word.ex
+            if failed {
+                voice = 3
+                parts = []
+                return
+            }
             parts = Heard.parts(target: line, heard: heard)
-            let ok = !parts.isEmpty && parts.allSatisfy(\.ok)
-            said = ok
-            store.noteSaid(ok: ok)
-            if !ok { HardBook.add(de: line, pl: word.pl) }
+            let hit = parts.filter(\.ok).count
+            if !parts.isEmpty, hit == parts.count {
+                voice = 1
+                said = true
+                store.noteSaid(ok: true)
+            } else if hit == 0 {
+                voice = 3
+                parts = []
+            } else {
+                voice = 2
+                said = false
+                store.noteSaid(ok: false)
+                HardBook.add(de: line, pl: word.pl)
+            }
         }
     }
 
@@ -113,15 +131,33 @@ struct DailyRunView: View {
             if !taught {
                 Text("Po polsku").font(.caption).foregroundStyle(Theme.text2)
                 Text(word.pl).font(.title3.bold())
-                Text("Tego używasz w zwykłej sytuacji, nie jako luźnego słówka.").foregroundStyle(Theme.text2)
-                Button("Posłuchaj, jeszcze bez tekstu") {
-                    Talk.de(line, rate: 0.36)
+                Text("Najpierw samo ucho, w normalnym tempie. Tekstu jeszcze nie ma.").foregroundStyle(Theme.text2)
+                Button("Posłuchaj bez napisów") {
+                    options = meanings(word.pl)
+                    Talk.de(line, rate: 0.56)
                     taught = true
+                    picked = nil
                 }
                 .primaryButton()
+            } else if picked == nil {
+                Text("Co usłyszałeś? Bez napisów.").font(.headline)
+                Button { Talk.de(line, rate: 0.56) } label: { Label("Jeszcze raz, szybko", systemImage: "speaker.wave.2") }
+                    .buttonStyle(.glass)
+                ForEach(options.indices, id: \.self) { index in
+                    Button(options[index]) {
+                        picked = index
+                        let ok = options[index] == word.pl
+                        store.noteListen(ok: ok)
+                        note = ok ? "Rozumiesz ze słuchu." : "Na ekranie to znasz, ze słuchu jeszcze nie. Chodziło o: \(word.pl)"
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .foregroundStyle(Theme.text)
+                    .background(Theme.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
             } else if !hinted {
                 Text(line).font(.title3.bold())
                 Text(word.pl).foregroundStyle(Theme.text2)
+                if !note.isEmpty { Text(note).foregroundStyle(Theme.text2) }
                 Button { Talk.de(line, rate: 0.36) } label: { Label("Wolniej", systemImage: "tortoise") }.buttonStyle(.glass)
                 Button { Talk.de(line, rate: 0.52) } label: { Label("Naturalnie", systemImage: "hare") }.buttonStyle(.glass)
                 Text("Napisz zdanie. Podpowiedź: \(line.split(separator: " ").first.map(String.init) ?? "")…")
@@ -130,7 +166,6 @@ struct DailyRunView: View {
                 Button("Sprawdź z podpowiedzią") { gradeFresh(word, line, hinted: true) }
                     .primaryButton()
                     .disabled(typed.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                if !note.isEmpty { Text(note).foregroundStyle(Theme.text2) }
             } else {
                 Text("Teraz sam, bez początku zdania.").font(.headline)
                 Text(word.pl)
@@ -154,7 +189,8 @@ struct DailyRunView: View {
                     who: "Jesteś kierownikiem na budowie. Mówisz prostym A1–A2. Jedno pytanie na raz. Po błędzie krótka poprawka po polsku, potem znowu po niemiecku.",
                     de: "Was machst du heute auf der Arbeit?",
                     pl: "Co dzisiaj robisz w pracy?",
-                    say: "Ich arbeite heute auf der Baustelle."
+                    say: words.first?.de ?? "Ich arbeite heute auf der Baustelle.",
+                    keep: words.map { "\($0.de) = \($0.pl)" }.joined(separator: "\n")
                 ))
             } label: {
                 Text("Wejdź w rozmowę").primaryButton()
@@ -162,17 +198,22 @@ struct DailyRunView: View {
             .buttonStyle(.plain)
             if let word = words.first {
                 let line = word.ex.isEmpty ? word.de : word.ex
-                Text("Powiedz też zdanie z tej lekcji:").font(.headline)
+                Text("Powiedz zdanie z tej lekcji albo napisz je, jeśli mikrofon nie złapie.").font(.headline)
                 Text(word.pl)
                 if !parts.isEmpty { SaidWords(parts: parts) }
                 Button { mic.toggle() } label: { Label(mic.listening ? "Stop" : "Powiedz", systemImage: "mic.fill") }
                     .buttonStyle(.glassProminent)
-                Text(said ? "Zdanie zgodziło się słowo po słowie." : "Bez pełnego nagrania nie zaliczam mówienia.")
+                Text(voiceLine)
                     .font(.footnote)
                     .foregroundStyle(Theme.text2)
-                Button("Dalej do sprawdzenia") { phase = 3; cursor = 0; taught = false; hinted = false; typed = ""; note = "" }
+                if voice == 3 {
+                    field()
+                    Button("Zapisz tekstem") { acceptTyped(word, line) }
+                        .primaryButton()
+                        .disabled(typed.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                Button("Dalej do sprawdzenia") { phase = 3; cursor = 0; taught = false; hinted = false; typed = ""; note = ""; picked = nil }
                     .primaryButton()
-                Text(line).font(.caption2).foregroundStyle(Theme.text2)
             } else {
                 Button("Dalej") { phase = 3 }.primaryButton()
             }
@@ -198,8 +239,8 @@ struct DailyRunView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Powtórka: \(reviewHits) z \(fixes.count).")
             Text("Nowe zdanie samodzielnie: \(phraseHits > 0 ? "weszło na dziś" : "jeszcze nie").")
-            Text("Mówienie: \(said ? "zdanie się zgodziło" : "niezaliczone, brak pełnego nagrania albo błąd").")
-            Text("Jedno kliknięcie albo jeden dobry dzień nie zamyka słowa. Opanowane jest po 3 dniach, kiedy sam je napiszesz.")
+            Text("Mówienie: \(voiceLine)")
+            Text("Wraca po 1, 3, 7 i 14 dniach. Jak znowu sprawia problem, odstęp skraca się do poprzedniego.")
                 .foregroundStyle(Theme.text2)
             Text("Opanowane dotychczas: \(store.masteredCount).")
                 .font(.footnote)
@@ -233,7 +274,49 @@ struct DailyRunView: View {
     private func load() {
         guard fixes.isEmpty, words.isEmpty else { return }
         fixes = Array(MistakeReview.nextEight(store: store).prefix(2))
-        words = Array(store.nextSession(size: 2, maxNew: 1, level: band == "oba" ? "A2" : band).prefix(2))
+        words = lessonWords()
+        for word in words where !store.words.contains(where: { Normalizer.clean($0.de) == Normalizer.clean(word.de) }) {
+            _ = store.addWords([word])
+        }
+    }
+
+    private func lessonWords() -> [Word] {
+        let ranked = DayLines.all.map { pair -> (Word, Int) in
+            let word = Word(de: pair.de, pl: pair.pl, ex: pair.de, exPl: pair.pl, topic: "Zwroty", level: "A1")
+            return (word, store.stats[pair.de]?.days.count ?? 0)
+        }.sorted { $0.1 < $1.1 }
+        return Array(ranked.prefix(3).map(\.0))
+    }
+
+    private func meanings(_ right: String) -> [String] {
+        var pool = DayLines.all.map(\.pl).filter { $0 != right }
+        pool.shuffle()
+        var rows = Array(pool.prefix(2))
+        rows.append(right)
+        return rows.shuffled()
+    }
+
+    private var voiceLine: String {
+        switch voice {
+        case 1: return "Poprawna odpowiedź."
+        case 2: return "Odpowiedź wymaga poprawy. Usłyszałem tylko część zdania."
+        case 3: return "Nie udało się rozpoznać wypowiedzi. To nie jest błąd językowy."
+        default: return "Możesz powiedzieć albo, jak mikrofon zawiedzie, napisać."
+        }
+    }
+
+    private func acceptTyped(_ word: Word, _ line: String) {
+        writing = false
+        if Normalizer.same(typed, line) {
+            voice = 1
+            said = true
+            store.grade(word, .easy, produced: true)
+        } else {
+            voice = 2
+            said = false
+            store.scheduleTomorrow(word)
+            HardBook.add(de: line, pl: word.pl)
+        }
     }
 
     private func nextFix(ok: Bool) {
@@ -277,6 +360,8 @@ struct DailyRunView: View {
             cursor += 1
             taught = false
             hinted = false
+            picked = nil
+            options = []
             typed = ""
             note = ""
         } else {
@@ -312,4 +397,15 @@ struct DailyRunView: View {
         picked = nil
         note = ""
     }
+}
+
+enum DayLines {
+    static let all: [(de: String, pl: String)] = [
+        ("Ich verstehe nicht.", "Nie rozumiem."),
+        ("Können Sie das wiederholen?", "Czy może Pan powtórzyć?"),
+        ("Ich mache das gleich.", "Zaraz to zrobię."),
+        ("Können Sie bitte langsamer sprechen?", "Czy może Pan mówić wolniej?"),
+        ("Wo soll ich anfangen?", "Od czego mam zacząć?"),
+        ("Ich komme sofort.", "Zaraz przyjdę.")
+    ]
 }
