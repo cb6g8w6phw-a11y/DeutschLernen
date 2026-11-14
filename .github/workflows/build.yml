@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: ipa-main
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: macos-26-intel
