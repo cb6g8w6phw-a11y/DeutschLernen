@@ -451,30 +451,40 @@ struct StatsView: View {
     }
 
     private var skills: some View {
-        let studied = max(store.stats.count, 1)
-        let words = Double(store.masteredCount) / Double(studied)
-        let listen = store.journal.listenTries == 0 ? 0 : Double(store.journal.listenOk) / Double(store.journal.listenTries)
-        let talk = min(1, Double(store.monthTalkSeconds) / 1800)
-        let scenes = Scenarios.all.isEmpty ? 0 : Double(store.journal.scenes.count) / Double(Scenarios.all.count)
-        let rows: [(String, Double)] = [("Słówka", words), ("Słuchanie", listen), ("Rozmowa", talk), ("Sceny", scenes)]
+        func rate(_ ok: Int, _ bad: Int) -> Double {
+            let total = ok + bad
+            return total == 0 ? 0 : Double(ok) / Double(total)
+        }
+        let rows: [(String, Int, Int)] = [
+            ("Słuch", store.journal.skillListenOK, store.journal.skillListenBad),
+            ("Gramatyka", store.journal.skillGrammarOK, store.journal.skillGrammarBad),
+            ("Zdania", store.journal.skillSentenceOK, store.journal.skillSentenceBad),
+            ("Mówienie", store.journal.skillSpeakOK, store.journal.skillSpeakBad),
+            ("Słownictwo", store.journal.skillVocabOK, store.journal.skillVocabBad),
+        ]
         return VStack(alignment: .leading, spacing: 10) {
             Text("Umiejętności").font(.headline)
-            ForEach(rows, id: \.0) { name, value in
+            ForEach(rows, id: \.0) { name, ok, bad in
+                let total = ok + bad
                 HStack {
-                    Text(name).frame(width: 90, alignment: .leading).font(.subheadline)
+                    Text(name).frame(width: 92, alignment: .leading).font(.subheadline)
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             Capsule().fill(Color.white.opacity(0.08))
-                            Capsule().fill(Ink.accent).frame(width: geo.size.width * value)
+                            Capsule().fill(Ink.accent).frame(width: geo.size.width * rate(ok, bad))
                         }
                     }
                     .frame(height: 8)
+                    Text(total == 0 ? "—" : "\(ok)/\(total)")
+                        .font(.caption2)
+                        .foregroundStyle(Ink.muted)
+                        .frame(width: 52, alignment: .trailing)
                 }
             }
-            Text("Baza: \(FreqBank.all.count) najczęstszych słów, A1–B2. W nauce: \(store.stats.count).")
+            Text("Pasek to trafione odpowiedzi w tym dziale, nie szacunek. Kreska znaczy, że tego jeszcze nie robiłeś.")
                 .font(.footnote)
                 .foregroundStyle(Ink.muted)
-            Text("Rozmowa w tym miesiącu: \(store.talkLabel) · Dzień \(store.planDay)/30")
+            Text("Słowo jest opanowane dopiero, gdy sam je napiszesz albo powiesz w 3 różne dni. Samo rozpoznanie zostaje w nauce.")
                 .font(.footnote)
                 .foregroundStyle(Ink.muted)
         }
