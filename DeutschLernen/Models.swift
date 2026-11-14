@@ -127,9 +127,19 @@ struct Journal: Codable {
     var history: [String: Int] = [:]
     var todayOK: Int = 0
     var todayBad: Int = 0
+    var skillListenOK: Int = 0
+    var skillListenBad: Int = 0
+    var skillGrammarOK: Int = 0
+    var skillGrammarBad: Int = 0
+    var skillSentenceOK: Int = 0
+    var skillSentenceBad: Int = 0
+    var skillSpeakOK: Int = 0
+    var skillSpeakBad: Int = 0
+    var skillVocabOK: Int = 0
+    var skillVocabBad: Int = 0
 
     private enum CodingKeys: String, CodingKey {
-        case startDay, day, reviews, month, monthSeconds, listenOk, listenTries, said, scenes, sceneStars, mistakes, streak, bestStreak, lastActive, history, todayOK, todayBad
+        case startDay, day, reviews, month, monthSeconds, listenOk, listenTries, said, scenes, sceneStars, mistakes, streak, bestStreak, lastActive, history, todayOK, todayBad, skillListenOK, skillListenBad, skillGrammarOK, skillGrammarBad, skillSentenceOK, skillSentenceBad, skillSpeakOK, skillSpeakBad, skillVocabOK, skillVocabBad
     }
 
     init() {}
@@ -153,6 +163,16 @@ struct Journal: Codable {
         history = try c.decodeIfPresent([String: Int].self, forKey: .history) ?? [:]
         todayOK = try c.decodeIfPresent(Int.self, forKey: .todayOK) ?? 0
         todayBad = try c.decodeIfPresent(Int.self, forKey: .todayBad) ?? 0
+        skillListenOK = try c.decodeIfPresent(Int.self, forKey: .skillListenOK) ?? 0
+        skillListenBad = try c.decodeIfPresent(Int.self, forKey: .skillListenBad) ?? 0
+        skillGrammarOK = try c.decodeIfPresent(Int.self, forKey: .skillGrammarOK) ?? 0
+        skillGrammarBad = try c.decodeIfPresent(Int.self, forKey: .skillGrammarBad) ?? 0
+        skillSentenceOK = try c.decodeIfPresent(Int.self, forKey: .skillSentenceOK) ?? 0
+        skillSentenceBad = try c.decodeIfPresent(Int.self, forKey: .skillSentenceBad) ?? 0
+        skillSpeakOK = try c.decodeIfPresent(Int.self, forKey: .skillSpeakOK) ?? 0
+        skillSpeakBad = try c.decodeIfPresent(Int.self, forKey: .skillSpeakBad) ?? 0
+        skillVocabOK = try c.decodeIfPresent(Int.self, forKey: .skillVocabOK) ?? 0
+        skillVocabBad = try c.decodeIfPresent(Int.self, forKey: .skillVocabBad) ?? 0
     }
 
     func encode(to encoder: Encoder) throws {
@@ -174,6 +194,16 @@ struct Journal: Codable {
         try c.encode(history, forKey: .history)
         try c.encode(todayOK, forKey: .todayOK)
         try c.encode(todayBad, forKey: .todayBad)
+        try c.encode(skillListenOK, forKey: .skillListenOK)
+        try c.encode(skillListenBad, forKey: .skillListenBad)
+        try c.encode(skillGrammarOK, forKey: .skillGrammarOK)
+        try c.encode(skillGrammarBad, forKey: .skillGrammarBad)
+        try c.encode(skillSentenceOK, forKey: .skillSentenceOK)
+        try c.encode(skillSentenceBad, forKey: .skillSentenceBad)
+        try c.encode(skillSpeakOK, forKey: .skillSpeakOK)
+        try c.encode(skillSpeakBad, forKey: .skillSpeakBad)
+        try c.encode(skillVocabOK, forKey: .skillVocabOK)
+        try c.encode(skillVocabBad, forKey: .skillVocabBad)
     }
 }
 
@@ -268,7 +298,7 @@ final class LearningStore: ObservableObject {
         save()
     }
 
-    func grade(_ w: Word, _ g: Grade) {
+    func grade(_ w: Word, _ g: Grade, produced: Bool = false) {
         var s = stats[w.de] ?? WordStat()
         let today = Self.dayKey()
         switch g {
@@ -278,14 +308,16 @@ final class LearningStore: ObservableObject {
             UserDefaults.standard.set(w.de, forKey: "lastMiss")
         case .mid, .easy:
             s.correct += 1
-            if !s.days.contains(today) { s.days.append(today) }
+            if produced, !s.days.contains(today) { s.days.append(today) }
             s.box = min(s.days.count, 5)
-            let gap = s.days.count >= 3 ? 7 : (s.days.count == 2 ? 3 : 1)
-            s.due = Calendar.current.date(byAdding: .day, value: gap, to: Date()) ?? Date()
+            let step = s.days.count
+            let gap = step >= 4 ? 14 : (step >= 3 ? 7 : (step == 2 ? 3 : 1))
+            let wait = produced ? gap : 1
+            s.due = Calendar.current.date(byAdding: .day, value: wait, to: Date()) ?? Date()
             UserDefaults.standard.set(w.de, forKey: "lastHit")
         }
         stats[w.de] = s
-        noteOutcome(ok: g != .hard)
+        noteSkill(produced ? "sentence" : "vocab", ok: g != .hard)
         save()
     }
 
@@ -566,13 +598,31 @@ final class LearningStore: ObservableObject {
         journal.listenTries += 1
         if ok { journal.listenOk += 1 }
         UserDefaults.standard.set(journal.day, forKey: "didListenDay")
-        noteOutcome(ok: ok)
+        noteSkill("listen", ok: ok)
     }
 
     func noteSaid(ok: Bool = false) {
         roll()
         journal.said += 1
-        noteOutcome(ok: ok)
+        noteSkill("speak", ok: ok)
+    }
+
+    func noteSkill(_ name: String, ok: Bool) {
+        roll()
+        switch name {
+        case "listen":
+            if ok { journal.skillListenOK += 1 } else { journal.skillListenBad += 1 }
+        case "grammar":
+            if ok { journal.skillGrammarOK += 1 } else { journal.skillGrammarBad += 1 }
+        case "sentence":
+            if ok { journal.skillSentenceOK += 1 } else { journal.skillSentenceBad += 1 }
+        case "speak":
+            if ok { journal.skillSpeakOK += 1 } else { journal.skillSpeakBad += 1 }
+        default:
+            if ok { journal.skillVocabOK += 1 } else { journal.skillVocabBad += 1 }
+        }
+        if ok { journal.todayOK += 1 } else { journal.todayBad += 1 }
+        noteReview()
     }
 
     private func noteOutcome(ok: Bool) {
