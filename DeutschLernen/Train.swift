@@ -25,6 +25,10 @@ enum CoachData {
     }
 
     static let listen: [ListenQ] = [
+        ListenQ(de: "Chef: Kommst du heute zur Frühschicht?\nDu: Der Bus hat Verspätung. Ich bin in zwanzig Minuten da.\nChef: Gut. Fang dann an der Rampe an.", pl: "Szef pyta, czy jesteś na porannej. Autobus się spóźnił, będziesz za dwadzieścia minut. Masz zacząć przy rampie.", question: "Kiedy będziesz na miejscu?", options: ["Za dwadzieścia minut", "Jutro rano", "Za godzinę", "Już jesteś"], answer: 0),
+        ListenQ(de: "Arzt: Was fehlt Ihnen?\nDu: Mir tut der Rücken weh und ich brauche eine Krankschreibung.\nArzt: Seit wann ist das so?", pl: "Lekarz pyta, co dolega. Boli cię plecy i potrzebujesz zwolnienia. Pyta, od kiedy.", question: "Czego potrzebujesz od lekarza?", options: ["Zwolnienia", "Nowego kasku", "Recepty na okulary", "Skierowania na rentgen kolana"], answer: 0),
+        ListenQ(de: "Verkäufer: Zusammen oder getrennt?\nDu: Getrennt, bitte. Kann ich mit Karte zahlen?\nVerkäufer: Ja. Möchten Sie eine Tüte?", pl: "Kasjer pyta, czy razem. Płacisz osobno kartą. Pyta o torbę.", question: "Jak płacisz?", options: ["Kartą, osobno", "Gotówką za wszystkich", "Bonem", "Nie płacisz"], answer: 0),
+        ListenQ(de: "Amt: Haben Sie den Ausweis dabei?\nDu: Ja. Ich möchte den Wohnsitz anmelden.\nAmt: Füllen Sie bitte das Formular aus.", pl: "W urzędzie pytają o dowód. Chcesz zameldować adres. Masz wypełnić formularz.", question: "Co masz zrobić?", options: ["Wypełnić formularz", "Zapłacić kaucję", "Iść do lekarza", "Czekać na szefa"], answer: 0),
         ListenQ(de: "Kacper, hol bitte die Schaufel und komm zur Baustelle.", pl: "Kacper, przynieś proszę łopatę i przyjdź na budowę.", question: "Co masz zrobić?", options: ["Przynieść łopatę i przyjść na budowę", "Zostać w aucie", "Iść do lekarza"], answer: 0),
         ListenQ(de: "Wir fangen morgen um sechs Uhr an.", pl: "Jutro zaczynamy o szóstej.", question: "O której zaczynacie?", options: ["O ósmej", "O szóstej", "W południe"], answer: 1),
         ListenQ(de: "Mach das Loch achtzig Zentimeter tief.", pl: "Zrób dół na osiemdziesiąt centymetrów.", question: "Jak głęboki ma być dół?", options: ["40 cm", "80 cm", "2 metry"], answer: 1),
@@ -122,7 +126,7 @@ struct TodayView: View {
                     goalCard
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                         bigTile("Mówienie", "Ćwicz rozmowę", "mic.fill", Theme.accent) { TutorView() }
-                        bigTile("Słówka", "Powtarzaj wiedzę", "rectangle.stack.fill", Color(hex: "5AC8FA")) { QuizView(sessionSize: 10) }
+                        bigTile("Słówka", "Najpierw zdanie, potem sam", "rectangle.stack.fill", Color(hex: "5AC8FA")) { StudyView() }
                         bigTile("Słuchanie", "Rozumiej Niemców", "headphones", Color(hex: "8B6CF0")) { ListenView() }
                         bigTile("Postępy", "Sprawdzaj wyniki", "chart.bar.fill", Theme.orange) { StatsView() }
                     }
@@ -179,7 +183,7 @@ struct TodayView: View {
                 Text("\(done)/4 ukończone").font(.caption).foregroundStyle(Theme.text2)
             }
             ProgressView(value: Double(done), total: 4).tint(Theme.accent)
-            goalRow("10 nowych słówek", goals[0].1) { QuizView(sessionSize: 10) }
+            goalRow("10 nowych słówek", goals[0].1) { StudyView() }
             goalRow("Rozmowa z AI", goals[1].1) { TutorView() }
             goalRow("Słuchanie", goals[2].1) { ListenView() }
             goalRow("Powtórka błędów", goals[3].1) { MistakeReview() }
@@ -337,10 +341,10 @@ struct ListenView: View {
                     }
                     .buttonStyle(.plain)
                 } else if let item {
-                    Text("Posłuchaj polecenia. Potem odpowiedz, co z niego wynika. Nie musisz znać każdego słowa.")
+                    Text("Najpierw samo ucho. Tekst i pytanie dopiero po odtworzeniu.")
                         .font(.subheadline)
                         .foregroundStyle(Theme.text2)
-                    Text("\(index + 1) z \(deck.count) · w banku \(CoachData.listen.count)")
+                    Text("\(index + 1) z \(deck.count) · w banku \(CoachData.listen.count + DailyPack.listen.count)")
                         .font(.footnote)
                         .foregroundStyle(Theme.text2)
                     Picker("Tempo", selection: $speed) {
@@ -356,7 +360,7 @@ struct ListenView: View {
                         }
                     }
                     Button { Talk.de(item.de, rate: speed, voice: voice.isEmpty ? nil : voice) } label: {
-                        Label("Odtwórz", systemImage: "speaker.wave.2.fill")
+                        Label(showPL ? "Odtwórz jeszcze raz" : "Odtwórz bez napisów", systemImage: "speaker.wave.2.fill")
                             .font(.body.weight(.semibold))
                             .frame(maxWidth: .infinity)
                             .frame(minHeight: 52)
@@ -364,10 +368,15 @@ struct ListenView: View {
                             .foregroundStyle(Theme.ink)
                     }
                     .buttonStyle(.plain)
-                    Button(showPL ? "Ukryj tłumaczenie" : "Tłumaczenie") { showPL.toggle() }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(Theme.text)
-                        .frame(minHeight: 44)
+                    if !showPL {
+                        Button("Słyszałem — pokaż tekst") { showPL = true }
+                            .primaryButton()
+                    }
+                    if showPL {
+                    Text(item.de)
+                        .font(.title3.bold())
+                    Text(item.pl)
+                        .foregroundStyle(Theme.text2)
                     Text(item.question)
                         .font(.title3.bold())
                         .foregroundStyle(Theme.text)
@@ -384,13 +393,11 @@ struct ListenView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    if picked != nil || showPL {
+                    if picked != nil {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(picked == item.answer ? "Dobrze." : "Poprawnie: \(item.options[item.answer])")
                                 .font(.headline)
                                 .foregroundStyle(picked == item.answer ? Theme.ok : Theme.bad)
-                            Text(item.de).font(.body)
-                            Text(item.pl).foregroundStyle(Theme.text2)
                             Button {
                                 store.pinForReview(Word(
                                     de: item.de,
@@ -410,12 +417,11 @@ struct ListenView: View {
                         }
                         .padding(12)
                         .themedCard(radius: 16)
-                    }
-                    if picked != nil {
                         Button { advance(item) } label: {
                             Text(index + 1 >= deck.count ? "Zakończ" : "Dalej").primaryButton()
                         }
                         .buttonStyle(.plain)
+                    }
                     }
                     if store.journal.listenTries > 0 {
                         Text("Trafione: \(store.journal.listenOk) z \(store.journal.listenTries)")
@@ -447,7 +453,10 @@ struct ListenView: View {
         let heard = forceAll ? [] : (UserDefaults.standard.stringArray(forKey: "heardListen") ?? [])
         if forceAll { UserDefaults.standard.removeObject(forKey: "heardListen") }
         let fresh = (CoachData.listen + DailyPack.listen).filter { !heard.contains($0.de) }
-        deck = (fresh.isEmpty ? (CoachData.listen + DailyPack.listen) : fresh).shuffled()
+        let pool = fresh.isEmpty ? (CoachData.listen + DailyPack.listen) : fresh
+        let talks = pool.filter { $0.de.contains("\n") }
+        let lines = pool.filter { !$0.de.contains("\n") }.shuffled()
+        deck = talks + lines
         index = 0
         picked = nil
         showPL = false
