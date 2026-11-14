@@ -119,11 +119,8 @@ struct TodayView: View {
                             .padding(.vertical, 6)
                             .background(Theme.ok.opacity(0.25), in: Capsule())
                     }
-                    Text("Hallo! 👋")
-                        .font(.system(size: 40, weight: .bold))
-                    Text("Gotowy na dzisiejszą lekcję?")
-                        .foregroundStyle(Theme.text2)
                     goalCard
+                    LessonPath()
                     skillPills
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
                         tile("Pisanie", "Po polsku, do nauki", "square.and.pencil") { WriteLearnView() }
@@ -149,7 +146,6 @@ struct TodayView: View {
                         tile("Offline", "Bez sieci", "arrow.down.circle") { OfflineView() }
                         tile("Ratunek", "Powtórz, wolniej", "exclamationmark.bubble") { RescueView() }
                     }
-                    LessonPath()
                     NavigationLink { DailyRunView() } label: {
                         Text("Pełna lekcja: zdania, powtórki, scena").primaryButton()
                     }
@@ -234,9 +230,11 @@ struct TodayView: View {
             .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
     }
 
     private var skillPills: some View {
@@ -250,6 +248,7 @@ struct TodayView: View {
                 pill("Słówka", journal.skillVocabOK, journal.skillVocabBad)
             }
         }
+        .frame(height: 52)
     }
 
     private func pill(_ name: String, _ ok: Int, _ bad: Int) -> some View {

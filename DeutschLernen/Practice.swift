@@ -183,7 +183,7 @@ struct PracticeView: View {
             }
             .frame(maxWidth: .infinity, minHeight: wide ? 48 : 72, alignment: .leading)
             .padding(.horizontal, 12)
-            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.plain)
     }

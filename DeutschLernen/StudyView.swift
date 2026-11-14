@@ -14,6 +14,8 @@ struct StudyView: View {
     @State private var missed = 0
     @State private var topic = ""
     @State private var picking = true
+    @State private var choosing = false
+    @State private var pickedTopics: [String] = StudyPicks.load()
     @AppStorage("band") private var band = "A1"
     @FocusState private var writing: Bool
 
@@ -61,24 +63,40 @@ struct StudyView: View {
         return seen
     }
 
+    private var chosen: [String] {
+        let known = Set(categories)
+        let saved = pickedTopics.filter { known.contains($0) }
+        if !saved.isEmpty { return saved }
+        let useful = ["Moje", "Praca", "Budowa", "Zdrowie", "Mieszkanie", "Zakupy", "Transport", "Urzędy", "Komunikacja", "Na co dzień"]
+        let start = useful.filter { known.contains($0) }
+        return start.isEmpty ? Array(categories.prefix(8)) : start
+    }
+
     private var picker: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Czego chcesz się uczyć?")
                 .font(.title2.bold())
-            Text("Jedna kategoria na raz. Wpisujesz tylko brakujące słowo, nie całe zdanie.")
+            Text("Wybierasz kategorie. Reszta zostaje schowana.")
                 .foregroundStyle(Theme.text2)
             Button("Do przypomnienia") { start(topic: "przypomnienie") }
                 .primaryButton()
+            Button("Wybierz kategorie") { choosing = true }
+                .buttonStyle(.glass)
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                ForEach(categories, id: \.self) { name in
+                ForEach(chosen, id: \.self) { name in
                     Button(name) { start(topic: name) }
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.text)
                         .frame(maxWidth: .infinity, minHeight: 52)
+                        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                         .background(Theme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
             }
         }
+        .sheet(isPresented: $choosing) {
+            CategoryPick(all: categories, picked: $pickedTopics)
+        }
+        .onChange(of: pickedTopics) { _, next in StudyPicks.save(next) }
     }
 
     private func teach(_ word: Word) -> some View {
@@ -307,5 +325,50 @@ private struct WordPicture: View {
         case "cart.fill": return Color(hex: "FFD60A")
         default: return Color(hex: "8B6CF0")
         }
+    }
+}
+
+enum StudyPicks {
+    static func load() -> [String] {
+        UserDefaults.standard.stringArray(forKey: "studyPicks") ?? []
+    }
+
+    static func save(_ names: [String]) {
+        UserDefaults.standard.set(names, forKey: "studyPicks")
+    }
+}
+
+struct CategoryPick: View {
+    let all: [String]
+    @Binding var picked: [String]
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List(all, id: \.self) { name in
+                Button {
+                    if let index = picked.firstIndex(of: name) {
+                        picked.remove(at: index)
+                    } else {
+                        picked.append(name)
+                    }
+                } label: {
+                    HStack {
+                        Text(name).foregroundStyle(.primary)
+                        Spacer()
+                        if picked.contains(name) {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Kategorie")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Gotowe") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
     }
 }

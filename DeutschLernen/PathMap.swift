@@ -16,17 +16,22 @@ struct LessonPath: View {
 
     var body: some View {
         let open = stops.firstIndex { !passed.contains($0.id) } ?? stops.count
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Ścieżka")
-                    .font(.title2.bold())
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center, spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("SEKCJA \(min(open + 1, stops.count))")
+                        .font(.caption.weight(.bold))
+                    Text(open < stops.count ? stops[open].title : "Ścieżka skończona")
+                        .font(.title3.bold())
+                }
                 Spacer()
                 Text("\(min(open, stops.count))/\(stops.count)")
                     .font(.subheadline.weight(.bold))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(Theme.track, in: Capsule())
             }
+            .foregroundStyle(.white)
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.accent, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             ZStack {
                 Capsule()
                     .fill(Theme.track)
