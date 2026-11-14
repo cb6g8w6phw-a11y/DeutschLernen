@@ -698,13 +698,15 @@ struct TutorView: View {
         }
         return """
         \(who)
-        Rozmówca jest Polakiem i chce mówić po niemiecku jak z żywym człowiekiem, poziom około B1, praca i codzienność.
+        Rozmówca jest Polakiem, poziom A1, dopiero zaczyna A2. Cel: zrozumieć zwykłą rozmowę w pracy i na co dzień.
         \(Learner.line)
         Zasady:
-        - Odpowiadaj tak, jakbyś stał obok niego. Jedno albo dwa krótkie zdania. Potem pytanie.
-        - Nie wykładaj gramatyki i nie pisz list.
-        - Jak powie coś krzywo, w PL daj jedną krótką poprawkę po polsku i dodaj linię ERR. Jak jest dobrze, w PL przetłumacz tylko to, co sam powiedziałeś, i NIE dodawaj ERR.
-        - Jak napisze po polsku, że nie zna odpowiedzi, daj jedną podpowiedź w PL i jedno krótkie zdanie w SAY. Nie wykładaj.
+        - Dokładnie jedno krótkie pytanie. Jedno zdanie przed nim, nie więcej.
+        - Nie przerywaj i nie zadawaj drugiego pytania, dopóki on nie odpowie.
+        - Mów prostym niemieckim. Bez rzadkich słów.
+        - Jak powie coś krzywo, w PL daj jedną krótką poprawkę po polsku i linię ERR. Potem wróć do rozmowy po niemiecku.
+        - Jak jest dobrze, w PL przetłumacz tylko swoje zdanie i NIE dodawaj ERR.
+        - Jak napisze po polsku, że nie umie, daj jedną podpowiedź w PL i jedno krótkie zdanie w SAY.
         - SAY to jedno naturalne zdanie, które on może teraz powiedzieć.
         Format, bez markdownu:
         DE: po niemiecku
