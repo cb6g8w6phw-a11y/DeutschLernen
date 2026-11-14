@@ -74,166 +74,83 @@ enum PracticeData {
     }
 }
 
+struct PracticeSlot: Codable, Identifiable, Equatable {
+    var id: String
+    var onHome: Bool
+}
+
 struct PracticeView: View {
     @EnvironmentObject var store: LearningStore
     @State private var streak = false
+    @State private var arranging = false
+    @State private var slots: [PracticeSlot] = PracticeLayout.load()
+
+    private var home: [PracticeSlot] { slots.filter(\.onHome) }
+    private var rest: [PracticeSlot] { slots.filter { !$0.onHome } }
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
+                VStack(alignment: .leading, spacing: 16) {
                     HStack {
                         Text("Ćwicz")
                             .font(.largeTitle.bold())
                         Spacer()
-                        Button { streak = true } label: { streakPill }
-                    }
-                    NavigationLink {
-                        NewsListView()
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "newspaper.fill")
-                                .font(.title2)
-                                .foregroundStyle(Theme.orange)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Wiadomości").font(.headline).foregroundStyle(Theme.text)
-                                Text("Świat po niemiecku, tłumaczenie i słówka").font(.caption).foregroundStyle(Theme.text2)
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.right").foregroundStyle(Theme.text2)
-                        }
-                        .padding(16)
-                        .themedCard(radius: 18)
-                    }
-                    .buttonStyle(.plain)
-                    NavigationLink {
-                        CaptureView()
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.title2)
-                                .foregroundStyle(Theme.ok)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Z życia").font(.headline).foregroundStyle(Theme.text)
-                                Text("Wklej tekst, zdjęcie albo głosówkę i naucz się z tego").font(.caption).foregroundStyle(Theme.text2)
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.right").foregroundStyle(Theme.text2)
-                        }
-                        .padding(16)
-                        .themedCard(radius: 18)
-                    }
-                    .buttonStyle(.plain)
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
-                        ForEach(PracticeData.modes, id: \.2) { mode in
-                            NavigationLink {
-                                TutorView(launch: mode.4)
-                            } label: {
-                                VStack(spacing: 8) {
-                                    Image(systemName: mode.1)
-                                        .font(.title2)
-                                        .foregroundStyle(.white)
-                                        .frame(width: 64, height: 64)
-                                        .background(mode.3.opacity(0.9), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                                    Text(mode.0)
-                                        .font(.caption.weight(.semibold))
-                                        .foregroundStyle(Theme.text)
-                                        .lineLimit(2)
-                                        .multilineTextAlignment(.center)
-                                        .frame(height: 32)
-                                }
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    Text("Szybkie scenariusze")
-                        .font(.title3.bold())
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                        ForEach(PracticeData.quick) { scene in
-                            NavigationLink {
-                                SceneChatView(scenario: scene)
-                            } label: {
-                                HStack(spacing: 8) {
-                                    Image(systemName: icon(scene.id))
-                                    Text(scene.title)
-                                        .font(.subheadline.weight(.semibold))
-                                        .lineLimit(2)
-                                    Spacer(minLength: 0)
-                                }
+                        Button { arranging = true } label: {
+                            Text("Ułóż")
+                                .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(Theme.text)
                                 .padding(.horizontal, 12)
-                                .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
-                                .background(Theme.card, in: Capsule())
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    ForEach(PracticeData.groups) { group in
-                        HStack {
-                            Text(group.title).font(.title3.bold())
-                            Spacer()
-                            NavigationLink {
-                                ActivityList(group: group)
-                            } label: {
-                                Text("Wszystko").foregroundStyle(Theme.text2)
-                                Image(systemName: "chevron.right").font(.caption).foregroundStyle(Theme.text2)
-                            }
-                        }
-                        NavigationLink {
-                            ActivityList(group: group)
-                        } label: {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text("\(group.items.count) aktywności")
-                                        .font(.caption)
-                                        .foregroundStyle(Theme.text2)
-                                    Text(group.items[0].title)
-                                        .font(.title2.bold())
-                                }
-                                Spacer()
-                                Image(systemName: group.symbol)
-                                    .font(.largeTitle)
-                                    .foregroundStyle(group.tint)
-                            }
-                            .padding(20)
-                            .frame(maxWidth: .infinity, minHeight: 140, alignment: .bottomLeading)
-                            .background(
-                                LinearGradient(colors: [group.tint.opacity(0.45), Theme.card], startPoint: .topLeading, endPoint: .bottomTrailing),
-                                in: RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            )
+                                .frame(minHeight: 36)
+                                .glassEffect(.regular, in: Capsule())
                         }
                         .buttonStyle(.plain)
+                        Button { streak = true } label: { streakPill }
+                            .buttonStyle(.plain)
                     }
+                    Text("Na wierzchu tylko to, czego używasz. Reszta jest niżej.")
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.text2)
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                        ForEach(home) { slot in
+                            practiceLink(slot.id)
+                        }
+                    }
+                    if !rest.isEmpty {
+                        Text("Reszta")
+                            .font(.headline)
+                        VStack(spacing: 8) {
+                            ForEach(rest) { slot in
+                                practiceLink(slot.id, wide: true)
+                            }
+                        }
+                    }
+                    NavigationLink {
+                        PracticeMore()
+                    } label: {
+                        HStack {
+                            Text("Scenariusze: restauracja, praca, kultura")
+                                .font(.subheadline.weight(.semibold))
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                        }
+                        .foregroundStyle(Theme.text)
+                        .padding(14)
+                        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
-                .padding(.bottom, 150)
+                .padding(.bottom, 120)
             }
             .toolbar(.hidden, for: .navigationBar)
             .containerBackground(for: .navigation) { NightGlow() }
-            .safeAreaInset(edge: .bottom) {
-                NavigationLink {
-                    TutorView(launch: TalkLaunch(
-                        id: "wolna",
-                        title: "Swobodna rozmowa",
-                        who: "Gadasz swobodnie po niemiecku o tym, co uczeń przyniesie. Jedno pytanie na raz.",
-                        de: "Na, worüber hast du Lust zu reden?",
-                        pl: "No, o czym masz ochotę pogadać?",
-                        say: "Über meinen Tag auf der Arbeit."
-                    ))
-                } label: {
-                    Label("Rozpocznij swobodną rozmowę", systemImage: "mic.fill")
-                        .font(.body.weight(.bold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(Theme.accent, in: Capsule())
-                }
-                .buttonStyle(.plain)
-                .padding(.horizontal, 20)
-                .padding(.bottom, 8)
-            }
             .sheet(isPresented: $streak) { StreakSheet() }
+            .sheet(isPresented: $arranging) {
+                ArrangeTiles(slots: $slots)
+            }
+            .onChange(of: slots) { _, next in PracticeLayout.save(next) }
         }
     }
 
@@ -249,15 +166,180 @@ struct PracticeView: View {
         .background(Theme.card, in: Capsule())
     }
 
-    private func icon(_ id: String) -> String {
+    @ViewBuilder
+    private func practiceLink(_ id: String, wide: Bool = false) -> some View {
+        let meta = PracticeLayout.meta(id)
+        NavigationLink { PracticeLayout.destination(id) } label: {
+            HStack(spacing: 8) {
+                Image(systemName: meta.symbol)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 22)
+                Text(meta.title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.text)
+                    .lineLimit(1)
+                if wide { Spacer() }
+            }
+            .frame(maxWidth: .infinity, minHeight: wide ? 48 : 72, alignment: .leading)
+            .padding(.horizontal, 12)
+            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+enum PracticeLayout {
+    static let seed: [PracticeSlot] = [
+        PracticeSlot(id: "rozmowa", onHome: true),
+        PracticeSlot(id: "zycie", onHome: true),
+        PracticeSlot(id: "pisanie", onHome: true),
+        PracticeSlot(id: "lekarz", onHome: true),
+        PracticeSlot(id: "praca", onHome: true),
+        PracticeSlot(id: "wiadomosci", onHome: false),
+        PracticeSlot(id: "rola", onHome: false),
+        PracticeSlot(id: "dyskusja", onHome: false),
+        PracticeSlot(id: "wynajem", onHome: false),
+        PracticeSlot(id: "zakupy", onHome: false),
+        PracticeSlot(id: "sasiad", onHome: false)
+    ]
+
+    static func load() -> [PracticeSlot] {
+        let known = Set(seed.map(\.id))
+        guard let data = UserDefaults.standard.data(forKey: "practiceLayout"),
+              let saved = try? JSONDecoder().decode([PracticeSlot].self, from: data) else { return seed }
+        var rows = saved.filter { known.contains($0.id) }
+        for item in seed where !rows.contains(where: { $0.id == item.id }) {
+            rows.append(item)
+        }
+        return rows
+    }
+
+    static func save(_ slots: [PracticeSlot]) {
+        if let data = try? JSONEncoder().encode(slots) {
+            UserDefaults.standard.set(data, forKey: "practiceLayout")
+        }
+    }
+
+    static func meta(_ id: String) -> (title: String, symbol: String) {
         switch id {
-        case "wynajem": return "house.fill"
-        case "lekarz-szybko": return "cross.case.fill"
-        case "zakupy": return "cart.fill"
-        default: return "bubble.left.fill"
+        case "rozmowa": return ("Rozmowa", "mic.fill")
+        case "zycie": return ("Z życia", "plus.circle.fill")
+        case "pisanie": return ("Pisanie", "square.and.pencil")
+        case "lekarz": return ("Lekarz", "cross.case.fill")
+        case "praca": return ("Praca", "briefcase.fill")
+        case "wiadomosci": return ("Wiadomości", "newspaper")
+        case "rola": return ("Rola", "theatermasks")
+        case "dyskusja": return ("Dyskusja", "bubble.left.and.bubble.right")
+        case "wynajem": return ("Wynajem", "house.fill")
+        case "zakupy": return ("Zakupy", "cart.fill")
+        case "sasiad": return ("Sąsiad", "person.2.fill")
+        default: return (id, "circle")
+        }
+    }
+
+    @ViewBuilder
+    static func destination(_ id: String) -> some View {
+        switch id {
+        case "zycie":
+            CaptureView()
+        case "pisanie":
+            WriteLearnView()
+        case "wiadomosci":
+            NewsListView()
+        case "lekarz":
+            SceneChatView(scenario: PracticeData.quick[1])
+        case "wynajem":
+            SceneChatView(scenario: PracticeData.quick[0])
+        case "zakupy":
+            SceneChatView(scenario: PracticeData.quick[2])
+        case "sasiad":
+            SceneChatView(scenario: PracticeData.quick[3])
+        case "praca":
+            TutorView(launch: PracticeData.groups[4].items[0].launch)
+        case "rola":
+            TutorView(launch: PracticeData.modes[1].4)
+        case "dyskusja":
+            TutorView(launch: PracticeData.modes[0].4)
+        default:
+            TutorView(launch: TalkLaunch(
+                id: "wolna",
+                title: "Swobodna rozmowa",
+                who: "Gadasz swobodnie po niemiecku. Jedno pytanie na raz.",
+                de: "Na, worüber hast du Lust zu reden?",
+                pl: "No, o czym masz ochotę pogadać?",
+                say: "Über meinen Tag auf der Arbeit."
+            ))
         }
     }
 }
+
+struct ArrangeTiles: View {
+    @Binding var slots: [PracticeSlot]
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(slots) { slot in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(PracticeLayout.meta(slot.id).title)
+                            Text(slot.onHome ? "Na głównej" : "W reszcie")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Button(slot.onHome ? "Schowaj" : "Na główną") { toggle(slot.id) }
+                            .font(.caption.weight(.semibold))
+                    }
+                }
+                .onMove(perform: move)
+            }
+            .environment(\.editMode, .constant(.active))
+            .navigationTitle("Ułóż kafelki")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Gotowe") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private func move(_ source: IndexSet, _ destination: Int) {
+        slots.move(fromOffsets: source, toOffset: destination)
+    }
+
+    private func toggle(_ id: String) {
+        guard let index = slots.firstIndex(where: { $0.id == id }) else { return }
+        if slots[index].onHome, slots.filter(\.onHome).count <= 2 { return }
+        slots[index].onHome.toggle()
+    }
+}
+
+struct PracticeMore: View {
+    var body: some View {
+        List {
+            Section("Szybkie") {
+                ForEach(PracticeData.quick) { scene in
+                    NavigationLink(scene.title) { SceneChatView(scenario: scene) }
+                }
+            }
+            ForEach(PracticeData.groups) { group in
+                Section(group.title) {
+                    ForEach(group.items) { item in
+                        NavigationLink(item.title) { TutorView(launch: item.launch) }
+                    }
+                }
+            }
+        }
+        .navigationTitle("Scenariusze")
+        .scrollContentBackground(.hidden)
+        .containerBackground(for: .navigation) { NightGlow() }
+    }
+}
+
 
 struct ActivityList: View {
     let group: PracticeData.Group
