@@ -125,9 +125,11 @@ struct Journal: Codable {
     var bestStreak: Int = 0
     var lastActive: String = ""
     var history: [String: Int] = [:]
+    var todayOK: Int = 0
+    var todayBad: Int = 0
 
     private enum CodingKeys: String, CodingKey {
-        case startDay, day, reviews, month, monthSeconds, listenOk, listenTries, said, scenes, sceneStars, mistakes, streak, bestStreak, lastActive, history
+        case startDay, day, reviews, month, monthSeconds, listenOk, listenTries, said, scenes, sceneStars, mistakes, streak, bestStreak, lastActive, history, todayOK, todayBad
     }
 
     init() {}
@@ -149,6 +151,8 @@ struct Journal: Codable {
         bestStreak = try c.decodeIfPresent(Int.self, forKey: .bestStreak) ?? streak
         lastActive = try c.decodeIfPresent(String.self, forKey: .lastActive) ?? ""
         history = try c.decodeIfPresent([String: Int].self, forKey: .history) ?? [:]
+        todayOK = try c.decodeIfPresent(Int.self, forKey: .todayOK) ?? 0
+        todayBad = try c.decodeIfPresent(Int.self, forKey: .todayBad) ?? 0
     }
 
     func encode(to encoder: Encoder) throws {
@@ -168,6 +172,8 @@ struct Journal: Codable {
         try c.encode(bestStreak, forKey: .bestStreak)
         try c.encode(lastActive, forKey: .lastActive)
         try c.encode(history, forKey: .history)
+        try c.encode(todayOK, forKey: .todayOK)
+        try c.encode(todayBad, forKey: .todayBad)
     }
 }
 
@@ -258,7 +264,7 @@ final class LearningStore: ObservableObject {
             ? Calendar.current.date(byAdding: .day, value: days, to: Date()) ?? Date()
             : Date()
         stats[w.de] = s
-        noteReview()
+        noteOutcome(ok: correct)
         save()
     }
 
@@ -279,7 +285,7 @@ final class LearningStore: ObservableObject {
             UserDefaults.standard.set(w.de, forKey: "lastHit")
         }
         stats[w.de] = s
-        noteReview()
+        noteOutcome(ok: g != .hard)
         save()
     }
 
@@ -289,7 +295,7 @@ final class LearningStore: ObservableObject {
         s.due = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
         stats[w.de] = s
         UserDefaults.standard.set(w.de, forKey: "lastMiss")
-        noteReview()
+        noteOutcome(ok: false)
         save()
     }
 
@@ -560,13 +566,19 @@ final class LearningStore: ObservableObject {
         journal.listenTries += 1
         if ok { journal.listenOk += 1 }
         UserDefaults.standard.set(journal.day, forKey: "didListenDay")
-        publishJournal()
+        noteOutcome(ok: ok)
     }
 
-    func noteSaid() {
+    func noteSaid(ok: Bool = false) {
         roll()
         journal.said += 1
-        publishJournal()
+        noteOutcome(ok: ok)
+    }
+
+    private func noteOutcome(ok: Bool) {
+        roll()
+        if ok { journal.todayOK += 1 } else { journal.todayBad += 1 }
+        noteReview()
     }
 
     private func noteReview() {
@@ -602,6 +614,8 @@ final class LearningStore: ObservableObject {
         if journal.day != day {
             journal.day = day
             journal.reviews = 0
+            journal.todayOK = 0
+            journal.todayBad = 0
             changed = true
         }
         if journal.month != month {
