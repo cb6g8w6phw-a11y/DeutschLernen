@@ -14,9 +14,6 @@ struct SettingsView: View {
     @AppStorage("sessionSize") private var sessionSize = 20
     @AppStorage("islandSentence") private var islandSentence = true
     @AppStorage("islandEvening") private var islandEvening = true
-    @AppStorage("islandLesson") private var islandLesson = true
-    @AppStorage("islandSpeak") private var islandSpeak = true
-    @AppStorage("islandVoice") private var islandVoice = true
     @State private var testing = false
     @State private var testNote = ""
     @State private var confirmReset = false
@@ -41,8 +38,10 @@ struct SettingsView: View {
                         .font(.footnote).foregroundStyle(.secondary)
                 }
                 Section {
-                    Text("Stuknij „Pokaż teraz”. Za 2 sekundy ma wyskoczyć banner, nawet w otwartej aplikacji. Pasek pod zegarem jest wymuszony. Prawdziwa wyspa iPhone’a pojawia się dopiero po wyjściu na pulpit.")
+                    Text("Za 2 sekundy ma przyjść zwykłe powiadomienie. Wyspy nie ma.")
                         .font(.footnote).foregroundStyle(.secondary)
+                    Toggle("Zdanie rano", isOn: $islandSentence)
+                    Toggle("Wieczorem: zostało słówek", isOn: $islandEvening)
                     Button {
                         Task { await askNotify() }
                     } label: {
@@ -52,17 +51,6 @@ struct SettingsView: View {
                     Text(notifyNote).font(.footnote).foregroundStyle(.secondary)
                 } header: {
                     Text("Powiadomienia")
-                }
-                Section {
-                    Toggle("Zdanie na dziś", isOn: $islandSentence)
-                    Toggle("Wieczorem: zostało słówek", isOn: $islandEvening)
-                    Toggle("Nauka i słuchanie", isOn: $islandLesson)
-                    Toggle("Wymowa", isOn: $islandSpeak)
-                    Toggle("Głosówka", isOn: $islandVoice)
-                    Text("Wyłączone nie wchodzi na Dynamic Island. Zdanie i wieczór idą też jako powiadomienie, jeśli zezwolisz.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                } header: {
-                    Text("Co na wyspie")
                 }
                 Section("Wygląd") {
                     ThemePicker()
@@ -148,9 +136,6 @@ struct SettingsView: View {
             }
             .onChange(of: islandSentence) { _, _ in applyIsland() }
             .onChange(of: islandEvening) { _, _ in applyIsland() }
-            .onChange(of: islandLesson) { _, _ in applyIsland() }
-            .onChange(of: islandSpeak) { _, _ in applyIsland() }
-            .onChange(of: islandVoice) { _, _ in applyIsland() }
             .onChange(of: dailyGoal) { _, _ in applyIsland() }
         }
     }
@@ -161,7 +146,7 @@ struct SettingsView: View {
     }
 
     private func askNotify() async {
-        notifyNote = "Wymuszam banner i wyspę…"
+        notifyNote = "Wysyłam powiadomienie…"
         notifyNote = await Ping.poke(reviews: store.reviewsToday)
         await refreshNotify()
     }

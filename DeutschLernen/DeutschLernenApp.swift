@@ -21,7 +21,6 @@ struct RootView: View {
     @EnvironmentObject var store: LearningStore
     @State private var askNotify = false
     @AppStorage("notifyExplained") private var notifyExplained = false
-    @ObservedObject private var islandNow = IslandNow.shared
 
     var body: some View {
         TabView {
@@ -34,21 +33,6 @@ struct RootView: View {
             ProfileView().tabItem { Label("Profil", systemImage: "person.crop.circle") }
         }
         .tint(Color(hex: "8B6CF0"))
-        .safeAreaInset(edge: .top, spacing: 0) {
-            if islandNow.visible, !islandNow.text.isEmpty {
-                Text(islandNow.text)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color(hex: "2A2148"), in: Capsule())
-                    .overlay(Capsule().stroke(Color(hex: "8B6CF0").opacity(0.8), lineWidth: 1))
-                    .padding(.horizontal, 28)
-                    .padding(.bottom, 6)
-            }
-        }
         .preferredColorScheme(.dark)
         .fontDesign(.rounded)
         .onAppear {
@@ -76,7 +60,7 @@ struct RootView: View {
             }
             Button("Nie teraz", role: .cancel) { notifyExplained = true }
         } message: {
-            Text("Rano przyjdzie zdanie po niemiecku, a o 18:00 informacja, ile słówek zostało. W Profilu, w ustawieniach, wybierzesz, co ma być na wyspie.")
+            Text("Rano przyjdzie zdanie po niemiecku, a o 18:00 informacja, ile słówek zostało.")
         }
     }
 }

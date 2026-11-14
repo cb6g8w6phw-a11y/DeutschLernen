@@ -86,6 +86,5 @@ struct DeutschWidget: Widget {
 struct DeutschWidgetBundle: WidgetBundle {
     var body: some Widget {
         DeutschWidget()
-        StudyIslandWidget()
     }
 }
