@@ -224,24 +224,53 @@ struct CourseView: View {
     }
 
     private var help: some View {
-        let parts = lesson.help.de.replacingOccurrences(of: ".", with: "").split(separator: " ").map(String.init).sorted()
+        let parts = lesson.help.de
+            .replacingOccurrences(of: ".", with: "")
+            .replacingOccurrences(of: "?", with: "")
+            .replacingOccurrences(of: "!", with: "")
+            .split(separator: " ")
+            .map(String.init)
+            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedDescending }
         return VStack(alignment: .leading, spacing: 10) {
             Text("Ułóż zdanie. Kafelki są pomocą.").font(.subheadline).foregroundStyle(Theme.text2)
             Text(lesson.help.pl).font(.title3.bold())
-            Text(built.joined(separator: " "))
-                .frame(maxWidth: .infinity, alignment: .leading)
+            Text(built.isEmpty ? "Stuknij kafelki po kolei" : built.joined(separator: " "))
+                .font(.title3.bold())
+                .foregroundStyle(built.isEmpty ? Theme.text2 : Theme.text)
+                .frame(maxWidth: .infinity, minHeight: 28, alignment: .leading)
                 .padding(12)
                 .background(Theme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            FlexibleChips(parts: parts) { built.append($0) }
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 88), spacing: 8)], spacing: 8) {
+                ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
+                    Button(part) {
+                        built.append(part)
+                        note = ""
+                    }
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .background(Theme.accent, in: Capsule())
+                }
+            }
+            HStack {
+                Button("Cofnij") { if !built.isEmpty { built.removeLast(); note = "" } }
+                    .buttonStyle(.glass)
+                Button("Od nowa") { built = []; note = "" }
+                    .buttonStyle(.glass)
+            }
             if !note.isEmpty { Text(note).font(.footnote).foregroundStyle(Theme.bad) }
             Button("Sprawdź układ") {
-                if close(built.joined(separator: " "), lesson.help.de) {
+                let said = built.joined(separator: " ")
+                if close(said, lesson.help.de) {
                     typed = ""
                     alt = false
+                    note = ""
                     step = 4
                 } else {
+                    note = said.isEmpty
+                        ? "Najpierw stuknij kafelki. Kropki na końcu nie trzeba."
+                        : "Widzę „\(said)”. Ułóż jeszcze raz w kolejności zdania."
                     built = []
-                    note = "Jeszcze raz. Wzorzec zostaje schowany."
                     keep(lesson.help)
                 }
             }

@@ -216,10 +216,12 @@ enum Normalizer {
             t = String(t.dropFirst(a.count))
             break
         }
-        return t.replacingOccurrences(of: "ä", with: "ae")
+        t = t.replacingOccurrences(of: "ä", with: "ae")
             .replacingOccurrences(of: "ö", with: "oe")
             .replacingOccurrences(of: "ü", with: "ue")
             .replacingOccurrences(of: "ß", with: "ss")
+        let letters = t.unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) || $0 == " " }
+        return String(String.UnicodeScalarView(letters)).split(separator: " ").joined(separator: " ")
     }
     static func same(_ a: String, _ b: String) -> Bool { clean(a) == clean(b) }
 }
