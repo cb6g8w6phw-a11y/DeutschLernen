@@ -216,6 +216,7 @@ struct StudyView: View {
             missed += 1
             verdict = "Twoje: \(said). Nie przepisujesz tego teraz. Jutro przypomnę tę formę."
             store.scheduleTomorrow(word)
+            HardBook.add(de: sentence(word), pl: word.pl)
             Haptic.bad()
         }
     }
@@ -227,6 +228,7 @@ struct StudyView: View {
         phase = 2
         writing = false
         store.scheduleTomorrow(word)
+        HardBook.add(de: sentence(word), pl: word.pl)
     }
 
     private func start(topic name: String) {

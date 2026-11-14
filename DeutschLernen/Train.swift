@@ -124,6 +124,22 @@ struct TodayView: View {
                     Text("Gotowy na dzisiejszą lekcję?")
                         .foregroundStyle(Theme.text2)
                     LessonPath()
+                    if ExamLog.due() {
+                        NavigationLink { ExamView() } label: {
+                            Text("Egzamin kontrolny jest do zrobienia. Słuch, gramatyka, mówienie, zdania.")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Theme.text)
+                                .padding(14)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .themedCard()
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                        bigTile("Zwroty", "Całe zdanie, nie słówko", "text.bubble", Theme.accent) { PhraseView() }
+                        bigTile("Zeszyt", "Zdania, które nie weszły", "book.closed", Theme.orange) { NotebookView() }
+                        bigTile("Egzamin", ExamLog.due() ? "Pora na pomiar" : "Co 7 dni", "checkmark.seal", Theme.ok) { ExamView() }
+                    }
                     goalCard
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                         bigTile("Mówienie", "Ćwicz rozmowę", "mic.fill", Theme.accent) { TutorView() }

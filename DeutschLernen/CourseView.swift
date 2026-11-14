@@ -415,6 +415,7 @@ struct CourseView: View {
         if !misses.contains(beat.pl) { misses.append(beat.pl) }
         UserDefaults.standard.set(misses, forKey: "courseMiss")
         store.grade(word(beat), .hard, produced: false)
+        HardBook.add(de: beat.de, pl: beat.pl)
         Haptic.bad()
     }
 
