@@ -196,7 +196,7 @@ struct TodayView: View {
             goalRow("Powtórka błędów", goals[3].1) { MistakeReview() }
         }
         .padding(12)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .themedCard()
     }
 
     private func goalRow<Dest: View>(_ title: String, _ done: Bool, @ViewBuilder dest: () -> Dest) -> some View {
@@ -227,14 +227,11 @@ struct TodayView: View {
                     .foregroundStyle(Theme.text2)
                     .lineLimit(1)
             }
-            .frame(maxWidth: .infinity, minHeight: 72, alignment: .leading)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+            .padding(.horizontal, 4)
+            .padding(.vertical, 4)
         }
-        .buttonStyle(.plain)
-        .frame(maxWidth: .infinity)
+        .buttonStyle(.glass)
     }
 
     private var skillPills: some View {

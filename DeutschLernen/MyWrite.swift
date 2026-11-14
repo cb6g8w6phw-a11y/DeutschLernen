@@ -54,10 +54,9 @@ struct WriteLearnView: View {
                                 Text(word.de).font(.caption).foregroundStyle(Theme.text2)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(12)
-                            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            .padding(.vertical, 4)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.glass)
                     }
                 }
             }

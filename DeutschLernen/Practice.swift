@@ -99,12 +99,10 @@ struct PracticeView: View {
                         Button { arranging = true } label: {
                             Text("Ułóż")
                                 .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(Theme.text)
-                                .padding(.horizontal, 12)
+                                .padding(.horizontal, 14)
                                 .frame(minHeight: 36)
-                                .glassEffect(.regular, in: Capsule())
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.glass)
                         Button { streak = true } label: { streakPill }
                             .buttonStyle(.plain)
                     }
@@ -135,10 +133,11 @@ struct PracticeView: View {
                             Image(systemName: "chevron.right")
                         }
                         .foregroundStyle(Theme.text)
-                        .padding(14)
-                        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 6)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.glass)
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
@@ -179,13 +178,12 @@ struct PracticeView: View {
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.text)
                     .lineLimit(1)
-                if wide { Spacer() }
+                if wide { Spacer(minLength: 0) }
             }
-            .frame(maxWidth: .infinity, minHeight: wide ? 48 : 72, alignment: .leading)
-            .padding(.horizontal, 12)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .frame(maxWidth: .infinity, minHeight: wide ? 44 : 64, alignment: .leading)
+            .padding(.horizontal, 4)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.glass)
     }
 }
 
