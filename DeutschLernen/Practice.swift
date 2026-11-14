@@ -356,6 +356,53 @@ struct ActivityList: View {
     }
 }
 
+struct MoreTools: View {
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 10) {
+                link("Postępy", "chart.bar.fill") { StatsView() }
+                link("Słówka", "rectangle.stack.fill") { StudyView() }
+                link("Gramatyka", "textformat") { GrammarView() }
+                link("Pisanie", "square.and.pencil") { WriteLearnView() }
+                link("Zeszyt", "book.closed") { NotebookView() }
+                link("Egzamin", "checkmark.seal") { ExamView() }
+                link("Błędy, 8 najczęstszych", "exclamationmark.bubble") { MistakeReview() }
+                link("Wymowa", "waveform") { PronounceView() }
+                link("Shadowing", "ear") { ShadowView() }
+                link("Jak mówią", "quote.bubble") { StreetView() }
+                link("Dyktando", "pencil.line") { DictationView() }
+                link("Gry", "gamecontroller") { GamesHome() }
+                link("Wiadomości", "newspaper") { NewsListView() }
+                link("Z życia", "plus.circle.fill") { CaptureView() }
+                link("Plan dnia", "calendar") { DayPlanView() }
+                link("Offline", "arrow.down.circle") { OfflineView() }
+                link("Ratunek", "exclamationmark.bubble") { RescueView() }
+                NavigationLink { CourseView() } label: { row("Ścieżka lekcji", "point.topleft.down.curvedto.point.bottomright.scurvepath") }
+                    .buttonStyle(.plain)
+            }
+            .padding(20)
+        }
+        .navigationTitle("Więcej")
+        .containerBackground(for: .navigation) { NightGlow() }
+    }
+
+    private func link<Dest: View>(_ title: String, _ icon: String, @ViewBuilder dest: () -> Dest) -> some View {
+        NavigationLink { dest() } label: { row(title, icon) }
+            .buttonStyle(.plain)
+    }
+
+    private func row(_ title: String, _ icon: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon).foregroundStyle(Theme.accent).frame(width: 24)
+            Text(title).font(.body.weight(.semibold)).foregroundStyle(Theme.text)
+            Spacer()
+            Image(systemName: "chevron.right").foregroundStyle(Theme.text2)
+        }
+        .padding(14)
+        .themedCard(radius: 16)
+    }
+}
+
 struct ProfileView: View {
     @EnvironmentObject var store: LearningStore
     @AppStorage("band") private var band = "A1"
@@ -419,6 +466,24 @@ struct ProfileView: View {
                         .padding(14)
                         .themedCard()
                     }
+                    NavigationLink {
+                        MoreTools()
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Więcej").font(.headline)
+                                Text("Postępy, pisanie, egzamin, offline i reszta")
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.text2)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right").foregroundStyle(Theme.text2)
+                        }
+                        .foregroundStyle(Theme.text)
+                        .padding(14)
+                        .themedCard()
+                    }
+                    .buttonStyle(.plain)
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Ukończone sesje  \(doneCount)")
                             .font(.title3.bold())

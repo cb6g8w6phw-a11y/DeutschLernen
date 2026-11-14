@@ -219,42 +219,37 @@ struct HomeArrange: View {
 
 struct TodayView: View {
     @EnvironmentObject var store: LearningStore
-    @State private var homeSlots = HomeLayout.load()
-    @State private var arrangingHome = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack {
-                        Text("Deutsch AI")
-                            .font(.headline)
+                        Text("Deutsch")
+                            .font(.largeTitle.bold())
                         Spacer()
                         Text(levelName)
                             .font(.caption.weight(.bold))
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
                             .background(Theme.ok.opacity(0.25), in: Capsule())
-                        Button { arrangingHome = true } label: {
-                            Text("Wybierz")
-                                .font(.subheadline.weight(.semibold))
-                                .padding(.horizontal, 12)
-                                .frame(minHeight: 34)
-                        }
-                        .buttonStyle(.glass)
                     }
-                    goalCard
-                    LessonPath()
-                    skillPills
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                        ForEach(homeSlots.filter(\.onHome)) { slot in
-                            homeTile(slot.id)
-                        }
-                    }
+                    Text("Około 10 minut. Materiał wybiera aplikacja.")
+                        .foregroundStyle(Theme.text2)
                     NavigationLink { DailyRunView() } label: {
-                        Text("Pełna lekcja: zdania, powtórki, scena").primaryButton()
+                        Text("Rozpocznij dzisiejszą lekcję").primaryButton()
                     }
                     .buttonStyle(.plain)
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                        homeTile("mowienie")
+                        homeTile("sluchanie")
+                        homeTile("praca")
+                        homeTile("zwroty")
+                        homeTile("trener")
+                    }
+                    Text("Postępy, pisanie i reszta narzędzi są w Profilu, w zakładce Więcej.")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.text2)
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
@@ -263,10 +258,6 @@ struct TodayView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
             .containerBackground(for: .navigation) { NightGlow() }
-            .sheet(isPresented: $arrangingHome) {
-                HomeArrange(slots: $homeSlots)
-            }
-            .onChange(of: homeSlots) { _, next in HomeLayout.save(next) }
         }
     }
 
@@ -290,7 +281,7 @@ struct TodayView: View {
         case "egzamin": tile("Egzamin", "Z twoich błędów", "checkmark.seal") { ExamView() }
         case "shadowing": tile("Shadowing", "Powtórz na głos", "ear") { ShadowView() }
         case "mowia": tile("Jak mówią", "Potoczne zwroty", "quote.bubble") { StreetView() }
-        case "trener": tile("Trener", "Twoje błędy", "wrench.and.screwdriver") { RepairView() }
+        case "trener": tile("Trener", "Twoje powtórki", "wrench.and.screwdriver") { RepairView() }
         case "praca": tile("W pracy", "Szef i kask", "hammer") { WorkHubView() }
         case "plan": tile("Plan dnia", "Słabsza umiejętność", "calendar") { DayPlanView() }
         case "offline": tile("Offline", "Bez sieci", "arrow.down.circle") { OfflineView() }
