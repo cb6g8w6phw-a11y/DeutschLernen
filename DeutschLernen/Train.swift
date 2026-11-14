@@ -526,6 +526,10 @@ struct PronounceView: View {
             }
             if !mic.note.isEmpty { Text(mic.note).font(.caption).foregroundStyle(.secondary) }
             if mic.listening { Text(mic.text.isEmpty ? "Słucham…" : mic.text).font(.footnote) }
+            if mic.note.contains("niepytany") || mic.note.contains("odmowa") || mic.note.contains("Brak zgody") {
+                Button("Pozwól na mikrofon") { mic.allowPrompt() }
+                    .buttonStyle(.glassProminent)
+            }
             HStack {
                 Button { mic.toggle() } label: {
                     Label(mic.listening ? "Stop" : "Powiedz", systemImage: "mic.fill")
@@ -567,7 +571,7 @@ struct PronounceView: View {
                 return
             }
             parts = Heard.parts(target: item.de, heard: heard)
-            store.noteSaid()
+            store.noteSaid(ok: !parts.isEmpty && parts.allSatisfy(\.ok))
             showSpeak(listening: false)
         }
         .onDisappear {
