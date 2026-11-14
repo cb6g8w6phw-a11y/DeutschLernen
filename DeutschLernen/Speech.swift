@@ -426,8 +426,12 @@ final class Mic: ObservableObject {
             begin()
             return
         }
-        note = permissionLine()
-        wantsPrompt = true
+        if audio == .denied || audio == .restricted || speech == .denied || speech == .restricted {
+            note = permissionLine() + " iPhone nie zapyta drugi raz. Ustawienia → Prywatność → Mikrofon i Rozpoznawanie mowy → włącz Deutsch albo LiveContainer."
+            wantsPrompt = false
+            return
+        }
+        allowPrompt()
     }
 
     func allowPrompt() {
