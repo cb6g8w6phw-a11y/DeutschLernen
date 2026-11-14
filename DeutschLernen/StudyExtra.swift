@@ -13,6 +13,7 @@ enum GrammarBank {
 }
 
 struct GrammarView: View {
+    @EnvironmentObject var store: LearningStore
     @State private var deck: [GrammarItem] = []
     @State private var index = 0
     @State private var picked: Int?
@@ -28,7 +29,7 @@ struct GrammarView: View {
                     .font(.largeTitle.bold())
                 Text("Trafione \(hits) z \(deck.count).")
                 Button("Jeszcze raz") {
-                    deck = GrammarBank.all.shuffled()
+                    deck = ordered(GrammarBank.all)
                     index = 0
                     picked = nil
                     hits = 0
@@ -62,19 +63,32 @@ struct GrammarView: View {
         .navigationTitle("Gramatyka")
         .containerBackground(for: .navigation) { NightGlow() }
         .onAppear {
-            if deck.isEmpty { deck = GrammarBank.all.shuffled() }
+            if deck.isEmpty { deck = ordered(GrammarBank.all) }
         }
+    }
+
+    private func ordered(_ items: [GrammarItem]) -> [GrammarItem] {
+        let miss = Set(UserDefaults.standard.stringArray(forKey: "grammarMiss") ?? [])
+        let hot = items.filter { miss.contains($0.prompt) }
+        let cold = items.filter { !miss.contains($0.prompt) }.shuffled()
+        return hot + cold
     }
 
     private func pick(_ i: Int) {
         guard picked == nil else { return }
         picked = i
-        if i == item.answer {
+        let ok = i == item.answer
+        var miss = UserDefaults.standard.stringArray(forKey: "grammarMiss") ?? []
+        if ok {
             hits += 1
+            miss.removeAll { $0 == item.prompt }
             UINotificationFeedbackGenerator().notificationOccurred(.success)
         } else {
+            if !miss.contains(item.prompt) { miss.append(item.prompt) }
             UINotificationFeedbackGenerator().notificationOccurred(.error)
         }
+        UserDefaults.standard.set(miss, forKey: "grammarMiss")
+        store.noteSkill("grammar", ok: ok)
     }
 
     private func fill(_ i: Int) -> Color {
