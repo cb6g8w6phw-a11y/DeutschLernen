@@ -142,13 +142,19 @@ struct QuizView: View {
             Text(topicMark(w.topic))
                 .font(.caption)
                 .foregroundStyle(Theme.text2)
+            if drill == "luki" {
+                Text(w.pl)
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(Theme.text)
+            }
             HStack(spacing: 8) {
                 Text(prompt)
                     .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundStyle(Theme.text)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
-                Button { Talk.de(drill == "zdania" && !flip ? w.ex : prompt) } label: {
+                Button { Talk.de(drill == "luki" ? teachSentence(w) : (drill == "zdania" && !flip ? w.ex : prompt)) } label: {
                     Image(systemName: "speaker.wave.2.fill")
                         .frame(width: 44, height: 44)
                 }
@@ -292,7 +298,7 @@ struct QuizView: View {
     private var drillHint: String {
         switch drill {
         case "zdania": return "Widzisz polskie zdanie. Wybierz, jak to powiedzieć po niemiecku."
-        case "luki": return "W zdaniu brakuje słowa. Możesz je stuknąć albo powiedzieć do mikrofonu."
+        case "luki": return "W zdaniu brakuje słowa. Na górze jest polski. Możesz stuknąć albo powiedzieć."
         default: return "Słówka i krótkie zwroty z życia i z pracy. Bez „dzień dobry”."
         }
     }
@@ -323,11 +329,30 @@ struct QuizView: View {
     }
 
     private func cloze(_ w: Word) -> String {
+        let sentence = teachSentence(w)
         let token = bare(w.de)
-        if let r = w.ex.range(of: token) {
-            return w.ex.replacingCharacters(in: r, with: "______")
+        if let range = sentence.range(of: token, options: .caseInsensitive) {
+            let gapped = sentence.replacingCharacters(in: range, with: "______")
+            let leftover = gapped.replacingOccurrences(of: "_", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+            if leftover.count >= 2 { return gapped }
         }
-        return "______  ·  \(w.exPl)"
+        return "______"
+    }
+
+    private func teachSentence(_ w: Word) -> String {
+        let ex = w.ex.trimmingCharacters(in: .whitespacesAndNewlines)
+        let bits = ex.split(separator: " ")
+        if bits.count >= 3, ex.compare(w.de, options: .caseInsensitive) != .orderedSame {
+            return ex
+        }
+        let low = w.de.lowercased()
+        if low.hasPrefix("der ") || low.hasPrefix("die ") || low.hasPrefix("das ") {
+            return "Ich sehe \(w.de)."
+        }
+        if low.hasSuffix("en") || low.hasPrefix("sich ") {
+            return "Wir \(bare(w.de)) das heute."
+        }
+        return "Das ist \(w.de)."
     }
 
     private func bare(_ de: String) -> String {
@@ -408,6 +433,15 @@ struct QuizView: View {
             let wrong = near(flip ? w.exPl : w.ex)
             options = ([flip ? w.exPl : w.ex] + wrong).shuffled()
             if !flip { loadSimilar(w.ex) }
+        } else if drill == "luki" {
+            let pool = store.catalog(level: band).filter { $0.de != w.de }
+            let close = pool.filter { abs($0.de.count - w.de.count) <= 4 }.shuffled()
+            let rest = pool.shuffled()
+            var picked: [Word] = []
+            for word in close + rest where picked.count < 3 && !picked.contains(where: { $0.de == word.de }) {
+                picked.append(word)
+            }
+            options = ([w] + picked).shuffled().map { choice($0) }
         } else {
             let pool = store.catalog(level: band).filter { $0.de != w.de }
             let same = pool.filter { $0.topic == w.topic }.shuffled()
@@ -499,7 +533,7 @@ struct QuizView: View {
         answered = true
         wasCorrect = false
         speakGate = false
-        explain = "Jutro wraca. Poprawnie: \(expectedText(w))"
+        explain = "Jutro wraca. \(teachSentence(w)) — \(w.pl)"
         Haptic.bad()
         store.scheduleTomorrow(w)
     }
@@ -510,11 +544,11 @@ struct QuizView: View {
         speakGate = false
         if ok {
             score += 1
-            explain = "Tak się to mówi. \(w.exPl)"
+            explain = "\(teachSentence(w)) — \(w.pl)"
             Haptic.good()
             store.grade(w, .easy)
         } else {
-            explain = "Poprawnie: \(expectedText(w)). \(w.exPl)"
+            explain = "Poprawnie: \(w.de). \(teachSentence(w))"
             Haptic.bad()
             store.grade(w, .hard)
             bringBack(w)
