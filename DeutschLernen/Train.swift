@@ -126,6 +126,7 @@ struct TodayView: View {
                     goalCard
                     skillPills
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                        tile("Pisanie", "Po polsku, do nauki", "square.and.pencil") { WriteLearnView() }
                         tile("Mówienie", "Ćwicz rozmowę", "mic.fill") { TutorView() }
                         tile("Słówka", "Najpierw zdanie", "rectangle.stack.fill") { StudyView() }
                         tile("Słuchanie", "Rozumiej Niemców", "headphones") { ListenView() }
