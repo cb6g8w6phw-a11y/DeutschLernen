@@ -16,7 +16,7 @@ struct GamesHome: View {
                 }
                 .buttonStyle(.plain)
                 NavigationLink { SpeedGame() } label: {
-                    gameRow("45 sekund", "Ile trafisz, zanim czas spadnie.", "timer", Color(hex: "5AC8FA"))
+                    gameRow("45 sekund", "Ile trafisz, zanim czas spadnie.", "timer", .white)
                 }
                 .buttonStyle(.plain)
             }

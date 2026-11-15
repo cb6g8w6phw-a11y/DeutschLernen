@@ -1,28 +1,24 @@
 import SwiftUI
 
 enum Theme {
-    static let bg = Color(red: 0x14 / 255, green: 0x10 / 255, blue: 0x1F / 255)
-    static let card = Color(red: 0x1F / 255, green: 0x19 / 255, blue: 0x32 / 255)
-    static let card2 = Color(red: 0x24 / 255, green: 0x1D / 255, blue: 0x3D / 255)
-    static let track = Color(red: 0x2D / 255, green: 0x25 / 255, blue: 0x47 / 255)
-    static let text = Color(red: 0xF4 / 255, green: 0xF1 / 255, blue: 1)
-    static let text2 = Color(red: 0.86, green: 0.84, blue: 0.94)
-    static let accent = Color(hex: "8B6CF0")
-    static let orange = Color(hex: "FF9A62")
-    static let ok = Color(hex: "34C759")
+    static let bg = Color.black
+    static let card = Color(white: 0.11)
+    static let card2 = Color(white: 0.16)
+    static let track = Color.white.opacity(0.12)
+    static let text = Color.white
+    static let text2 = Color.white.opacity(0.55)
+    static let accent = Color.white
+    static let orange = Color.white.opacity(0.72)
+    static let ok = Color(hex: "3DDC84")
     static let bad = Color(hex: "FF453A")
-    static let ink = Color(hex: "14101F")
+    static let ink = Color.black
 
     static var gradient: LinearGradient {
-        LinearGradient(colors: [accent, orange], startPoint: .leading, endPoint: .trailing)
+        LinearGradient(colors: [.white, .white], startPoint: .leading, endPoint: .trailing)
     }
 
     static var background: some View {
-        LinearGradient(
-            colors: [Color(hex: "1C1730"), Color(hex: "100E18")],
-            startPoint: .top,
-            endPoint: .bottom
-        )
+        Color.black
     }
 
     static func dni(_ n: Int) -> String {
@@ -37,16 +33,17 @@ extension View {
 
     func themedCard(radius: CGFloat = 24) -> some View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
-        return background(Theme.card, in: shape)
-            .overlay(shape.stroke(Color.white.opacity(0.09), lineWidth: 1))
+        return background(.ultraThinMaterial, in: shape)
+            .background(Color.white.opacity(0.05), in: shape)
+            .overlay(shape.stroke(Color.white.opacity(0.10), lineWidth: 1))
     }
 
     func primaryButton() -> some View {
-        font(.system(size: 17, weight: .bold, design: .rounded))
-            .foregroundStyle(Theme.ink)
+        font(.system(size: 17, weight: .semibold, design: .rounded))
+            .foregroundStyle(.black)
             .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(Theme.gradient, in: Capsule())
+            .frame(height: 54)
+            .background(.white, in: Capsule())
     }
 
     func ghostButton() -> some View {

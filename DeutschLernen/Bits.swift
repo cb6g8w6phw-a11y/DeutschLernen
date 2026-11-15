@@ -94,7 +94,7 @@ struct ConfettiView: View {
         GeometryReader { geo in
             ForEach(0..<28, id: \.self) { i in
                 Circle()
-                    .fill([Theme.accent, Theme.orange, Theme.ok, Color(hex: "5AC8FA")][i % 4])
+                    .fill(Color.white.opacity(0.35 + Double(i % 4) * 0.15))
                     .frame(width: 8, height: 8)
                     .position(
                         x: CGFloat((i * 41) % max(Int(geo.size.width), 1)),

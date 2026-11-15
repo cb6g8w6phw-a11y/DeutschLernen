@@ -73,8 +73,8 @@ enum Ink {
     static var card: Color { Theme.card }
     static var accent: Color { Theme.accent }
     static var brass: Color { Theme.accent }
-    static var pine: Color { Theme.orange }
-    static var clay: Color { Color(red: 1, green: 0.34, blue: 0.38) }
+    static var pine: Color { Theme.ok }
+    static var clay: Color { Theme.bad }
     static var muted: Color { Theme.text2 }
 }
 

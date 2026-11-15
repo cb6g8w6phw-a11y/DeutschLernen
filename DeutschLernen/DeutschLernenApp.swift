@@ -32,7 +32,7 @@ struct RootView: View {
             .tabItem { Label("Słownik", systemImage: "text.book.closed") }
             ProfileView().tabItem { Label("Profil", systemImage: "person.crop.circle") }
         }
-        .tint(Color(hex: "8B6CF0"))
+        .tint(.white)
         .preferredColorScheme(.dark)
         .fontDesign(.rounded)
         .onAppear {
@@ -70,16 +70,16 @@ struct MoreView: View {
         NavigationStack {
             List {
                 more("Wiadomości", "newspaper", Theme.orange) { NewsListView() }
-                more("Gry", "gamecontroller", Color(hex: "FFD60A")) { GamesHome() }
+                more("Gry", "gamecontroller", .white) { GamesHome() }
                 more("Moje słówka", "text.book.closed", Theme.accent) { WordsView() }
                 more("Niemiecki na budowie", "hammer", Theme.orange) { BuildView() }
-                more("Słuchanie", "ear", Color(hex: "5AC8FA")) { ListenView() }
-                more("Generator zdań", "text.badge.checkmark", Color(hex: "FF6B9A")) { SentenceView() }
+                more("Słuchanie", "ear", .white) { ListenView() }
+                more("Generator zdań", "text.badge.checkmark", .white) { SentenceView() }
                 more("Słówka z filmu", "play.rectangle", Theme.accent) { ClipView() }
                 more("Z życia", "plus.circle.fill", Theme.ok) { CaptureView() }
                 more("Z twojego życia", "sparkles", Theme.orange) { LifeView() }
-                more("Skan zdjęcia", "camera", Color(hex: "5AC8FA")) { ScanView() }
-                more("Ustawienia i klucz", "gear", Color(hex: "FF6B9A")) { SettingsView() }
+                more("Skan zdjęcia", "camera", .white) { ScanView() }
+                more("Ustawienia i klucz", "gear", .white) { SettingsView() }
             }
             .navigationTitle("Więcej")
             .scrollContentBackground(.hidden)

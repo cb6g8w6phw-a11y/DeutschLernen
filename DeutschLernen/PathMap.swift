@@ -108,9 +108,9 @@ private struct PathNode: View {
 
     private var shadow: Color {
         switch state {
-        case .done: return Color(hex: "1E7A34")
-        case .now: return Color(hex: "5A3CC4")
-        case .locked: return Color(hex: "1A1528")
+        case .done: return Color.white
+        case .now: return Color.white.opacity(0.85)
+        case .locked: return Color.white.opacity(0.18)
         }
     }
 

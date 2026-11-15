@@ -281,7 +281,7 @@ private struct WordPicture: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(LinearGradient(colors: [tint.opacity(0.95), Color(hex: "1B1530")], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .fill(LinearGradient(colors: [Color.white.opacity(0.16), Color.black], startPoint: .topLeading, endPoint: .bottomTrailing))
                 .frame(height: 150)
             VStack(spacing: 8) {
                 Image(systemName: symbol)
@@ -314,18 +314,7 @@ private struct WordPicture: View {
         return "sparkles"
     }
 
-    private var tint: Color {
-        switch symbol {
-        case "clock.fill": return Color(hex: "5AC8FA")
-        case "cross.case.fill": return Color(hex: "FF6B9A")
-        case "fork.knife": return Color(hex: "FF9A62")
-        case "bus.fill": return Color(hex: "8B6CF0")
-        case "house.fill": return Color(hex: "34C759")
-        case "briefcase.fill": return Color(hex: "5AC8FA")
-        case "cart.fill": return Color(hex: "FFD60A")
-        default: return Color(hex: "8B6CF0")
-        }
-    }
+    private var tint: Color { .white }
 }
 
 enum StudyPicks {

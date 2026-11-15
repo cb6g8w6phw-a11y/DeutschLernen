@@ -31,27 +31,27 @@ enum PracticeData {
     }
 
     static let groups: [Group] = [
-        Group(id: "zycie", title: "Styl życia", symbol: "fork.knife", tint: Color(hex: "FF9A62"), items: [
+        Group(id: "zycie", title: "Styl życia", symbol: "fork.knife", tint: .white, items: [
             talk("restauracja", "Restauracja", "Jesteś kelnerem w restauracji.", "Guten Abend. Haben Sie reserviert?", "Dobry wieczór. Ma pan rezerwację?", "Ja, einen Tisch für zwei, bitte."),
             talk("kawa", "Kawiarnia", "Jesteś baristą.", "Was darf es sein?", "Co podać?", "Einen Kaffee zum Mitnehmen, bitte."),
             talk("fryzjer", "Fryzjer", "Jesteś fryzjerem.", "Was machen wir heute?", "Co dzisiaj robimy?", "Nur die Spitzen schneiden, bitte.")
         ]),
-        Group(id: "kultura", title: "Sztuka i kultura", symbol: "theatermasks", tint: Color(hex: "8B6CF0"), items: [
+        Group(id: "kultura", title: "Sztuka i kultura", symbol: "theatermasks", tint: .white, items: [
             talk("kino", "Kino", "Sprzedajesz bilety do kina.", "Welchen Film möchten Sie sehen?", "Jaki film chce pan zobaczyć?", "Zwei Karten für den Film um acht, bitte."),
             talk("muzeum", "Muzeum", "Jesteś w kasie muzeum.", "Einmalig oder die Jahreskarte?", "Jednorazowo czy karnet?", "Einmalig, bitte. Gibt es eine Ermäßigung?"),
             talk("swieta", "Święta", "Jesteś sąsiadem na spotkaniu świątecznym.", "Frohe Weihnachten! Bleiben Sie zum Essen?", "Wesołych świąt! Zostaje pan na jedzenie?", "Danke, gerne. Kann ich etwas mitbringen?")
         ]),
-        Group(id: "ruch", title: "Aktywny tryb życia", symbol: "figure.run", tint: Color(hex: "34C759"), items: [
+        Group(id: "ruch", title: "Aktywny tryb życia", symbol: "figure.run", tint: .white, items: [
             talk("silownia", "Siłownia", "Jesteś recepcjonistą na siłowni.", "Haben Sie schon einen Vertrag?", "Ma pan już umowę?", "Nein, ich möchte eine Probestunde."),
             talk("bieganie", "Bieganie", "Jesteś kolegą na bieżni.", "Wie viele Kilometer läufst du heute?", "Ile kilometrów dzisiaj biegasz?", "Ich laufe heute fünf Kilometer."),
             talk("rower", "Rower", "Jesteś w serwisie rowerowym.", "Was ist mit dem Rad?", "Co z rowerem?", "Die Schaltung springt. Können Sie das heute noch machen?")
         ]),
-        Group(id: "media", title: "Rozrywka", symbol: "tv.fill", tint: Color(hex: "FF6B9A"), items: [
+        Group(id: "media", title: "Rozrywka", symbol: "tv.fill", tint: .white, items: [
             talk("film", "Film w domu", "Jesteś współlokatorem.", "Welchen Film schauen wir?", "Jaki film oglądamy?", "Etwas Kurzes, ich muss morgen früh raus."),
             talk("mecz", "Mecz", "Jesteś kolegą przed meczem.", "Gehst du heute zum Spiel?", "Idziesz dzisiaj na mecz?", "Ja, aber ich muss um zehn zu Hause sein."),
             talk("muzyka", "Koncert", "Sprzedajesz bilety.", "Stehplatz oder Sitzplatz?", "Miejsca stojące czy siedzące?", "Zwei Stehplätze, bitte.")
         ]),
-        Group(id: "praca", title: "Produktywność", symbol: "briefcase", tint: Color(hex: "5AC8FA"), items: [
+        Group(id: "praca", title: "Produktywność", symbol: "briefcase", tint: .white, items: [
             talk("praca", "Komunikacja w pracy", "Jesteś kierownikiem zmiany.", "Hast du den Auftrag verstanden?", "Rozumiesz zlecenie?", "Ja. Ich fange mit der linken Seite an."),
             talk("mail", "Mail do szefa", "Jesteś szefem i właśnie dostałeś wiadomość.", "Ich habe deine Nachricht gelesen. Was genau fehlt?", "Przeczytałem wiadomość. Czego dokładnie brakuje?", "Uns fehlt Material für heute."),
             talk("spotkanie", "Spotkanie", "Prowadzisz krótkie spotkanie zespołu.", "Was steht heute an?", "Co jest dzisiaj do zrobienia?", "Zuerst die Lieferung, dann die Montage.")
@@ -59,13 +59,13 @@ enum PracticeData {
     ]
 
     static let modes: [(String, String, String, Color, TalkLaunch)] = [
-        ("Dyskusja", "bubble.left.and.bubble.right.fill", "dyskusja", Color(hex: "8B6CF0"),
+        ("Dyskusja", "bubble.left.and.bubble.right.fill", "dyskusja", .white,
          TalkLaunch(id: "dyskusja", title: "Dyskusja", who: "Prowadzisz luźną rozmowę po niemiecku o dniu ucznia. Jedno pytanie na raz.", de: "Worüber willst du heute reden?", pl: "O czym chcesz dziś pogadać?", say: "Über die Arbeit und den Feierabend.")),
-        ("Odgrywanie ról", "theatermasks.fill", "rola", Color(hex: "FF9A62"),
+        ("Odgrywanie ról", "theatermasks.fill", "rola", .white,
          TalkLaunch(id: "rola", title: "Odgrywanie ról", who: "Grasz rolę kierownika. Uczeń ma powiedzieć, że się spóźni.", de: "Wo bleiben Sie? Die Schicht hat schon angefangen.", pl: "Gdzie pan jest? Zmiana już się zaczęła.", say: "Entschuldigung, der Bus kam nicht. Ich bin in zwanzig Minuten da.")),
-        ("Debata", "hammer.fill", "debata", Color(hex: "FF453A"),
+        ("Debata", "hammer.fill", "debata", .white,
          TalkLaunch(id: "debata", title: "Debata", who: "Bronisz tezy, że zmiana powinna zaczynać się o szóstej. Uczeń może się nie zgodzić. Krótko, bez wykładu.", de: "Ich finde, wir sollten um sechs anfangen. Was meinst du?", pl: "Uważam, że powinniśmy zaczynać o szóstej. Co ty na to?", say: "Um sechs ist mir zu früh. Um sieben wäre besser.")),
-        ("Wywiad", "person.crop.rectangle", "wywiad", Color(hex: "5AC8FA"),
+        ("Wywiad", "person.crop.rectangle", "wywiad", .white,
          TalkLaunch(id: "wywiad", title: "Wywiad", who: "Jesteś rekruterem w magazynie. Pytasz o doświadczenie, zmianę i kiedy może zacząć.", de: "Erzählen Sie kurz: Wo haben Sie schon gearbeitet?", pl: "Proszę krótko: gdzie pan już pracował?", say: "Ich habe im Lager und auf der Baustelle gearbeitet."))
     ]
 

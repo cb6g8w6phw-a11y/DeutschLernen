@@ -520,7 +520,7 @@ struct TodayView: View {
             }
             Spacer(minLength: 8)
             ZStack {
-                Circle().stroke(Color(hex: "2D2547"), lineWidth: 10)
+                Circle().stroke(Color.white.opacity(0.12), lineWidth: 10)
                 Circle()
                     .trim(from: 0, to: progress)
                     .stroke(Theme.gradient, style: StrokeStyle(lineWidth: 10, lineCap: .round))
