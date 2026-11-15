@@ -120,13 +120,19 @@ struct PhraseView: View {
     @State private var typed = ""
     @State private var note = ""
     @State private var bank: [String] = []
+    @State private var quiz: Bool?
+    @State private var ownDe = ""
+    @State private var ownPl = ""
+    @State private var own: [String] = UserDefaults.standard.stringArray(forKey: "ownWorkPhrases") ?? []
     @FocusState private var writing: Bool
 
     private let packs: [VerbPack] = [
         VerbPack(verb: "machen", why: "Samego „machen” nie użyjesz. Uczysz się całego pytania i całej odpowiedzi.", lines: [
             ("Co mam zrobić?", "Was muss ich machen?"),
             ("Zrobię to później.", "Ich mache das später."),
-            ("Robię to teraz.", "Ich mache das jetzt.")
+            ("Robię to teraz.", "Ich mache das jetzt."),
+            ("Co mam teraz zrobić?", "Was soll ich jetzt machen?"),
+            ("Zaraz to zrobię.", "Ich mache das sofort.")
         ]),
         VerbPack(verb: "brauchen", why: "„brauchen” bez rzeczy nic nie znaczy w pracy. Mów, czego potrzebujesz.", lines: [
             ("Potrzebuję zwolnienia.", "Ich brauche eine Krankschreibung."),
@@ -160,11 +166,11 @@ struct PhraseView: View {
                 }
                 .pickerStyle(.segmented)
                 if show {
-                    Text(current.pl).font(.headline)
+                    Text("Po polsku").font(.caption.weight(.semibold)).foregroundStyle(Theme.text2)
+                    Text(current.pl).font(.title3.bold())
                     Text(current.de).font(.title2.bold())
-                    Text(gloss(current.de))
-                        .font(.footnote)
-                        .foregroundStyle(Theme.text2)
+                    Text("Słowo po słowie").font(.caption.weight(.semibold)).foregroundStyle(Theme.text2)
+                    GlossRow(text: current.de)
                     Button { Talk.de(current.de, rate: 0.42) } label: { Label("Posłuchaj zwrotu", systemImage: "speaker.wave.2") }
                         .buttonStyle(.glass)
                     Button("Schowaj i ułóż zwrot") {
@@ -175,6 +181,54 @@ struct PhraseView: View {
                         writing = true
                     }
                     .primaryButton()
+                    Text("Też z \(pack.verb)").font(.headline)
+                    ForEach(pack.lines.indices, id: \.self) { i in
+                        if i != line % pack.lines.count {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(pack.lines[i].de).font(.headline)
+                                Text(pack.lines[i].pl).font(.subheadline).foregroundStyle(Theme.text2)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(12)
+                            .themedCard(radius: 14)
+                        }
+                    }
+                    Text("Z czym to stoi").font(.headline)
+                    ForEach(Array(links.enumerated()), id: \.offset) { _, pair in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(pair.0).font(.headline)
+                            Text(pair.1).foregroundStyle(Theme.text2)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(12)
+                        .themedCard(radius: 14)
+                    }
+                    Text("Szybki sprawdzian").font(.headline)
+                    Text(links[0].0).font(.title3.bold())
+                    Button(links[0].1) { quiz = true }
+                        .buttonStyle(.glass)
+                    Button(decoy) { quiz = false }
+                        .buttonStyle(.glass)
+                    if let quiz {
+                        Text(quiz ? "Dobrze. \(links[0].0) = \(links[0].1)." : "Nie. \(links[0].0) znaczy: \(links[0].1).")
+                            .foregroundStyle(quiz ? Theme.ok : Theme.bad)
+                    }
+                    Text("Twój zwrot z pracy").font(.headline)
+                    TextField("Po niemiecku", text: $ownDe)
+                        .textFieldStyle(.roundedBorder)
+                    TextField("Po polsku", text: $ownPl)
+                        .textFieldStyle(.roundedBorder)
+                    Button("Zapisz zwrot") { saveOwn() }
+                        .buttonStyle(.glass)
+                        .disabled(ownDe.trimmingCharacters(in: .whitespaces).isEmpty || ownPl.trimmingCharacters(in: .whitespaces).isEmpty)
+                    ForEach(own, id: \.self) { row in
+                        let bits = row.split(separator: "|", maxSplits: 1).map(String.init)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(bits.first ?? "").font(.headline)
+                            Text(bits.count > 1 ? bits[1] : "").foregroundStyle(Theme.text2)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 } else {
                     Text(current.pl).font(.title3.bold())
                     Text("Ułóż z kafelków albo napisz sam.").font(.footnote).foregroundStyle(Theme.text2)
@@ -227,6 +281,7 @@ struct PhraseView: View {
         .navigationTitle("Zwroty")
         .containerBackground(for: .navigation) { NightGlow() }
         .onChange(of: verb) { _, _ in reset() }
+        .onAppear { own = UserDefaults.standard.stringArray(forKey: "ownWorkPhrases") ?? [] }
         .onDisappear { Talk.stop() }
     }
 
@@ -251,31 +306,84 @@ struct PhraseView: View {
         }
     }
 
-    private func gloss(_ de: String) -> String {
-        let map = [
-            "was": "co", "muss": "muszę", "ich": "ja", "machen": "robić", "mache": "robię",
-            "das": "to", "später": "później", "jetzt": "teraz", "brauche": "potrzebuję",
-            "eine": "pewien/pewna", "brauchst": "potrzebujesz", "du": "ty", "dafür": "do tego",
-            "material": "materiał", "komme": "przyjdę", "um": "o", "neun": "dziewiątej",
-            "kommst": "przychodzisz", "heute": "dziś", "zur": "na", "sag": "powiedz",
-            "bescheid": "znać", "wenn": "kiedy", "fertig": "gotowy", "bist": "jesteś",
-            "sage": "powiem", "dem": "temu", "chef": "szefowi", "zum": "do", "arzt": "lekarza",
-            "gehen": "iść", "gehe": "idę", "nach": "do", "hause": "domu"
-        ]
-        let parts = de.split(separator: " ").map { String($0).trimmingCharacters(in: .punctuationCharacters) }
-        let bits = parts.compactMap { word -> String? in
-            guard let pl = map[word.lowercased()] else { return nil }
-            return "\(word) = \(pl)"
-        }
-        return bits.isEmpty ? "Cały zwrot, nie pojedyncze słowo." : bits.joined(separator: " · ")
-    }
-
     private func reset() {
         line = 0
         show = true
         typed = ""
         note = ""
         bank = []
+        quiz = nil
+    }
+
+    private var links: [(String, String)] {
+        switch pack.verb {
+        case "machen": return [("Pause machen", "zrobić przerwę"), ("Feierabend machen", "skończyć pracę")]
+        case "brauchen": return [("Hilfe brauchen", "potrzebować pomocy"), ("Zeit brauchen", "potrzebować czasu")]
+        case "kommen": return [("zu spät kommen", "spóźnić się"), ("klar kommen", "dać sobie radę")]
+        case "sagen": return [("Bescheid sagen", "dać znać"), ("die Wahrheit sagen", "powiedzieć prawdę")]
+        default: return [("nach Hause gehen", "iść do domu"), ("in Ordnung gehen", "być w porządku")]
+        }
+    }
+
+    private var decoy: String {
+        switch pack.verb {
+        case "machen": return "iść do domu"
+        case "brauchen": return "skończyć pracę"
+        case "kommen": return "dać znać"
+        case "sagen": return "zrobić przerwę"
+        default: return "potrzebować pomocy"
+        }
+    }
+
+    private func saveOwn() {
+        let row = "\(ownDe.trimmingCharacters(in: .whitespaces))|\(ownPl.trimmingCharacters(in: .whitespaces))"
+        own.insert(row, at: 0)
+        if own.count > 20 { own = Array(own.prefix(20)) }
+        UserDefaults.standard.set(own, forKey: "ownWorkPhrases")
+        ownDe = ""
+        ownPl = ""
+    }
+}
+
+struct GlossRow: View {
+    let text: String
+
+    var body: some View {
+        let parts = text.split(separator: " ").map { String($0).trimmingCharacters(in: .punctuationCharacters) }.filter { !$0.isEmpty }
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 8)], spacing: 8) {
+            ForEach(Array(parts.enumerated()), id: \.offset) { _, word in
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(word).font(.headline)
+                    Text(Gloss.meaning(word)).font(.caption).foregroundStyle(Theme.text2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(10)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.white.opacity(0.12), lineWidth: 1))
+            }
+        }
+    }
+}
+
+enum Gloss {
+    static func meaning(_ word: String) -> String {
+        let map = [
+            "was": "co", "muss": "muszę", "ich": "ja", "machen": "robić", "mache": "robię",
+            "das": "to", "später": "później", "jetzt": "teraz", "brauche": "potrzebuję",
+            "eine": "jedną", "brauchst": "potrzebujesz", "du": "ty", "dafür": "do tego",
+            "material": "materiał", "krankschreibung": "zwolnienie", "komme": "przyjdę",
+            "um": "o", "neun": "dziewiątej", "kommst": "przychodzisz", "heute": "dziś",
+            "zur": "na", "frühschicht": "poranną zmianę", "sag": "powiedz", "bescheid": "znać",
+            "wenn": "kiedy", "fertig": "gotowy", "bist": "jesteś", "sage": "powiem",
+            "dem": "temu", "chef": "szefowi", "zum": "do", "arzt": "lekarza", "gehen": "iść",
+            "gehe": "idę", "nach": "do", "hause": "domu", "soll": "mam", "sofort": "zaraz",
+            "die": "ta", "der": "ten", "pause": "przerwa", "ist": "jest", "bus": "autobus",
+            "hat": "ma", "verspätung": "opóźnienie", "bin": "jestem", "zwanzig": "dwadzieścia",
+            "minuten": "minut", "da": "tu", "kann": "mogę", "mit": "z", "karte": "kartą",
+            "zahlen": "płacić", "pass": "uważaj", "auf": "na", "hier": "tu", "ein": "jeden",
+            "kabel": "kabel"
+        ]
+        return map[word.lowercased()] ?? "…"
     }
 }
 

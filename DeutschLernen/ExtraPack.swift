@@ -32,6 +32,10 @@ struct ShadowView: View {
                 Text(line.pl).font(.headline)
                 Text(played > 0 ? line.de : "Posłuchaj dwa razy. Tekst wejdzie po pierwszym odtworzeniu.")
                     .font(.title2.bold())
+                if played > 0 {
+                    Text("Słowo po słowie").font(.caption.weight(.semibold)).foregroundStyle(Theme.text2)
+                    GlossRow(text: line.de)
+                }
                 Text(played < 2 ? "Odsłuchane \(played) z 2. Potem powtarzasz." : "Teraz powiedz to samo.")
                     .font(.footnote)
                     .foregroundStyle(Theme.text2)
