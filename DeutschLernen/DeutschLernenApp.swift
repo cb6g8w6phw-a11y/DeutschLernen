@@ -54,9 +54,10 @@ struct RootView: View {
         }
         .background(NightGlow())
         .background(DockPanBridge(hidden: $dockHidden))
-        .animation(.spring(response: 0.34, dampingFraction: 0.9), value: dockHidden)
         .onChange(of: tab) { _, _ in
-            withAnimation(.spring(response: 0.34, dampingFraction: 0.9)) { dockHidden = false }
+            var snap = Transaction()
+            snap.disablesAnimations = true
+            withTransaction(snap) { dockHidden = false }
         }
         .tint(Theme.ok)
         .preferredColorScheme(.dark)
@@ -221,6 +222,7 @@ private struct DockPanBridge: UIViewRepresentable {
             pan.delegate = self
             pan.cancelsTouchesInView = false
             pan.delaysTouchesBegan = false
+            pan.delaysTouchesEnded = false
             window.addGestureRecognizer(pan)
             installed = true
         }
@@ -230,20 +232,26 @@ private struct DockPanBridge: UIViewRepresentable {
         }
 
         @objc func panned(_ gesture: UIPanGestureRecognizer) {
-            guard gesture.state == .changed || gesture.state == .ended else { return }
+            // Tylko po puszczeniu palca. Zmiana wysokości docka w trakcie
+            // przeciągnięcia zmienia ramkę listy i przerywa przewijanie.
+            guard gesture.state == .ended else { return }
+            let velocity = gesture.velocity(in: gesture.view)
             let move = gesture.translation(in: gesture.view)
-            if abs(move.x) > abs(move.y) + 16 { return }
-            if move.y < -20 { apply(true) }
-            else if move.y > 20 { apply(false) }
+            if abs(velocity.x) > abs(velocity.y) + 40, abs(move.x) > abs(move.y) { return }
+            if velocity.y < -220 || move.y < -64 {
+                apply(true)
+            } else if velocity.y > 180 || move.y > 48 {
+                apply(false)
+            }
         }
 
         func apply(_ hide: Bool) {
             guard Date() > lock, hidden.wrappedValue != hide else { return }
-            lock = Date().addingTimeInterval(0.35)
+            lock = Date().addingTimeInterval(0.45)
             DispatchQueue.main.async {
-                withAnimation(.spring(response: 0.34, dampingFraction: 0.9)) {
-                    self.hidden.wrappedValue = hide
-                }
+                var snap = Transaction()
+                snap.disablesAnimations = true
+                withTransaction(snap) { self.hidden.wrappedValue = hide }
             }
         }
     }
