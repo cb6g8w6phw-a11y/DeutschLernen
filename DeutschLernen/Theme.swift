@@ -34,9 +34,17 @@ extension View {
 
     func themedCard(radius: CGFloat = 24) -> some View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
-        return background(.ultraThinMaterial, in: shape)
-            .background(Color.white.opacity(0.05), in: shape)
-            .overlay(shape.stroke(Color.white.opacity(0.10), lineWidth: 1))
+        return glassEffect(.regular, in: shape)
+            .overlay(
+                shape.stroke(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.38), Color.white.opacity(0.06)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+            )
     }
 
     func primaryButton() -> some View {
@@ -64,9 +72,8 @@ struct MatteGlassButton: ButtonStyle {
             .frame(maxWidth: .infinity)
             .frame(minHeight: 50)
             .padding(.horizontal, 12)
-            .background(.ultraThinMaterial, in: Capsule())
-            .background(Color.white.opacity(0.08), in: Capsule())
-            .overlay(Capsule().stroke(Color.white.opacity(0.22), lineWidth: 1))
+            .glassEffect(.regular, in: Capsule())
+            .overlay(Capsule().stroke(Color.white.opacity(0.28), lineWidth: 1))
             .opacity(configuration.isPressed ? 0.65 : 1)
     }
 }

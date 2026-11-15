@@ -39,7 +39,7 @@ struct RootView: View {
         .safeAreaBar(edge: .bottom, spacing: 8) {
             AppDock(tab: $tab)
         }
-        .background(Color.black)
+        .background { NightGlow() }
         .tint(Theme.ok)
         .preferredColorScheme(.dark)
         .fontDesign(.rounded)

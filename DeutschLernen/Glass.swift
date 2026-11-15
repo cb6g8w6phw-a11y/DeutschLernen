@@ -80,7 +80,25 @@ enum Ink {
 
 struct NightGlow: View {
     var body: some View {
-        Theme.background.ignoresSafeArea()
+        ZStack {
+            Color.black
+            Circle()
+                .fill(Theme.ok.opacity(0.28))
+                .frame(width: 280, height: 280)
+                .blur(radius: 70)
+                .offset(x: -130, y: -260)
+            Circle()
+                .fill(Theme.accent.opacity(0.34))
+                .frame(width: 320, height: 320)
+                .blur(radius: 80)
+                .offset(x: 150, y: 40)
+            Circle()
+                .fill(Color.white.opacity(0.08))
+                .frame(width: 180, height: 180)
+                .blur(radius: 50)
+                .offset(x: 40, y: 280)
+        }
+        .ignoresSafeArea()
     }
 }
 

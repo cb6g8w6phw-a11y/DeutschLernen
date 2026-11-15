@@ -130,7 +130,8 @@ struct GrammarLibraryView: View {
             }
         }
         .navigationTitle("Wzorce gramatyczne")
-        .containerBackground(for: .navigation) { Color.black }
+        .scrollContentBackground(.hidden)
+        .containerBackground(for: .navigation) { NightGlow() }
         .onAppear { refresh += 1 }
     }
 }
@@ -160,7 +161,7 @@ struct GrammarLessonView: View {
             .padding(16)
         }
         .navigationTitle("Wzorzec")
-        .containerBackground(for: .navigation) { Color.black }
+        .containerBackground(for: .navigation) { NightGlow() }
         .onDisappear { Talk.stop() }
     }
 

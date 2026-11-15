@@ -115,7 +115,8 @@ struct SceneLibraryView: View {
             }
         }
         .navigationTitle("Mini dialogi")
-        .containerBackground(for: .navigation) { Color.black }
+        .scrollContentBackground(.hidden)
+        .containerBackground(for: .navigation) { NightGlow() }
         .onAppear { refresh += 1 }
     }
 
@@ -124,8 +125,22 @@ struct SceneLibraryView: View {
             .font(.caption.weight(.semibold))
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(on ? Theme.ok : Color.white.opacity(0.08), in: Capsule())
             .foregroundStyle(on ? Theme.ink : .white)
+            .background { if on { Capsule().fill(Theme.ok) } }
+            .modifier(IdleGlass(active: !on))
+    }
+}
+
+private struct IdleGlass: ViewModifier {
+    var active: Bool
+    func body(content: Content) -> some View {
+        if active {
+            content
+                .glassEffect(.regular, in: Capsule())
+                .overlay(Capsule().stroke(Color.white.opacity(0.22), lineWidth: 1))
+        } else {
+            content
+        }
     }
 }
 
@@ -180,7 +195,8 @@ struct SceneStudyView: View {
                     }
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color.white.opacity(0.18), lineWidth: 1))
                 }
                 Text(scene.question).font(.title3.bold())
                 ForEach(scene.options.indices, id: \.self) { index in
@@ -194,7 +210,12 @@ struct SceneStudyView: View {
                     .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
                     .padding(.horizontal, 12)
                     .foregroundStyle(.white)
-                    .background(fill(index), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .background {
+                        if picked != nil {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous).fill(fill(index))
+                        }
+                    }
+                    .modifier(IdleGlassRect(active: picked == nil))
                 }
                 if let picked {
                     Text(picked == scene.answer ? "Dobrze." : "Poprawnie: \(scene.options[scene.answer])")
@@ -232,7 +253,7 @@ struct SceneStudyView: View {
             .padding(.bottom, 24)
         }
         .navigationTitle("Scenka")
-        .containerBackground(for: .navigation) { Color.black }
+        .containerBackground(for: .navigation) { NightGlow() }
         .onAppear { fav = MiniProgress.favIDs().contains(scene.id) }
         .onDisappear { Talk.stop() }
     }
@@ -284,6 +305,19 @@ struct SceneStudyView: View {
             HardBook.add(de: scene.replyDE, pl: scene.replyPL)
             UserDefaults.standard.set(scene.note, forKey: "freshPattern")
             Haptic.bad()
+        }
+    }
+}
+
+private struct IdleGlassRect: ViewModifier {
+    var active: Bool
+    func body(content: Content) -> some View {
+        if active {
+            content
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Color.white.opacity(0.18), lineWidth: 1))
+        } else {
+            content
         }
     }
 }
