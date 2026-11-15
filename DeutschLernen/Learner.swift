@@ -19,6 +19,10 @@ enum Learner {
         if !fresh.isEmpty {
             bits.append("ostatnio uczone słowa, wpleć je w rozmowę: " + fresh.joined(separator: ", "))
         }
+        let pattern = d.string(forKey: "freshPattern") ?? ""
+        if !pattern.isEmpty {
+            bits.append("ostatni wzorzec gramatyczny, użyj go w zdaniu: \(pattern)")
+        }
         return "Dane ucznia: " + bits.joined(separator: ". ") + "."
     }
 }

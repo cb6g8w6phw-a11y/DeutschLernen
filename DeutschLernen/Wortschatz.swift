@@ -163,6 +163,12 @@ enum VocabBook {
         list.removeAll { $0 == card.de }
         list.insert(card.de, at: 0)
         UserDefaults.standard.set(Array(list.prefix(8)), forKey: "freshVocab")
+        if built.contains(where: { $0.de.lowercased() == card.de.lowercased() }) { return }
+        var mine = custom
+        if !mine.contains(where: { $0.de.lowercased() == card.de.lowercased() }) {
+            mine.insert(card, at: 0)
+            saveCustom(Array(mine.prefix(80)))
+        }
     }
 
     static func freshListen() -> [CoachData.ListenQ] {

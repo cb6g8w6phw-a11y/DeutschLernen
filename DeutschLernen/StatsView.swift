@@ -27,6 +27,7 @@ struct StatsView: View {
                     levelCard
                     goalCard
                     summary
+                    modules
                     topics
                     activity
                     skills
@@ -125,6 +126,21 @@ struct StatsView: View {
             }
         }
         .frame(height: 10)
+    }
+
+    private var modules: some View {
+        let scenesDone = (UserDefaults.standard.stringArray(forKey: "miniDone") ?? []).count
+        let grammarDone = (UserDefaults.standard.stringArray(forKey: "grammarDone") ?? []).count
+        return VStack(alignment: .leading, spacing: 6) {
+            Text("Scenki i wzorce").font(.headline)
+            Text("Mini dialogi: \(scenesDone) z \(MiniBook.all.count).")
+            Text("Wzorce: \(grammarDone) z \(GrammarBook.lessons.count).")
+            Text("Słowa ze scenek wracają w słuchaniu. Ostatni wzorzec wraca w rozmowie.")
+                .font(.footnote)
+                .foregroundStyle(Theme.text2)
+        }
+        .padding(16)
+        .themedCard()
     }
 
     private var summary: some View {
