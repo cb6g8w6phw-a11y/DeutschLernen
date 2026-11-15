@@ -13,8 +13,12 @@ enum Learner {
         if !boss.isEmpty { bits.append("szef: \(boss)") }
         if !car.isEmpty { bits.append("auto: \(car)") }
         if bits.isEmpty {
-            return "Uczeń pracuje w Niemczech, w magazynie, na budowie albo w warsztacie."
+            bits.append("Uczeń pracuje w Niemczech, w magazynie, na budowie albo w warsztacie")
         }
-        return "Dane ucznia, używaj ich w rozmowie jak o prawdziwej osobie: " + bits.joined(separator: ", ") + "."
+        let fresh = UserDefaults.standard.stringArray(forKey: "freshVocab") ?? []
+        if !fresh.isEmpty {
+            bits.append("ostatnio uczone słowa, wpleć je w rozmowę: " + fresh.joined(separator: ", "))
+        }
+        return "Dane ucznia: " + bits.joined(separator: ". ") + "."
     }
 }

@@ -25,6 +25,8 @@ struct RootView: View {
     var body: some View {
         TabView {
             TodayView().tabItem { Label("Start", systemImage: "house.fill") }
+            NavigationStack { WortHome() }
+                .tabItem { Label("Słówka", systemImage: "character.book.closed") }
             NavigationStack { ListenView() }
                 .tabItem { Label("Słuchaj", systemImage: "headphones") }
             TutorView().tabItem { Label("Mów", systemImage: "mic.fill") }

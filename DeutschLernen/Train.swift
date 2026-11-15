@@ -819,7 +819,7 @@ struct ListenView: View {
     private func loadDeck(forceAll: Bool) {
         let heard = forceAll ? [] : (UserDefaults.standard.stringArray(forKey: "heardListen") ?? [])
         if forceAll { UserDefaults.standard.removeObject(forKey: "heardListen") }
-        let fresh = (CoachData.listen + DailyPack.listen + SiteTalk.listen).filter { !heard.contains($0.de) }
+        let fresh = (VocabBook.freshListen() + CoachData.listen + DailyPack.listen + SiteTalk.listen).filter { !heard.contains($0.de) }
         let pool = fresh.isEmpty ? (CoachData.listen + DailyPack.listen + SiteTalk.listen) : fresh
         let talks = pool.filter { $0.de.contains("\n") }
         let lines = pool.filter { !$0.de.contains("\n") }.shuffled()
