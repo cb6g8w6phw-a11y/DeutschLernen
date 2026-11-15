@@ -144,15 +144,16 @@ struct PictureTalk: View {
     @State private var note = ""
     @State private var fix = ""
     @State private var busy = false
+    @State private var bank: [String] = []
     @FocusState private var writing: Bool
 
-    private let scenes: [(title: String, see: String, need: [String], sample: String, symbol: String, extra: String, side: String)] = [
-        ("Budowa", "Kask, łopata i bus. Opowiedz po niemiecku, co widzisz.", ["Schaufel", "Baustelle"], "Auf der Baustelle liegt eine Schaufel.", "helmet", "hammer", "bus"),
-        ("Sklep", "Chleb i kasa. Powiedz, co jest w sklepie.", ["Brot", "Kasse"], "Im Laden gibt es Brot an der Kasse.", "cart", "birthday.cake", "creditcard"),
-        ("Ulica", "Autobus i ulica. Powiedz, co jedzie.", ["Bus", "Straße"], "Der Bus fährt auf der Straße.", "bus", "car", "trafficlight")
+    private let scenes: [(title: String, see: String, order: [String], extra: String, sample: String, symbol: String, side: String, third: String)] = [
+        ("Budowa", "Kask i łopata. Ułóż, co leży.", ["Eine", "Schaufel", "liegt"], "Helm", "Eine Schaufel liegt.", "helmet", "hammer", "shippingbox"),
+        ("Sklep", "Chleb w sklepie. Ułóż, co jest.", ["Es", "gibt", "Brot"], "Kasse", "Es gibt Brot.", "cart", "birthday.cake", "creditcard"),
+        ("Ulica", "Autobus i auto. Ułóż, co jedzie.", ["Ein", "Bus", "fährt"], "Auto", "Ein Bus fährt.", "bus", "car", "road.lanes")
     ]
 
-    private var scene: (title: String, see: String, need: [String], sample: String, symbol: String, extra: String, side: String) { scenes[index % scenes.count] }
+    private var scene: (title: String, see: String, order: [String], extra: String, sample: String, symbol: String, side: String, third: String) { scenes[index % scenes.count] }
 
     var body: some View {
         ScrollView {
@@ -160,8 +161,8 @@ struct PictureTalk: View {
                 Text(scene.title).font(.largeTitle.bold())
                 HStack(spacing: 22) {
                     Image(systemName: scene.symbol)
-                    Image(systemName: scene.extra)
                     Image(systemName: scene.side)
+                    Image(systemName: scene.third)
                 }
                 .font(.system(size: 42))
                 .foregroundStyle(.white)
@@ -169,10 +170,12 @@ struct PictureTalk: View {
                 .padding(.vertical, 18)
                 .themedCard(radius: 18)
                 Text(scene.see).foregroundStyle(.white)
-                Text("Napisz albo powiedz całe zdanie. Polskiego tłumaczenia nie ma, dopóki nie sprawdzisz.")
+                Text("Ułóż zdanie z podanych słów. Stuknięcie wstawia słowo. Możesz też napisać albo powiedzieć.")
                     .font(.footnote)
                     .foregroundStyle(Theme.text2)
-                TextField("Po niemiecku", text: $typed, axis: .vertical)
+                answerLine
+                chipRow
+                TextField("albo napisz sam", text: $typed, axis: .vertical)
                     .lineLimit(2...4)
                     .textFieldStyle(.roundedBorder)
                     .textInputAutocapitalization(.never)
@@ -193,6 +196,7 @@ struct PictureTalk: View {
                     typed = ""
                     note = ""
                     fix = ""
+                    deal()
                 }
                 .buttonStyle(.glass)
             }
@@ -201,6 +205,7 @@ struct PictureTalk: View {
         .navigationTitle("Opisz obrazek")
         .containerBackground(for: .navigation) { NightGlow() }
         .scrollDismissesKeyboard(.interactively)
+        .onAppear { if bank.isEmpty { deal() } }
         .onChange(of: mic.listening) { was, now in
             guard was, !now else { return }
             let heard = mic.text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -215,27 +220,84 @@ struct PictureTalk: View {
         defer { busy = false }
         let said = typed.trimmingCharacters(in: .whitespacesAndNewlines)
         let clean = Normalizer.clean(said)
-        let hit = scene.need.filter { clean.contains(Normalizer.clean($0)) }
-        let missed = scene.need.filter { !clean.contains(Normalizer.clean($0)) }
-        if missed.isEmpty {
-            note = "Są słowa z obrazka: \(hit.joined(separator: ", "))."
+        let hit = scene.order.filter { clean.contains(Normalizer.clean($0)) }
+        let inOrder = follows(said, scene.order)
+        if inOrder {
+            note = "Kolejność się zgadza: \(scene.sample)"
             store.noteSkill("sentence", ok: true)
             let word = Word(de: said, pl: scene.title, ex: scene.sample, exPl: scene.see, topic: "Obrazek", level: "A2")
             store.grade(word, .easy, produced: true)
         } else {
-            note = "Brakuje na obrazku: \(missed.joined(separator: ", "))."
+            note = hit.isEmpty ? "Ułóż: \(scene.order.joined(separator: " "))." : "Są słowa, ale szyk jest inny. Wzorzec: \(scene.sample)"
             store.noteSkill("sentence", ok: false)
             HardBook.add(de: scene.sample, pl: scene.see)
         }
-        fix = await polish(said) ?? "Wzorzec z tych samych rzeczy: \(scene.sample)"
-        if let line = fix.split(separator: "\n").first.map(String.init), line.contains(" ") {
-            Talk.de(scene.sample, rate: 0.44)
+        fix = await polish(said) ?? ""
+        Talk.de(scene.sample, rate: 0.44)
+    }
+
+    private var answerLine: some View {
+        HStack {
+            Text(typed.isEmpty ? "Tu ułoży się zdanie" : typed)
+                .font(.title3.bold())
+                .foregroundStyle(typed.isEmpty ? Theme.text2 : .white)
+            Spacer()
+            if !typed.isEmpty {
+                Button("Cofnij") { undo() }
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.white)
+            }
         }
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 54, alignment: .leading)
+        .themedCard(radius: 16)
+    }
+
+    private var chipRow: some View {
+        HStack(spacing: 8) {
+            ForEach(bank, id: \.self) { word in
+                Button(word) { place(word) }
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Color.white.opacity(0.2), lineWidth: 1))
+            }
+        }
+    }
+
+    private func deal() {
+        bank = (scene.order + [scene.extra]).shuffled()
+    }
+
+    private func place(_ word: String) {
+        guard let at = bank.firstIndex(of: word) else { return }
+        bank.remove(at: at)
+        typed = (typed + " " + word).trimmingCharacters(in: .whitespaces)
+    }
+
+    private func undo() {
+        let parts = typed.split(separator: " ").map(String.init)
+        guard let last = parts.last else { return }
+        typed = parts.dropLast().joined(separator: " ")
+        if !bank.contains(last) { bank.append(last) }
+    }
+
+    private func follows(_ said: String, _ order: [String]) -> Bool {
+        var rest = Normalizer.clean(said).split(separator: " ").map(String.init)
+        for word in order {
+            let key = Normalizer.clean(word)
+            guard let at = rest.firstIndex(of: key) else { return false }
+            rest = Array(rest.dropFirst(at + 1))
+        }
+        return true
     }
 
     private func polish(_ said: String) async -> String? {
         let prompt = """
-        Uczeń opisuje obrazek po niemiecku. Obrazek: \(scene.title). Powinien użyć: \(scene.need.joined(separator: ", ")).
+        Uczeń opisuje obrazek po niemiecku. Obrazek: \(scene.title). Wzorzec: \(scene.sample).
         Napisał: \(said)
         Popraw zdanie po niemiecku, jednym zdaniem. Pod spodem jedna linia po polsku, co było nie tak. Bez ocen procentowych.
         """
