@@ -330,6 +330,19 @@ final class LearningStore: ObservableObject {
         save()
     }
 
+    /// Dwa trafienia pod rząd: słowo schodzi z bieżącej puli i wraca za dwa dni.
+    func parkTwoDays(_ w: Word) {
+        var s = stats[w.de] ?? WordStat()
+        s.correct += 1
+        let today = Self.dayKey()
+        if !s.days.contains(today) { s.days.append(today) }
+        s.box = min(max(s.days.count, 2), 5)
+        s.due = Calendar.current.date(byAdding: .day, value: 2, to: Date()) ?? Date()
+        stats[w.de] = s
+        noteSkill("vocab", ok: true)
+        save()
+    }
+
     func scheduleTomorrow(_ w: Word) {
         var s = stats[w.de] ?? WordStat()
         s.wrong += 1

@@ -29,10 +29,10 @@ struct RootView: View {
         ZStack(alignment: .bottom) {
             Group {
                 switch tab {
-                case 1: NavigationStack { WortHome() }
+                case 1: NavigationStack { MoreTools(title: "Ucz się") }
                 case 2: NavigationStack { ListenView() }
                 case 3: TutorView()
-                case 4: NavigationStack { MoreTools() }
+                case 4: NavigationStack { MoreTools(title: "Ucz się") }
                 case 5: NavigationStack { SceneLibraryView() }
                 case 6: NavigationStack { GrammarLibraryView() }
                 case 7: NavigationStack { PronounceView() }
@@ -41,6 +41,7 @@ struct RootView: View {
                 case 10: PracticeView()
                 case 11: ProfileView()
                 case 12: NavigationStack { TextLibraryView() }
+                case 13: NavigationStack { WortHome() }
                 default: TodayView()
                 }
             }
@@ -110,72 +111,17 @@ struct AppDock: View {
     @Binding var tab: Int
 
     var body: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 8) {
-                card(5, "bubble.left.and.bubble.right.fill", "Mini dialogi", "100+ scenek z życia")
-                card(6, "text.book.closed.fill", "Wzorce gramatyczne", "Gramatyka przez praktykę")
-            }
-            Button { tab = 12 } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "book.closed.fill")
-                    Text("Teksty i historie").font(.caption.weight(.bold))
-                    Spacer()
-                    Text("Tłumaczenie po kliknięciu").font(.caption2).foregroundStyle(tab == 12 ? Theme.ink.opacity(0.8) : Theme.text2)
-                }
-                .foregroundStyle(tab == 12 ? Theme.ink : Theme.text)
-                .padding(.horizontal, 12)
-                .frame(maxWidth: .infinity, minHeight: 36)
-                .background(tab == 12 ? Theme.ok : Color.white.opacity(0.08), in: Capsule())
-            }
-            .buttonStyle(.plain)
-            HStack(spacing: 0) {
-                icon(0, "house.fill", "Start")
-                icon(1, "character.book.closed", "Słówka")
-                icon(2, "headphones", "Słuchaj")
-                icon(3, "mic.fill", "Mów")
-                icon(4, "ellipsis", "Więcej")
-            }
-            HStack(spacing: 0) {
-                icon(7, "waveform", "Wymowa")
-                icon(8, "checkmark.circle", "Test")
-                icon(9, "text.book.closed", "Słownik")
-                icon(10, "figure.run", "Ćwicz")
-                icon(11, "person", "Profil")
-            }
+        HStack(spacing: 0) {
+            icon(0, "house.fill", "Start")
+            icon(1, "book.fill", "Ucz się")
+            icon(2, "headphones", "Słuchaj")
+            icon(3, "mic.fill", "Mów")
+            icon(11, "person", "Profil")
         }
-        .padding(10)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
-        .padding(.horizontal, 10)
-    }
-
-    private func card(_ value: Int, _ symbol: String, _ title: String, _ subtitle: String) -> some View {
-        Button { tab = value } label: {
-            VStack(alignment: .leading, spacing: 6) {
-                Image(systemName: symbol)
-                    .font(.title3)
-                    .foregroundStyle(Theme.ok)
-                Text(title)
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(Theme.text)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                Text(subtitle)
-                    .font(.caption2)
-                    .foregroundStyle(Theme.text2)
-                    .lineLimit(1)
-                Text("Nowa kategoria")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(Theme.ink)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Theme.ok, in: Capsule())
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(10)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(tab == value ? Theme.ok : Color.white.opacity(0.16), lineWidth: tab == value ? 1.5 : 0.5))
-        }
-        .buttonStyle(.plain)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 6)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .padding(.horizontal, 12)
     }
 
     private func icon(_ value: Int, _ symbol: String, _ title: String) -> some View {

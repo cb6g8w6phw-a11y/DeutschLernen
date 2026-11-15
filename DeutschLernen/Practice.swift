@@ -357,56 +357,147 @@ struct ActivityList: View {
 }
 
 struct MoreTools: View {
+    var title: String = "Ucz się"
+
     var body: some View {
         ScrollView {
-            VStack(spacing: 10) {
-                link("Mini dialogi", "bubble.left.and.bubble.right.fill") { SceneLibraryView() }
-                link("Teksty i historie", "book.closed.fill") { TextLibraryView() }
-                link("Wzorce gramatyczne", "text.book.closed.fill") { GrammarLibraryView() }
-                link("Praca", "helmet") { WorkHubView() }
-                link("Postępy", "chart.bar.fill") { StatsView() }
-                link("Słówka", "rectangle.stack.fill") { StudyView() }
-                link("Gramatyka", "textformat") { GrammarView() }
-                link("Pisanie", "square.and.pencil") { WriteLearnView() }
-                link("Zeszyt", "book.closed") { NotebookView() }
-                link("Egzamin", "checkmark.seal") { ExamView() }
-                link("Błędy, 8 najczęstszych", "exclamationmark.bubble") { MistakeReview() }
-                link("Wymowa", "waveform") { PronounceView() }
-                link("Całe zwroty", "text.bubble") { PhraseView() }
-                link("Myślenie po niemiecku", "brain") { ThinkView() }
-                link("Opisz obrazek", "photo") { PictureTalk() }
-                link("Shadowing", "ear") { ShadowView() }
-                link("Jak mówią", "quote.bubble") { StreetView() }
-                link("Dyktando", "pencil.line") { DictationView() }
-                link("Gry", "gamecontroller") { GamesHome() }
-                link("Wiadomości", "newspaper") { NewsListView() }
-                link("Z życia", "plus.circle.fill") { CaptureView() }
-                link("Plan dnia", "calendar") { DayPlanView() }
-                link("Offline", "arrow.down.circle") { OfflineView() }
-                link("Ratunek", "exclamationmark.bubble") { RescueView() }
-                NavigationLink { CourseView() } label: { row("Ścieżka lekcji", "point.topleft.down.curvedto.point.bottomright.scurvepath") }
-                    .buttonStyle(.plain)
+            VStack(spacing: 12) {
+                Text("Sześć działów. Wszystko, co było na liście, jest w środku.")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.text2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                hub("Rozmowy i teksty", "Mini dialogi · Teksty i historie · Opisz obrazek", "bubble.left.and.bubble.right.fill") { TalkHub() }
+                hub("Słownictwo", "Słówka · Całe zwroty · Słownik · Zeszyt", "book.fill") { WordsHub() }
+                hub("Gramatyka", "Wzorce gramatyczne · Gramatyka", "text.book.closed.fill") { GrammarHub() }
+                hub("Wymowa i rozumienie", "Wymowa · Myślenie po niemiecku", "headphones") { SpeakHub() }
+                hub("Ćwiczenia i testy", "Pisanie · Test · Egzamin · Ćwicz · Błędy", "pencil") { DrillHub() }
+                hub("Niemiecki w pracy", "Budowa · Narzędzia · Polecenia · Rozmowy", "briefcase.fill") { WorkHubView() }
             }
             .padding(20)
+            .padding(.bottom, 24)
         }
-        .navigationTitle("Więcej")
+        .navigationTitle(title)
         .containerBackground(for: .navigation) { NightGlow() }
     }
 
-    private func link<Dest: View>(_ title: String, _ icon: String, @ViewBuilder dest: () -> Dest) -> some View {
-        NavigationLink { dest() } label: { row(title, icon) }
-            .buttonStyle(.plain)
-    }
-
-    private func row(_ title: String, _ icon: String) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon).foregroundStyle(Theme.accent).frame(width: 24)
-            Text(title).font(.body.weight(.semibold)).foregroundStyle(Theme.text)
-            Spacer()
-            Image(systemName: "chevron.right").foregroundStyle(Theme.text2)
+    private func hub<Dest: View>(_ title: String, _ detail: String, _ icon: String, @ViewBuilder dest: () -> Dest) -> some View {
+        NavigationLink { dest() } label: {
+            HStack(spacing: 14) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundStyle(Theme.ok)
+                    .frame(width: 52, height: 52)
+                    .background(Theme.ok.opacity(0.16), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title).font(.headline).foregroundStyle(Theme.text)
+                    Text(detail).font(.caption).foregroundStyle(Theme.text2).fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right").foregroundStyle(Theme.text2)
+            }
+            .padding(12)
+            .themedCard(radius: 20)
         }
-        .padding(14)
-        .themedCard(radius: 16)
+        .buttonStyle(.plain)
+    }
+}
+
+private struct HubLink<Dest: View>: View {
+    let title: String
+    let icon: String
+    @ViewBuilder var dest: () -> Dest
+
+    var body: some View {
+        NavigationLink { dest() } label: {
+            HStack(spacing: 12) {
+                Image(systemName: icon).foregroundStyle(Theme.ok).frame(width: 28)
+                Text(title).font(.body.weight(.semibold)).foregroundStyle(Theme.text)
+                Spacer()
+                Image(systemName: "chevron.right").foregroundStyle(Theme.text2)
+            }
+            .padding(14)
+            .themedCard(radius: 16)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct HubScreen<Content: View>: View {
+    let title: String
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 10) { content() }
+                .padding(20)
+                .padding(.bottom, 24)
+        }
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+        .containerBackground(for: .navigation) { NightGlow() }
+    }
+}
+
+private struct TalkHub: View {
+    var body: some View {
+        HubScreen(title: "Rozmowy i teksty") {
+            HubLink(title: "Mini dialogi", icon: "bubble.left.and.bubble.right.fill") { SceneLibraryView() }
+            HubLink(title: "Teksty i historie", icon: "book.closed.fill") { TextLibraryView() }
+            HubLink(title: "Opisz obrazek", icon: "photo") { PictureTalk() }
+            HubLink(title: "Jak mówią", icon: "quote.bubble") { StreetView() }
+            HubLink(title: "Shadowing", icon: "ear") { ShadowView() }
+            HubLink(title: "Wiadomości", icon: "newspaper") { NewsListView() }
+            HubLink(title: "Z twojego życia", icon: "sparkles") { LifeView() }
+            HubLink(title: "Ścieżka lekcji", icon: "point.topleft.down.curvedto.point.bottomright.scurvepath") { CourseView() }
+        }
+    }
+}
+
+private struct WordsHub: View {
+    var body: some View {
+        HubScreen(title: "Słownictwo") {
+            HubLink(title: "Słówka", icon: "rectangle.stack.fill") { WortHome() }
+            HubLink(title: "Uzupełnij słówko", icon: "character.cursor.ibeam") { StudyView() }
+            HubLink(title: "Całe zwroty", icon: "text.bubble") { PhraseView() }
+            HubLink(title: "Słownik", icon: "text.book.closed") { WordsView() }
+            HubLink(title: "Zeszyt", icon: "book.closed") { NotebookView() }
+            HubLink(title: "Słówka z filmu", icon: "play.rectangle") { ClipView() }
+            HubLink(title: "Z życia", icon: "plus.circle.fill") { CaptureView() }
+        }
+    }
+}
+
+private struct GrammarHub: View {
+    var body: some View {
+        HubScreen(title: "Gramatyka") {
+            HubLink(title: "Wzorce gramatyczne", icon: "text.book.closed.fill") { GrammarLibraryView() }
+            HubLink(title: "Gramatyka", icon: "textformat") { GrammarView() }
+            HubLink(title: "Generator zdań", icon: "text.badge.checkmark") { SentenceView() }
+        }
+    }
+}
+
+private struct SpeakHub: View {
+    var body: some View {
+        HubScreen(title: "Wymowa i rozumienie") {
+            HubLink(title: "Wymowa", icon: "waveform") { PronounceView() }
+            HubLink(title: "Myślenie po niemiecku", icon: "brain") { ThinkView() }
+        }
+    }
+}
+
+private struct DrillHub: View {
+    var body: some View {
+        HubScreen(title: "Ćwiczenia i testy") {
+            HubLink(title: "Pisanie", icon: "square.and.pencil") { WriteLearnView() }
+            HubLink(title: "Test", icon: "checkmark.circle") { PlacementView() }
+            HubLink(title: "Egzamin", icon: "checkmark.seal") { ExamView() }
+            HubLink(title: "Ćwicz", icon: "figure.run") { PracticeView() }
+            HubLink(title: "Błędy", icon: "exclamationmark.bubble") { MistakeReview() }
+            HubLink(title: "Dyktando", icon: "pencil.line") { DictationView() }
+            HubLink(title: "Gry", icon: "gamecontroller") { GamesHome() }
+            HubLink(title: "Ratunek", icon: "lifepreserver") { RescueView() }
+        }
     }
 }
 
@@ -474,12 +565,12 @@ struct ProfileView: View {
                         .themedCard()
                     }
                     NavigationLink {
-                        MoreTools()
+                        MoreTools(title: "Ucz się")
                     } label: {
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Więcej").font(.headline)
-                                Text("Postępy, pisanie, egzamin, offline i reszta")
+                                Text("Ucz się").font(.headline)
+                                Text("Rozmowy, słówka, gramatyka, wymowa, ćwiczenia, praca")
                                     .font(.caption)
                                     .foregroundStyle(Theme.text2)
                             }
@@ -491,6 +582,9 @@ struct ProfileView: View {
                         .themedCard()
                     }
                     .buttonStyle(.plain)
+                    NavigationLink { StatsView() } label: { profileRow("Postępy", "chart.bar.fill") }
+                    NavigationLink { DayPlanView() } label: { profileRow("Plan dnia", "calendar") }
+                    NavigationLink { OfflineView() } label: { profileRow("Offline", "arrow.down.circle") }
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Ukończone sesje  \(doneCount)")
                             .font(.title3.bold())
@@ -607,6 +701,18 @@ struct ProfileView: View {
                 Text(text).font(.caption).foregroundStyle(Theme.text2)
             }
         }
+    }
+
+    private func profileRow(_ title: String, _ icon: String) -> some View {
+        HStack {
+            Image(systemName: icon).foregroundStyle(Theme.ok).frame(width: 28)
+            Text(title).font(.headline)
+            Spacer()
+            Image(systemName: "chevron.right").foregroundStyle(Theme.text2)
+        }
+        .foregroundStyle(Theme.text)
+        .padding(14)
+        .themedCard()
     }
 }
 

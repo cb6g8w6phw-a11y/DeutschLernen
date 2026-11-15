@@ -127,15 +127,16 @@ enum VocabBook {
 
     static func today(_ store: LearningStore, limit: Int, topic: String) -> [Vocab] {
         let key = "wortToday-\(LearningStore.dayKey())-\(topic)-\(limit)"
-        let core = core(store, topic: topic)
-        if let saved = UserDefaults.standard.stringArray(forKey: key) {
-            let map = Dictionary(uniqueKeysWithValues: all(store).map { ($0.de, $0) })
-            let kept = saved.compactMap { map[$0] }
-            if !kept.isEmpty { return kept }
+        let pool = core(store, topic: topic)
+        let map = Dictionary(uniqueKeysWithValues: all(store).map { ($0.de, $0) })
+        let saved = UserDefaults.standard.stringArray(forKey: key) ?? []
+        var kept = saved.compactMap { map[$0] }.filter { !VocabPace.parked(store, $0.de) }
+        if kept.count < limit {
+            let used = Set(kept.map(\.de))
+            let more = pool.filter { !used.contains($0.de) && !VocabPace.parked(store, $0.de) }.shuffled()
+            kept.append(contentsOf: more.prefix(limit - kept.count))
         }
-        let unseen = core.filter { stat(store, $0).correct + stat(store, $0).wrong == 0 }
-        let source = (unseen.isEmpty ? core : unseen).shuffled()
-        let pick = Array(source.prefix(limit))
+        let pick = Array(kept.prefix(limit))
         UserDefaults.standard.set(pick.map(\.de), forKey: key)
         return pick
     }
@@ -346,6 +347,27 @@ struct WortCard: View {
     }
 }
 
+enum VocabPace {
+    static func streak(_ de: String) -> Int {
+        let raw = UserDefaults.standard.dictionary(forKey: "vocabHitStreak") ?? [:]
+        if let n = raw[de] as? Int { return n }
+        if let n = raw[de] as? NSNumber { return n.intValue }
+        return 0
+    }
+
+    static func set(_ de: String, _ n: Int) {
+        var raw = UserDefaults.standard.dictionary(forKey: "vocabHitStreak") as? [String: Int] ?? [:]
+        if n <= 0 { raw.removeValue(forKey: de) } else { raw[de] = n }
+        UserDefaults.standard.set(raw, forKey: "vocabHitStreak")
+    }
+
+    static func parked(_ store: LearningStore, _ de: String) -> Bool {
+        guard let stat = store.stats[de], stat.due > Date() else { return false }
+        if streak(de) >= 2 { return true }
+        return stat.correct >= 2 && stat.wrong == 0
+    }
+}
+
 enum WortMode { case fresh, review, cards, hear, quiz, type }
 
 struct WortSession: View {
@@ -362,6 +384,7 @@ struct WortSession: View {
     @State private var flipToPolish = false
     @State private var heard = false
     @State private var choices: [String] = []
+    @State private var banner = ""
 
     private var card: Vocab? { index < deck.count ? deck[index] : nil }
 
@@ -374,7 +397,10 @@ struct WortSession: View {
                     Text(mode == .review ? "Weź najpierw nowe słówka. Trudne wrócą same." : "Dodaj własne albo wybierz inną kategorię.")
                         .foregroundStyle(Theme.text2)
                 } else if let card {
-                    Text("\(index + 1) z \(deck.count)").font(.footnote).foregroundStyle(Theme.text2)
+                    Text("\(min(index + 1, deck.count)) z \(deck.count)").font(.footnote).foregroundStyle(Theme.text2)
+                    if !banner.isEmpty {
+                        Text(banner).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ok)
+                    }
                     switch mode {
                     case .fresh:
                         WortCard(card: card, show: true)
@@ -495,25 +521,51 @@ struct WortSession: View {
     private func mark(_ card: Vocab, ok: Bool, advance go: Bool = true) {
         let word = Word(de: card.de, pl: card.pl, ex: card.ex, exPl: card.exPl, topic: card.topic)
         if ok {
+            let n = VocabPace.streak(card.de) + 1
+            VocabPace.set(card.de, n)
+            if n >= 2 {
+                store.parkTwoDays(word)
+                VocabBook.remember(card)
+                replace(card)
+                banner = "Zaliczone. Powtórka za 2 dni."
+                Haptic.good()
+                if go { step(keepIndex: true) }
+                return
+            }
             store.grade(word, .easy)
             VocabBook.remember(card)
+            banner = "Raz dobrze. Drugi raz pod rząd zalicza i odkłada na 2 dni."
             Haptic.good()
         } else {
+            VocabPace.set(card.de, 0)
             store.grade(word, .hard)
             store.pinForReview(word)
+            banner = "Jeszcze nie. Seria od nowa."
             Haptic.bad()
         }
-        if go { advance() }
+        if go { step(keepIndex: false) }
     }
 
-    private func advance() {
+    private func replace(_ card: Vocab) {
+        deck.removeAll { $0.de == card.de }
+        let more = VocabBook.today(store, limit: limit, topic: topic)
+        for item in more where !deck.contains(where: { $0.de == item.de }) {
+            deck.append(item)
+            if deck.count >= limit { break }
+        }
+    }
+
+    private func step(keepIndex: Bool) {
         show = false
         picked = nil
         heard = false
         typed = ""
-        index += 1
+        if !keepIndex { index += 1 }
+        if index > deck.count { index = deck.count }
         prepare()
     }
+
+    private func advance() { step(keepIndex: false) }
 }
 
 struct WortAdd: View {

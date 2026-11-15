@@ -555,7 +555,7 @@ struct LessonDoneView: View {
                     dismiss()
                 }
                 .buttonStyle(.glass)
-                Button("Przećwicz nowe słówka") { Go.tab(1); dismiss() }.buttonStyle(.glass)
+                Button("Przećwicz nowe słówka") { Go.tab(13); dismiss() }.buttonStyle(.glass)
                 Button("Wróć do strony głównej") { Go.tab(0); dismiss() }.buttonStyle(.glass)
                 WeekSkills()
             }
