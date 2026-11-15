@@ -14,6 +14,7 @@ struct SettingsView: View {
     @AppStorage("sessionSize") private var sessionSize = 20
     @AppStorage("islandSentence") private var islandSentence = true
     @AppStorage("islandEvening") private var islandEvening = true
+    @AppStorage("lessonMotion") private var lessonMotion = true
     @State private var testing = false
     @State private var testNote = ""
     @State private var confirmReset = false
@@ -51,6 +52,14 @@ struct SettingsView: View {
                     Text(notifyNote).font(.footnote).foregroundStyle(.secondary)
                 } header: {
                     Text("Powiadomienia")
+                }
+                Section {
+                    NavigationLink("Głosy niemieckie") { GermanVoicesView() }
+                    Toggle("Animacja po lekcji", isOn: $lessonMotion)
+                    Text("Odtwarzanie lekcji idzie głosem iPhone’a i nie wysyła tekstu do AI. Rozmowa w zakładce Mów zostaje osobno.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                } header: {
+                    Text("Głos offline")
                 }
                 Section("Wygląd") {
                     ThemePicker()

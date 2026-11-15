@@ -27,6 +27,7 @@ struct StatsView: View {
                     levelCard
                     goalCard
                     summary
+                    WeekSkills().padding(16).themedCard()
                     modules
                     topics
                     activity

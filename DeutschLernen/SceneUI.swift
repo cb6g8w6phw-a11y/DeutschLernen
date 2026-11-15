@@ -53,6 +53,7 @@ struct SceneLibraryView: View {
     @State private var level = "Wszystko"
     @State private var onlyFav = false
     @State private var refresh = 0
+    @State private var jump: String?
 
     private var categories: [String] { ["Wszystko"] + MiniBook.categories }
 
@@ -117,7 +118,17 @@ struct SceneLibraryView: View {
         .navigationTitle("Mini dialogi")
         .scrollContentBackground(.hidden)
         .containerBackground(for: .navigation) { NightGlow() }
-        .onAppear { refresh += 1 }
+        .onAppear { refresh += 1
+            if let id = UserDefaults.standard.string(forKey: "jumpScene") {
+                UserDefaults.standard.removeObject(forKey: "jumpScene")
+                jump = id
+            }
+        }
+        .navigationDestination(isPresented: Binding(get: { jump != nil }, set: { if !$0 { jump = nil } })) {
+            if let jump, let scene = MiniBook.all.first(where: { $0.id == jump }) {
+                SceneStudyView(scene: scene)
+            }
+        }
     }
 
     private func filterChip(_ name: String, on: Bool, action: @escaping () -> Void) -> some View {
@@ -152,6 +163,10 @@ struct SceneStudyView: View {
     @State private var typed = ""
     @State private var verdict = ""
     @State private var fav = false
+    @State private var qOK: Bool?
+    @State private var whoOK: Bool?
+    @State private var started = Date()
+    @State private var report: LessonResult?
 
     var body: some View {
         ScrollView {
@@ -172,13 +187,14 @@ struct SceneStudyView: View {
                     .font(.footnote)
                     .foregroundStyle(Theme.text2)
                 Button {
-                    Talk.de(scene.lines.map(\.de).joined(separator: " "), rate: Speaker.savedPace())
+                    GermanVoice.shared.speak(lines: scene.lines.map { DeTurn(speaker: $0.who, text: $0.de) })
                 } label: {
                     Label("Odtwórz cały dialog", systemImage: "speaker.wave.2.fill")
                         .frame(maxWidth: .infinity, minHeight: 48)
                 }
                 .buttonStyle(MatteGlassButton())
-                Text("Stuknij słowo. Tłumaczenie wyskoczy w małym okienku. Głos jest z aplikacji.")
+                LocalPlayBar()
+                Text("Stuknij słowo. Tłumaczenie wyskoczy w małym okienku. Głos jest z iPhone’a, nie z AI.")
                     .font(.footnote)
                     .foregroundStyle(Theme.text2)
                 ForEach(scene.lines) { line in
@@ -187,7 +203,7 @@ struct SceneStudyView: View {
                             Text(line.who).font(.caption.weight(.bold)).foregroundStyle(Theme.ok)
                             Spacer()
                             Button {
-                                Talk.de(line.de, rate: Speaker.savedPace())
+                                GermanVoice.shared.speak(lines: [DeTurn(speaker: line.who, text: line.de)])
                             } label: {
                                 Label("Odtwórz", systemImage: "speaker.wave.1.fill")
                                     .font(.caption.weight(.semibold))
@@ -212,6 +228,7 @@ struct SceneStudyView: View {
                         guard picked == nil else { return }
                         picked = index
                         let ok = index == scene.answer
+                        qOK = ok
                         store.noteListen(ok: ok)
                         if !ok { HardBook.add(de: scene.lines.map(\.de).joined(separator: " "), pl: scene.situation) }
                     }
@@ -236,6 +253,7 @@ struct SceneStudyView: View {
                     Button(name) {
                         guard endPick == nil else { return }
                         endPick = name
+                        whoOK = name == lastWho
                     }
                     .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                     .padding(.horizontal, 12)
@@ -259,7 +277,7 @@ struct SceneStudyView: View {
                 Text("Zwroty").font(.headline)
                 ForEach(scene.phrases, id: \.self) { phrase in
                     Button {
-                        Talk.de(phrase, rate: Speaker.savedPace())
+                        GermanVoice.shared.speak(text: phrase)
                     } label: {
                         Label(phrase, systemImage: "speaker.wave.1")
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -277,7 +295,7 @@ struct SceneStudyView: View {
                 Button("Sprawdź") { checkReply() }.primaryButton().disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
                 if !verdict.isEmpty { Text(verdict).foregroundStyle(Theme.text2) }
                 Text("Wzorzec: \(scene.replyDE)").font(.footnote).foregroundStyle(Theme.text2)
-                Button { Talk.de(scene.replyDE, rate: Speaker.savedPace()) } label: { Label("Posłuchaj wzorca", systemImage: "speaker.wave.2") }
+                Button { GermanVoice.shared.speak(text: scene.replyDE) } label: { Label("Posłuchaj wzorca", systemImage: "speaker.wave.2") }
                     .buttonStyle(.glass)
             }
             .padding(16)
@@ -285,8 +303,16 @@ struct SceneStudyView: View {
         }
         .navigationTitle("Scenka")
         .containerBackground(for: .navigation) { NightGlow() }
-        .onAppear { fav = MiniProgress.favIDs().contains(scene.id) }
-        .onDisappear { Talk.stop() }
+        .onAppear {
+            fav = MiniProgress.favIDs().contains(scene.id)
+            if let id = UserDefaults.standard.string(forKey: "jumpScene"), id == scene.id {
+                UserDefaults.standard.removeObject(forKey: "jumpScene")
+            }
+        }
+        .onDisappear { GermanVoice.shared.stop() }
+        .sheet(item: $report) { row in
+            LessonDoneView(result: row).environmentObject(store)
+        }
     }
 
     private func meaning(_ token: String) -> String {
@@ -408,6 +434,37 @@ struct SceneStudyView: View {
             UserDefaults.standard.set(scene.note, forKey: "freshPattern")
             Haptic.bad()
         }
+        closeLesson(replyOK: ok)
+    }
+
+    private func closeLesson(replyOK: Bool) {
+        guard report == nil else { return }
+        var correct = 0
+        var wrong = 0
+        var misses: [String] = []
+        if let qOK {
+            if qOK { correct += 1 } else { wrong += 1; misses.append("Pytanie o całą historię") }
+        }
+        if let whoOK {
+            if whoOK { correct += 1 } else { wrong += 1; misses.append("Kto mówi na końcu") }
+        }
+        if replyOK { correct += 1 } else { wrong += 1; misses.append("Odpowiedź bez podpowiedzi") }
+        let remembered = replyOK ? min(3, scene.words.count) : 0
+        let row = ProgressBook.make(
+            kind: "dialog",
+            title: scene.title,
+            level: scene.level,
+            sourceID: scene.id,
+            correct: correct,
+            wrong: wrong,
+            seconds: Int(Date().timeIntervalSince(started)),
+            seenWords: scene.words.count,
+            remembered: remembered,
+            misses: misses,
+            streak: store.streak
+        )
+        ProgressBook.add(row)
+        report = row
     }
 }
 

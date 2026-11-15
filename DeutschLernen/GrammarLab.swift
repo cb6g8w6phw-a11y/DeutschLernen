@@ -88,6 +88,7 @@ enum GrammarBook {
 struct GrammarLibraryView: View {
     @State private var level = "Wszystko"
     @State private var refresh = 0
+    @State private var jump: String?
 
     var body: some View {
         let _ = refresh
@@ -132,7 +133,18 @@ struct GrammarLibraryView: View {
         .navigationTitle("Wzorce gramatyczne")
         .scrollContentBackground(.hidden)
         .containerBackground(for: .navigation) { NightGlow() }
-        .onAppear { refresh += 1 }
+        .onAppear {
+            refresh += 1
+            if let id = UserDefaults.standard.string(forKey: "jumpGrammar") {
+                UserDefaults.standard.removeObject(forKey: "jumpGrammar")
+                jump = id
+            }
+        }
+        .navigationDestination(isPresented: Binding(get: { jump != nil }, set: { if !$0 { jump = nil } })) {
+            if let jump, let lesson = GrammarBook.lessons.first(where: { $0.id == jump }) {
+                GrammarLessonView(lesson: lesson)
+            }
+        }
     }
 }
 
@@ -146,6 +158,11 @@ struct GrammarLessonView: View {
     @State private var typed = ""
     @State private var made = ""
     @State private var note = ""
+    @State private var started = Date()
+    @State private var okCount = 0
+    @State private var badCount = 0
+    @State private var misses: [String] = []
+    @State private var report: LessonResult?
 
     var body: some View {
         ScrollView {
@@ -162,7 +179,10 @@ struct GrammarLessonView: View {
         }
         .navigationTitle("Wzorzec")
         .containerBackground(for: .navigation) { NightGlow() }
-        .onDisappear { Talk.stop() }
+        .onDisappear { GermanVoice.shared.stop() }
+        .sheet(item: $report) { row in
+            LessonDoneView(result: row).environmentObject(store)
+        }
     }
 
     private var teach: some View {
@@ -179,7 +199,7 @@ struct GrammarLessonView: View {
             ForEach(lesson.work) { item in
                 Text("\(item.de) — \(item.pl)").font(.subheadline)
             }
-            Button { Talk.de(lesson.pattern, rate: Speaker.savedPace()) } label: { Label("Posłuchaj wzorca", systemImage: "speaker.wave.2") }
+            Button { GermanVoice.shared.speak(text: lesson.pattern) } label: { Label("Posłuchaj wzorca", systemImage: "speaker.wave.2") }
                 .buttonStyle(.glass)
             Button("Ćwiczę") { step = 1 }.primaryButton()
         }
@@ -192,7 +212,13 @@ struct GrammarLessonView: View {
                 Button(lesson.options[index]) {
                     guard picked == nil else { return }
                     picked = index
-                    if index != lesson.answer { store.noteSkill("grammar", ok: false) }
+                    if index != lesson.answer {
+                        badCount += 1
+                        misses.append(GrammarLessonView.weak(lesson.topic))
+                        store.noteSkill("grammar", ok: false)
+                    } else {
+                        okCount += 1
+                    }
                 }
                 .frame(maxWidth: .infinity, minHeight: 48)
                 .foregroundStyle(.white)
@@ -229,10 +255,13 @@ struct GrammarLessonView: View {
             Button("Sprawdź szyk") {
                 if built == lesson.order {
                     note = "Szyk jest dobry."
+                    okCount += 1
                     step = 3
                 } else {
                     note = "Jeszcze nie. Wzorzec: \(lesson.order.joined(separator: " "))."
                     built = []
+                    badCount += 1
+                    misses.append("Szyk zdania")
                     HardBook.add(de: lesson.replyDE, pl: lesson.replyPL)
                 }
             }
@@ -251,8 +280,13 @@ struct GrammarLessonView: View {
                     .background(clozePick == index ? Theme.ok.opacity(0.3) : Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
             Button("Dalej") {
-                if clozePick == lesson.clozeAnswer { step = 4 } else {
+                if clozePick == lesson.clozeAnswer {
+                    okCount += 1
+                    step = 4
+                } else {
                     note = "Luka: \(lesson.clozeOptions[lesson.clozeAnswer])."
+                    badCount += 1
+                    misses.append(GrammarLessonView.weak(lesson.topic))
                     store.noteSkill("grammar", ok: false)
                 }
             }
@@ -298,8 +332,34 @@ struct GrammarLessonView: View {
     }
 
     private func finish() {
+        guard report == nil else { return }
         GrammarBook.mark(lesson.id, pattern: lesson.pattern)
         store.noteSkill("grammar", ok: true)
         UserDefaults.standard.set(lesson.pattern, forKey: "freshPattern")
+        okCount += 1
+        let row = ProgressBook.make(
+            kind: "grammar",
+            title: lesson.title,
+            level: lesson.level,
+            sourceID: lesson.id,
+            correct: okCount,
+            wrong: badCount,
+            seconds: Int(Date().timeIntervalSince(started)),
+            seenWords: lesson.examples.count + lesson.work.count,
+            remembered: 0,
+            misses: misses,
+            streak: store.streak
+        )
+        ProgressBook.add(row)
+        report = row
+    }
+
+    static func weak(_ topic: String) -> String {
+        let text = topic.lowercased()
+        if text.contains("perfekt") { return "Czas przeszły Perfekt" }
+        if text.contains("rodzaj") || text.contains("der") { return "Rodzajniki der, die, das" }
+        if text.contains("akkusativ") || text.contains("dativ") || text.contains("przypad") { return "Akkusativ i Dativ" }
+        if text.contains("weil") || text.contains("szyk") || text.contains("zdani") { return "Szyk zdania" }
+        return "Wzorzec: \(topic)"
     }
 }

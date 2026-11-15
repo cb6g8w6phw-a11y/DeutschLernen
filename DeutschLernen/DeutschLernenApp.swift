@@ -76,6 +76,11 @@ struct RootView: View {
                 Ping.plan(reviews: store.reviewsToday)
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .jumpTab)) { note in
+            if let next = note.object as? Int {
+                tab = next
+            }
+        }
         .alert("Zezwól na powiadomienia", isPresented: $askNotify) {
             Button("Zezwól") {
                 notifyExplained = true
@@ -244,6 +249,7 @@ struct MoreView: View {
                 more("Z życia", "plus.circle.fill", Theme.ok) { CaptureView() }
                 more("Z twojego życia", "sparkles", Theme.orange) { LifeView() }
                 more("Skan zdjęcia", "camera", .white) { ScanView() }
+                more("Głosy niemieckie", "waveform", Theme.ok) { GermanVoicesView() }
                 more("Ustawienia i klucz", "gear", .white) { SettingsView() }
             }
             .navigationTitle("Więcej")
