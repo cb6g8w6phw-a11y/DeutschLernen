@@ -261,8 +261,10 @@ struct TodayView: View {
                     moreRow("Trening słuchania", "Wolno, normalnie, szybko", "headphones") { ListenView() }
                     moreRow("Rozmowa z AI", "Mówisz, AI odpowiada po niemiecku", "bubble.left.and.bubble.right") { TutorView() }
                     moreRow("Niemiecki w pracy", "Szef, koledzy, budowa", "helmet") { WorkHubView() }
-                    moreRow("Codzienne życie", "Sklep, lekarz, dojazd", "house") { LifeView() }
+                    moreRow("Codzienne życie", "Sklep, lekarz, dojazd", "house") { DailySituationsView() }
                     moreRow("Powtórka błędów", "Tylko Twoje pomyłki", "target") { RepairView() }
+                    moreRow("Wymowa", "Słowa, które złapał mikrofon", "waveform") { PronounceView() }
+                    moreRow("Test na start", "Sześć pytań, bez udawanego egzaminu", "checklist") { PlacementView() }
                     moreRow("Postępy", "Czas, słowa, błędy", "chart.bar") { StatsView() }
                     Text("Opanowane słowa: \(store.masteredCount) · Zdania: \(sentences)")
                         .font(.footnote)
@@ -573,6 +575,7 @@ struct ListenView: View {
     @State private var voice = ""
     @State private var picked: Int?
     @State private var showPL = false
+    @State private var heardOnce = false
     @State private var saved = false
     @State private var voices: [(id: String, name: String)] = []
 
@@ -606,7 +609,7 @@ struct ListenView: View {
                     Picker("Tempo", selection: $speed) {
                         Text("Wolno").tag(Float(0.35))
                         Text("Normalnie").tag(Float(0.46))
-                        Text("Szybko").tag(Float(0.56))
+                        Text("Szybko").tag(Float(0.62))
                     }
                     .pickerStyle(.segmented)
                     if voices.count > 1 {
@@ -615,8 +618,11 @@ struct ListenView: View {
                             ForEach(voices, id: \.id) { v in Text(v.name).tag(v.id) }
                         }
                     }
-                    Button { Talk.de(item.de, rate: speed, voice: voice.isEmpty ? nil : voice) } label: {
-                        Label(showPL ? "Odtwórz jeszcze raz" : "Odtwórz bez napisów", systemImage: "speaker.wave.2.fill")
+                    Button {
+                        heardOnce = true
+                        Talk.de(item.de, rate: speed, voice: voice.isEmpty ? nil : voice)
+                    } label: {
+                        Label(heardOnce ? "Odtwórz jeszcze raz" : "Odtwórz bez napisów", systemImage: "speaker.wave.2.fill")
                             .font(.body.weight(.semibold))
                             .frame(maxWidth: .infinity)
                             .frame(minHeight: 52)
@@ -624,15 +630,12 @@ struct ListenView: View {
                             .foregroundStyle(Theme.ink)
                     }
                     .buttonStyle(.plain)
-                    if !showPL {
-                        Button("Słyszałem — pokaż tekst") { showPL = true }
-                            .primaryButton()
+                    if !heardOnce {
+                        Text("Najpierw samo ucho. Pytanie wejdzie po odtworzeniu, tekst dopiero po odpowiedzi.")
+                            .font(.footnote)
+                            .foregroundStyle(Theme.text2)
                     }
-                    if showPL {
-                    Text(item.de)
-                        .font(.title3.bold())
-                    Text(item.pl)
-                        .foregroundStyle(Theme.text2)
+                    if heardOnce {
                     Text(item.question)
                         .font(.title3.bold())
                         .foregroundStyle(Theme.text)
@@ -648,12 +651,19 @@ struct ListenView: View {
                                 .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.25), lineWidth: 1.5))
                         }
                         .buttonStyle(.plain)
+                        .disabled(picked != nil && i != picked && i != item.answer)
                     }
                     if picked != nil {
                         VStack(alignment: .leading, spacing: 8) {
+                            Text(item.de).font(.title3.bold())
+                            Text(item.pl).foregroundStyle(Theme.text2)
                             Text(picked == item.answer ? "Dobrze." : "Poprawnie: \(item.options[item.answer])")
                                 .font(.headline)
                                 .foregroundStyle(picked == item.answer ? Theme.ok : Theme.bad)
+                            Button { Talk.de(item.de, rate: speed, voice: voice.isEmpty ? nil : voice) } label: {
+                                Label("Posłuchaj jeszcze raz, już z tekstem", systemImage: "speaker.wave.2")
+                            }
+                            .buttonStyle(.glass)
                             Button {
                                 store.pinForReview(Word(
                                     de: item.de,
@@ -716,6 +726,7 @@ struct ListenView: View {
         index = 0
         picked = nil
         showPL = false
+        heardOnce = false
         saved = false
         showIsland()
     }
@@ -734,6 +745,7 @@ struct ListenView: View {
         UserDefaults.standard.set(heard, forKey: "heardListen")
         picked = nil
         showPL = false
+        heardOnce = false
         saved = false
         index += 1
         showIsland()

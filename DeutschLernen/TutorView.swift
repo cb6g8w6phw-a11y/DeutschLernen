@@ -42,7 +42,7 @@ struct TutorView: View {
     @State private var situation = 0
     var launch: TalkLaunch? = nil
 
-    private let people = ["Marek", "Lena", "Piotr", "Kierownik", "Sklep", "Telefon", "Lekarz", "Agencja"]
+    private let people = ["Marek", "Lena", "Piotr", "Kierownik", "Sklep", "Telefon", "Lekarz", "Agencja", "Sąsiad", "Urząd", "Niespodzianka"]
     private var blind: Bool { persona == "Telefon" || persona == "Agencja" }
 
     var body: some View {
@@ -668,6 +668,12 @@ struct TutorView: View {
             return Turn(role: "model", german: "Guten Tag. Was fehlt Ihnen denn?", polish: "Dzień dobry. Co panu dolega?", say: "Mir tut der Hals weh und ich brauche eine Krankschreibung.")
         case "Agencja":
             return Turn(role: "model", german: "Guten Tag, hier ist die Zeitarbeitsfirma. Können Sie morgen anfangen?", polish: "Dzień dobry, tu agencja pracy. Może pan jutro zacząć?", say: "Ja, ich kann morgen um sechs Uhr anfangen.")
+        case "Sąsiad":
+            return Turn(role: "model", german: "Entschuldigung, können Sie die Musik etwas leiser machen?", polish: "Przepraszam, może pan trochę ściszyć muzykę?", say: "Ja, klar. Ich mache sie leiser.")
+        case "Urząd":
+            return Turn(role: "model", german: "Guten Tag. Haben Sie Ihren Ausweis dabei?", polish: "Dzień dobry. Ma pan przy sobie dowód?", say: "Ja, hier ist mein Ausweis.")
+        case "Niespodzianka":
+            return Turn(role: "model", german: "Sag mal, kannst du heute länger bleiben?", polish: "Słuchaj, możesz dziś zostać dłużej?", say: "Heute nicht. Ich muss zum Arzt.")
         default:
             return Turn(role: "model", german: "Na, was machst du heute auf der Baustelle?", polish: "No i co dzisiaj robisz na budowie?", say: "Ich montiere heute die Klimaanlage.")
         }
@@ -699,6 +705,12 @@ struct TutorView: View {
             who = "Jesteś lekarzem. Pytasz krótko o objawy i o to, czy potrzebuje zwolnienia."
         case "Agencja":
             who = "Dzwonisz z agencji pracy. Pytasz o termin, doświadczenie i czy może zacząć jutro."
+        case "Sąsiad":
+            who = "Jesteś sąsiadem w bloku w Niemczech. Mówisz o hałasie, śmieciach albo parkingu. Krótko i po ludzku."
+        case "Urząd":
+            who = "Jesteś urzędnikiem. Pytasz o dokument, termin i adres. Mówisz wyraźnie, ale w normalnym tempie."
+        case "Niespodzianka":
+            who = "Zaczynasz od zwykłego pytania z budowy, a w drugim zdaniu zmieniasz na coś codziennego, czego uczeń się nie spodziewa. Nadal jedno pytanie naraz."
         default:
             who = "Masz na imię Marek. Pracujesz na budowie i przy montażu w Niemczech. Gadasz jak kolega na zmianie, nie jak nauczyciel."
         }
