@@ -12,6 +12,7 @@ struct Vocab: Identifiable, Codable, Hashable {
     let note: String
 }
 
+@MainActor
 enum VocabBook {
     static let built: [Vocab] = [
         v("die Baustelle", "plac budowy", "die Baustellen", "Ich arbeite auf der Baustelle.", "Pracuję na budowie.", "Budowa", "Rzeczownik – rodzaj żeński", "auf der Baustelle arbeiten"),
