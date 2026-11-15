@@ -157,7 +157,7 @@ enum ProgressBook {
         if wrong == 0, correct >= 2 { badge = "Bez błędu" }
         else if streak >= 7 { badge = "Tydzień z rzędu" }
         else if todayCount() == 0 { badge = "Pierwsza dziś" }
-        let next = suggest(kind: kind, misses: cleanMiss, title: title)
+        let next = suggest(kind: kind, misses: cleanMiss, title: title, level: level, area: area, sourceID: sourceID)
         return LessonResult(
             id: UUID().uuidString,
             at: Date(),
@@ -192,6 +192,9 @@ enum ProgressBook {
         if row.kind == "dialog", row.correct + row.wrong >= 3, !row.misses.contains("Pytanie o całą historię") {
             lines.append("Rozumienie prostych pytań")
         }
+        if row.kind == "text", row.correct + row.wrong >= 2, !row.misses.contains("Pytanie o całą historię") {
+            lines.append("Rozumiesz cały tekst, nie tylko jedno zdanie.")
+        }
         if row.remembered > 0, isWork(row.area) {
             lines.append("Zwroty z pracy zapisane w słowniku: \(row.remembered).")
         } else if row.remembered > 0 {
@@ -210,36 +213,192 @@ enum ProgressBook {
         case "Akkusativ i Dativ": return "Zamień jedno zdanie: komu i kogo."
         case "Czas przeszły Perfekt": return "Powiedz to samo zdanie w Perfekt, z haben albo sein."
         case "Odpowiedź bez podpowiedzi": return "Zamknij wzorzec i napisz zdanie jeszcze raz."
-        case "Pytanie o całą historię": return "Przeczytaj dialog od początku i wskaż, o co chodziło."
+        case "Pytanie o całą historię": return "Przeczytaj od początku i wskaż, o co chodziło w całości."
         case "Kto mówi na końcu": return "Przejdź wypowiedzi od ostatniej do pierwszej."
         default: return "Wróć do tego jednego miejsca, nie do całej aplikacji."
         }
     }
 
-    private static func suggest(kind: String, misses: [String], title: String) -> (title: String, blurb: String, tab: Int, id: String) {
-        let grammarLeft = GrammarBook.lessons.filter { !GrammarBook.doneIDs().contains($0.id) }
-        if misses.contains(where: { $0.contains("Szyk") || $0.contains("Rodzaj") || $0.contains("Akkusativ") || $0.contains("Perfekt") }) {
-            let needle = misses.contains { $0.contains("Perfekt") } ? "perfekt"
-                : misses.contains { $0.contains("Rodzaj") } ? "rodzaj"
-                : misses.contains { $0.contains("Akkusativ") } ? "dativ"
-                : "szyk"
-            if let hit = grammarLeft.first(where: { ($0.topic + " " + $0.title).lowercased().contains(needle) })
-                ?? grammarLeft.first {
-                return (hit.title, "Tu uciekł \(misses[0].lowercased()). Następna lekcja jest z tego, nie z losowego tematu.", 6, hit.id)
+    static func lemma(_ de: String) -> String {
+        var text = de.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        for prefix in ["der ", "die ", "das ", "den ", "dem ", "des ", "ein ", "eine ", "einen "] where text.hasPrefix(prefix) {
+            text.removeFirst(prefix.count)
+            break
+        }
+        return text.trimmingCharacters(in: .punctuationCharacters)
+    }
+
+    static func savedLemmas() -> [String] {
+        guard let data = UserDefaults.standard.data(forKey: "myVocab"),
+              let list = try? JSONDecoder().decode([Vocab].self, from: data) else { return [] }
+        var out: [String] = []
+        for card in list {
+            let word = lemma(card.de)
+            if word.count > 2, !out.contains(word) { out.append(word) }
+        }
+        return out
+    }
+
+    static func levelScore(_ have: String, _ want: String) -> Int {
+        if have == want { return 6 }
+        let order = ["A1", "A2", "B1", "B2"]
+        guard let i = order.firstIndex(of: have), let j = order.firstIndex(of: want) else { return 0 }
+        return abs(i - j) == 1 ? 2 : 0
+    }
+
+    static func nextLevel(_ level: String) -> String {
+        switch level {
+        case "A1": return "A2"
+        case "A2": return "B1"
+        case "B1": return "B2"
+        default: return level
+        }
+    }
+
+    private static func suggest(kind: String, misses: [String], title: String, level: String, area: String, sourceID: String) -> (title: String, blurb: String, tab: Int, id: String) {
+        let saved = savedLemmas()
+        if misses.contains(where: { $0.contains("Odpowiedź") }) {
+            let why = "Samodzielne zdanie nie weszło. Następna lekcja ćwiczy układanie zdania, nie kolejną pozycję z listy."
+            if let hit = grammarPick(needles: ["szyk zdania", "budowanie pytań"], level: level, saved: saved, why: why) {
+                return hit
             }
         }
-        let scenes = MiniBook.all.filter { !MiniProgress.doneIDs().contains($0.id) && $0.title != title }
-        if kind == "dialog", let next = scenes.first {
-            let tone = misses.isEmpty ? "Dobrze radzisz sobie z tą rozmową." : "Tu zostało: \(misses.joined(separator: ", "))."
-            return (next.title, "\(tone) Teraz: \(next.title), \(next.category), poziom \(next.level).", 5, next.id)
+        if misses.contains(where: { $0.contains("Szyk") }) {
+            if let hit = grammarPick(needles: ["szyk zdania"], level: level, saved: saved, why: "Szyk zdania uciekł. Bierzesz wzorzec z tego, nie pierwszą wolną lekcję.") {
+                return hit
+            }
         }
-        if let next = grammarLeft.first {
-            return (next.title, "Wzorzec z tej lekcji jest zapisany. Kolejny, którego jeszcze nie było: \(next.title).", 6, next.id)
+        if misses.contains(where: { $0.contains("Perfekt") }) {
+            if let hit = grammarPick(needles: ["perfekt"], level: level, saved: saved, why: "Perfekt nie usiadł. Następna lekcja jest z przeszłości, nie z innej półki.") {
+                return hit
+            }
         }
-        if let next = scenes.first {
-            return (next.title, "Została scenka \(next.title), poziom \(next.level).", 5, next.id)
+        if misses.contains(where: { $0.contains("Rodzaj") }) {
+            if let hit = grammarPick(needles: ["rodzaj"], level: level, saved: saved, why: "Rodzajnik uciekł. Następna lekcja jest o der, die, das.") {
+                return hit
+            }
+        }
+        if misses.contains(where: { $0.contains("Akkusativ") || $0.contains("Dativ") || $0.contains("Przypad") }) {
+            if let hit = grammarPick(needles: ["przypadki", "dativ", "akkusativ"], level: level, saved: saved, why: "Przypadek uciekł. Następna lekcja jest o den i dem.") {
+                return hit
+            }
+        }
+        if let raw = misses.first(where: { $0.hasPrefix("Wzorzec:") }) {
+            let needle = raw.replacingOccurrences(of: "Wzorzec:", with: "").trimmingCharacters(in: .whitespaces).lowercased()
+            if let hit = grammarPick(needles: [needle], level: level, saved: saved, why: "Ten wzorzec jeszcze nie siadł. Wracasz do niego, nie do pierwszej wolnej lekcji.") {
+                return hit
+            }
+        }
+        if misses.contains(where: { $0.contains("Pytanie o całą") }) {
+            if let hit = textPick(level: level, area: area, saved: saved, avoid: sourceID, why: "Pytanie o całość nie weszło. Następny jest tekst ciągły, nie kolejny dialog z listy.") {
+                return hit
+            }
+        }
+        if misses.contains("Kto mówi na końcu") {
+            if let hit = scenePick(level: level, area: area, saved: saved, avoidTitle: title, avoidID: sourceID, why: "Uciekło, kto mówi na końcu. Biorę inną rozmowę na tym poziomie, nie pierwszą niedokończoną.") {
+                return hit
+            }
+        }
+        if kind == "grammar", let hit = sameTopic(area: area, title: title, level: level) {
+            return hit
+        }
+        if kind == "text", let hit = textPick(level: level, area: area, saved: saved, avoid: sourceID, why: saved.isEmpty ? "Ten tekst jest zapisany. Dalej inna historia na tym poziomie, nie kolejna z brzegu." : "Dalej historia, w której jest zapisane słówko.") {
+            return hit
+        }
+        if let hit = scenePick(level: level, area: area, saved: saved, avoidTitle: title, avoidID: sourceID, why: saved.isEmpty ? "Dalej inna rozmowa na tym poziomie. Nie biorę jej tylko dlatego, że jest następna na liście." : "Dalej rozmowa, w której jest zapisane słówko.") {
+            return hit
+        }
+        if let hit = textPick(level: level, area: area, saved: saved, avoid: sourceID, why: "Została historia na tym poziomie.") {
+            return hit
         }
         return ("Powtórka", "Na dziś nie ma nowej lekcji z tej półki. Wróć do błędów.", 0, "")
+    }
+
+    private static func grammarPick(needles: [String], level: String, saved: [String], why: String) -> (title: String, blurb: String, tab: Int, id: String)? {
+        let done = GrammarBook.doneIDs()
+        var best: (GLesson, Int)?
+        for lesson in GrammarBook.lessons {
+            let blob = (lesson.topic + " " + lesson.title).lowercased()
+            var score = 0
+            for (index, needle) in needles.enumerated() where blob.contains(needle) {
+                score += 24 - index * 3
+            }
+            if score == 0 { continue }
+            score += levelScore(lesson.level, level)
+            if !done.contains(lesson.id) { score += 3 }
+            let examples = (lesson.examples + lesson.work).map(\.de).joined(separator: " ").lowercased()
+            if saved.contains(where: { examples.contains($0) }) { score += 4 }
+            if best == nil || score > best!.1 { best = (lesson, score) }
+        }
+        guard let best else { return nil }
+        let linked = scenePick(level: level, area: "", saved: saved, avoidTitle: "", avoidID: "", why: "")
+        let extra = linked == nil ? "" : " Potem to samo w rozmowie: \(linked!.title)."
+        let word = saved.first.map { " Zapisane słówko „\($0)” zostaje w powtórkach." } ?? ""
+        return (best.0.title, why + extra + word, 6, best.0.id)
+    }
+
+    private static func sameTopic(area: String, title: String, level: String) -> (title: String, blurb: String, tab: Int, id: String)? {
+        let done = GrammarBook.doneIDs()
+        var best: (GLesson, Int)?
+        for lesson in GrammarBook.lessons where lesson.topic == area && lesson.title != title {
+            var score = levelScore(lesson.level, level)
+            if lesson.level == nextLevel(level) { score += 4 }
+            if !done.contains(lesson.id) { score += 10 }
+            if best == nil || score > best!.1 { best = (lesson, score) }
+        }
+        guard let best else { return nil }
+        return (best.0.title, "Ten wzorzec już był. Dalej ten sam temat: \(best.0.title), nie pierwsza wolna lekcja z innej półki.", 6, best.0.id)
+    }
+
+    private static func rank(_ id: String) -> Int { Int(id.filter(\.isNumber)) ?? 0 }
+
+    private static func better(score: Int, id: String, bestScore: Int?, bestID: String?, avoid: String) -> Bool {
+        guard let bestScore, let bestID else { return true }
+        if score != bestScore { return score > bestScore }
+        guard !avoid.isEmpty else { return rank(id) < rank(bestID) }
+        let next = rank(avoid) + 1
+        let candNext = rank(id) == next
+        let bestNext = rank(bestID) == next
+        if candNext != bestNext { return !candNext }
+        return rank(id) < rank(bestID)
+    }
+
+    private static func textPick(level: String, area: String, saved: [String], avoid: String, why: String) -> (title: String, blurb: String, tab: Int, id: String)? {
+        let done = TextBook.doneIDs()
+        var best: (ReadText, Int)?
+        for text in TextBook.all where text.id != avoid {
+            var score = levelScore(text.level, level)
+            if !done.contains(text.id) { score += 2 }
+            if !area.isEmpty, text.category != area { score += 1 }
+            let blob = text.german.lowercased()
+            score += saved.filter { blob.contains($0) }.count * 8
+            if better(score: score, id: text.id, bestScore: best?.1, bestID: best?.0.id, avoid: avoid) {
+                best = (text, score)
+            }
+        }
+        guard let best else { return nil }
+        let hitWord = saved.first { best.0.german.lowercased().contains($0) }
+        let because = hitWord.map { " Jest w niej zapisane słówko „\($0)”." } ?? ""
+        return (best.0.title, why + " \(best.0.title), \(best.0.category), poziom \(best.0.level)." + because, 12, best.0.id)
+    }
+
+    private static func scenePick(level: String, area: String, saved: [String], avoidTitle: String, avoidID: String, why: String) -> (title: String, blurb: String, tab: Int, id: String)? {
+        let done = MiniProgress.doneIDs()
+        var best: (MiniScene, Int)?
+        for scene in MiniBook.all where scene.id != avoidID && scene.title != avoidTitle {
+            var score = levelScore(scene.level, level)
+            if !done.contains(scene.id) { score += 2 }
+            if !area.isEmpty, scene.category != area { score += 2 }
+            let blob = (scene.lines.map(\.de) + scene.words.map(\.de) + [scene.replyDE]).joined(separator: " ").lowercased()
+            score += saved.filter { blob.contains($0) }.count * 8
+            if better(score: score, id: scene.id, bestScore: best?.1, bestID: best?.0.id, avoid: avoidID) {
+                best = (scene, score)
+            }
+        }
+        guard let best else { return nil }
+        let blob = (best.0.lines.map(\.de) + best.0.words.map(\.de)).joined(separator: " ").lowercased()
+        let because = saved.first { blob.contains($0) }.map { " Jest w niej zapisane słówko „\($0)”." } ?? ""
+        return (best.0.title, why + " \(best.0.title), \(best.0.category), poziom \(best.0.level)." + because, 5, best.0.id)
     }
 
     static func isWork(_ area: String) -> Bool {
@@ -283,9 +442,10 @@ extension Notification.Name {
 }
 
 enum Go {
-    static func tab(_ n: Int, scene: String? = nil, grammar: String? = nil) {
+    static func tab(_ n: Int, scene: String? = nil, grammar: String? = nil, text: String? = nil) {
         if let scene { UserDefaults.standard.set(scene, forKey: "jumpScene") }
         if let grammar { UserDefaults.standard.set(grammar, forKey: "jumpGrammar") }
+        if let text { UserDefaults.standard.set(text, forKey: "jumpText") }
         NotificationCenter.default.post(name: .jumpTab, object: n)
     }
 }
@@ -390,6 +550,7 @@ struct LessonDoneView: View {
                     .buttonStyle(DoneButton())
                 Button("Powtórz błędy") {
                     if result.kind == "grammar" { Go.tab(6, grammar: result.sourceID) }
+                    else if result.kind == "text" { Go.tab(12, text: result.sourceID) }
                     else { Go.tab(5, scene: result.sourceID) }
                     dismiss()
                 }
@@ -471,6 +632,8 @@ struct LessonDoneView: View {
             Go.tab(5, scene: result.nextID)
         } else if result.nextTab == 6, !result.nextID.isEmpty {
             Go.tab(6, grammar: result.nextID)
+        } else if result.nextTab == 12, !result.nextID.isEmpty {
+            Go.tab(12, text: result.nextID)
         } else {
             Go.tab(tab)
         }
@@ -511,6 +674,7 @@ struct WeekSkills: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Postęp z zapisanych lekcji").font(.headline)
             Text(ProgressBook.skill("dialog", "Mini dialogi"))
+            Text(ProgressBook.skill("text", "Teksty i historie"))
             Text(ProgressBook.skill("grammar", "Gramatyka"))
             Text(ProgressBook.workLine())
             Text(ProgressBook.counterLine("Słownictwo", ok: store.journal.skillVocabOK, bad: store.journal.skillVocabBad))

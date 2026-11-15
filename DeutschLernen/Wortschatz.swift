@@ -149,8 +149,9 @@ enum VocabBook {
     static func due(_ store: LearningStore) -> [Vocab] {
         let now = Date()
         return all(store).filter { card in
-            let s = stat(store, card)
-            return s.correct + s.wrong > 0 && s.due <= now
+            guard let s = store.stats[card.de] else { return false }
+            if s.correct + s.wrong > 0 { return s.due <= now }
+            return s.box == 0 && s.due <= now && s.due.timeIntervalSince1970 > 0
         }
     }
 
@@ -169,6 +170,17 @@ enum VocabBook {
             mine.insert(card, at: 0)
             saveCustom(Array(mine.prefix(80)))
         }
+    }
+
+    static func saveMine(_ card: Vocab) {
+        var list = UserDefaults.standard.stringArray(forKey: "freshVocab") ?? []
+        list.removeAll { $0 == card.de }
+        list.insert(card.de, at: 0)
+        UserDefaults.standard.set(Array(list.prefix(8)), forKey: "freshVocab")
+        var mine = custom
+        mine.removeAll { $0.de.lowercased() == card.de.lowercased() }
+        mine.insert(card, at: 0)
+        saveCustom(Array(mine.prefix(80)))
     }
 
     static func freshListen() -> [CoachData.ListenQ] {

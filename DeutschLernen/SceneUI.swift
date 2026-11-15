@@ -271,8 +271,18 @@ struct SceneStudyView: View {
                         .foregroundStyle(endPick == lastWho ? Theme.ok : Theme.bad)
                 }
                 Text("Słówka").font(.headline)
+                if !savedInScene.isEmpty {
+                    Text("Z twojego słownika w tej rozmowie").font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ok)
+                    ForEach(savedInScene, id: \.de) { card in
+                        Text("\(card.de) — \(card.pl)").font(.subheadline)
+                    }
+                }
                 ForEach(scene.words) { word in
-                    Text("\(word.de) — \(word.pl)").font(.subheadline)
+                    HStack {
+                        Text("\(word.de) — \(word.pl)").font(.subheadline)
+                        Spacer()
+                        SaveWordButton(de: word.de, pl: word.pl, ex: exampleFor(ProgressBook.lemma(word.de)), exPl: word.pl, topic: scene.category, level: scene.level)
+                    }
                 }
                 Text("Zwroty").font(.headline)
                 ForEach(scene.phrases, id: \.self) { phrase in
@@ -328,6 +338,11 @@ struct SceneStudyView: View {
         }
         if let known = Self.bits[bare] { return "\(token) — \(known)" }
         return "Nie mam osobnego tłumaczenia dla „\(token)”."
+    }
+
+    private var savedInScene: [Vocab] {
+        let blob = scene.lines.map(\.de).joined(separator: " ").lowercased()
+        return VocabBook.custom.filter { blob.contains(ProgressBook.lemma($0.de)) }
     }
 
     private func exampleFor(_ bare: String) -> String {
