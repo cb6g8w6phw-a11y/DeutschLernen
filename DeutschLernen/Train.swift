@@ -760,11 +760,11 @@ struct ListenView: View {
                             Text(item.pl).foregroundStyle(Theme.text2)
                             if picked == item.answer {
                                 Text("Dobrze.")
+                                    .font(.headline)
+                                    .foregroundStyle(Theme.ok)
                             } else {
                                 MerkeBox(text: "Gut zu wissen: poprawnie jest „\(item.options[item.answer])”. \(item.pl)")
                             }
-                                .font(.headline)
-                                .foregroundStyle(picked == item.answer ? Theme.ok : Theme.bad)
                             Button { Talk.de(item.de, rate: speed, voice: voice.isEmpty ? nil : voice) } label: {
                                 Label("Posłuchaj jeszcze raz, już z tekstem", systemImage: "speaker.wave.2")
                             }
