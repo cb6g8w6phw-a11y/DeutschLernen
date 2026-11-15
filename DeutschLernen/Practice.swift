@@ -368,6 +368,9 @@ struct MoreTools: View {
                 link("Egzamin", "checkmark.seal") { ExamView() }
                 link("Błędy, 8 najczęstszych", "exclamationmark.bubble") { MistakeReview() }
                 link("Wymowa", "waveform") { PronounceView() }
+                link("Całe zwroty", "text.bubble") { PhraseView() }
+                link("Myślenie po niemiecku", "brain") { ThinkView() }
+                link("Opisz obrazek", "photo") { PictureTalk() }
                 link("Shadowing", "ear") { ShadowView() }
                 link("Jak mówią", "quote.bubble") { StreetView() }
                 link("Dyktando", "pencil.line") { DictationView() }

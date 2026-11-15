@@ -299,6 +299,13 @@ struct TodayView: View {
                         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Color.white.opacity(0.08), lineWidth: 1))
                     }
                     .buttonStyle(.plain)
+                    Text("Jeszcze")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.white)
+                    moreRow("Myślenie po niemiecku", "Sytuacja bez polskiego", "brain") { ThinkView() }
+                    moreRow("Shadowing", "Powtórz za zdaniem", "ear") { ShadowView() }
+                    moreRow("Całe zwroty", "Nie samo machen", "text.bubble") { PhraseView() }
+                    moreRow("Opisz obrazek", "Budowa, sklep, ulica", "photo") { PictureTalk() }
                     Text("Postępy, ustawienia i tryb offline → Profil")
                         .font(.footnote)
                         .foregroundStyle(Color.white.opacity(0.45))
@@ -338,6 +345,26 @@ struct TodayView: View {
             .padding(14)
             .background(Color(white: 0.11), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func moreRow<Dest: View>(_ title: String, _ text: String, _ icon: String, @ViewBuilder dest: () -> Dest) -> some View {
+        NavigationLink { dest() } label: {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .frame(width: 28)
+                    .foregroundStyle(.white)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).font(.headline).foregroundStyle(.white)
+                    Text(text).font(.caption).foregroundStyle(Color.white.opacity(0.55))
+                }
+                Spacer()
+                Image(systemName: "chevron.right").foregroundStyle(Color.white.opacity(0.35))
+            }
+            .padding(14)
+            .background(Color(white: 0.11), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color.white.opacity(0.08), lineWidth: 1))
         }
         .buttonStyle(.plain)
     }

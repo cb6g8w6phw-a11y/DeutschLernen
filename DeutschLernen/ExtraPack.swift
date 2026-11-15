@@ -8,7 +8,7 @@ struct ShadowView: View {
     @State private var index = 0
     @State private var parts: [(word: String, ok: Bool)] = []
     @State private var heard = ""
-    @State private var played = false
+    @State private var played = 0
     @State private var alive = true
 
     private let lines: [(de: String, pl: String)] = [
@@ -30,12 +30,15 @@ struct ShadowView: View {
                     .foregroundStyle(Theme.text2)
                 Text("\(index + 1) z \(lines.count)").font(.footnote).foregroundStyle(Theme.text2)
                 Text(line.pl).font(.headline)
-                Text(played ? line.de : "Najpierw odsłuchaj. Tekst jest pod spodem, jak puścisz.")
+                Text(played > 0 ? line.de : "Posłuchaj dwa razy. Tekst wejdzie po pierwszym odtworzeniu.")
                     .font(.title2.bold())
+                Text(played < 2 ? "Odsłuchane \(played) z 2. Potem powtarzasz." : "Teraz powiedz to samo.")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.text2)
                 HStack {
-                    Button { Talk.de(line.de, rate: 0.36); played = true } label: { Label("Wolno", systemImage: "tortoise") }
+                    Button { Talk.de(line.de, rate: 0.36); played += 1 } label: { Label("Wolno", systemImage: "tortoise") }
                         .buttonStyle(.glass)
-                    Button { Talk.de(line.de, rate: 0.48); played = true } label: { Label("Normalnie", systemImage: "speaker.wave.2") }
+                    Button { Talk.de(line.de, rate: 0.48); played += 1 } label: { Label("Normalnie", systemImage: "speaker.wave.2") }
                         .buttonStyle(.glass)
                 }
                 if !parts.isEmpty {
@@ -53,12 +56,12 @@ struct ShadowView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.glassProminent)
-                .disabled(!played)
+                .disabled(played < 2)
                 Button(index + 1 >= lines.count ? "Od początku" : "Następne zdanie") {
                     mic.stop()
                     parts = []
                     heard = ""
-                    played = false
+                    played = 0
                     index = index + 1 >= lines.count ? 0 : index + 1
                 }
                 .buttonStyle(.glass)
