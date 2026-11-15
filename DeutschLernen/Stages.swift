@@ -15,19 +15,49 @@ struct WorkCourseView: View {
     @EnvironmentObject var store: LearningStore
     private let groups: [(String, [Drill])] = [
         ("Polecenia", [
-            Drill(title: "Drabina", audio: "Hol bitte die Leiter und bring sie nach hinten.", ask: "Co masz zrobić?", options: ["Przynieś drabinę do tyłu", "Zostaw drabinę", "Idź na przerwę"], answer: 0, de: "Hol bitte die Leiter und bring sie nach hinten.", pl: "Przynieś proszę drabinę i zanieś ją do tyłu."),
-            Drill(title: "Koniec", audio: "Ich bin fertig. Was soll ich jetzt machen?", ask: "Które zdanie mówi, że skończyłeś?", options: ["Ich bin fertig.", "Ich komme morgen.", "Das ist die Leiter."], answer: 0, de: "Ich bin fertig. Was soll ich jetzt machen?", pl: "Skończyłem. Co mam teraz zrobić?")
+            Drill(title: "Drabina", audio: "Hol bitte die Leiter und bring sie nach hinten.", ask: "Co masz zrobić?", options: ["Zanieś drabinę do przodu", "Przynieś drabinę do tyłu", "Zostaw drabinę na dachu"], answer: 1, de: "Hol bitte die Leiter und bring sie nach hinten.", pl: "Przynieś proszę drabinę i zanieś ją do tyłu."),
+            Drill(title: "Łopata", audio: "Hol die Schaufel und komm zur Grube.", ask: "Dokąd z łopatą?", options: ["Do wykopu", "Do biura", "Na rampę"], answer: 0, de: "Hol die Schaufel und komm zur Grube.", pl: "Weź łopatę i przyjdź do wykopu."),
+            Drill(title: "Wiertarka", audio: "Bring die Bohrmaschine zum Gerüst, nicht in den Keller.", ask: "Gdzie ma być wiertarka?", options: ["W piwnicy", "Na rusztowaniu", "W aucie"], answer: 1, de: "Bring die Bohrmaschine zum Gerüst, nicht in den Keller.", pl: "Zanieś wiertarkę na rusztowanie, nie do piwnicy."),
+            Drill(title: "Śruby", audio: "Wir brauchen noch acht Schrauben, nicht vier.", ask: "Ile śrub?", options: ["Cztery", "Osiem", "Dwadzieścia"], answer: 1, de: "Wir brauchen noch acht Schrauben, nicht vier.", pl: "Potrzebujemy jeszcze ośmiu śrub, nie czterech."),
+            Drill(title: "Koniec", audio: "Ich bin fertig. Was soll ich jetzt machen?", ask: "Co mówisz na końcu?", options: ["Ich komme morgen.", "Das ist die Leiter.", "Ich bin fertig."], answer: 2, de: "Ich bin fertig. Was soll ich jetzt machen?", pl: "Skończyłem. Co mam teraz zrobić?")
+        ]),
+        ("Narzędzia", [
+            Drill(title: "Młotek", audio: "Der Hammer liegt im Container, Fach zwei.", ask: "Gdzie jest młotek?", options: ["W aucie, półka jeden", "W kontenerze, półka dwa", "Na rusztowaniu"], answer: 1, de: "Der Hammer liegt im Container, Fach zwei.", pl: "Młotek leży w kontenerze, półka dwa."),
+            Drill(title: "Poziomica", audio: "Prüf die Wasserwaage, bevor du die Reihe klebst.", ask: "Co najpierw?", options: ["Przykleić rząd", "Sprawdzić poziomicę", "Pomalować ścianę"], answer: 1, de: "Prüf die Wasserwaage, bevor du die Reihe klebst.", pl: "Sprawdź poziomicę, zanim przykleisz rząd."),
+            Drill(title: "Akumulator", audio: "Die Bohrmaschine läuft nicht. Der Akku ist leer.", ask: "Czemu wiertarka stoi?", options: ["Brak tarczy", "Pusty akumulator", "Zły kabel"], answer: 1, de: "Die Bohrmaschine läuft nicht. Der Akku ist leer.", pl: "Wiertarka nie działa. Akumulator jest pusty.")
+        ]),
+        ("Materiały", [
+            Drill(title: "Cement", audio: "Wir brauchen noch zehn Sack Zement.", ask: "Ile cementu?", options: ["Dwa worki", "Dziesięć worków", "Jedna paleta piasku"], answer: 1, de: "Wir brauchen noch zehn Sack Zement.", pl: "Potrzebujemy jeszcze dziesięciu worków cementu."),
+            Drill(title: "Beton", audio: "Der Beton ist schon zu fest. Nicht mehr gießen.", ask: "Co z betonem?", options: ["Można jeszcze lać", "Jest już za twardy", "Jeszcze nie przyjechał"], answer: 1, de: "Der Beton ist schon zu fest. Nicht mehr gießen.", pl: "Beton jest już za twardy. Nie lać więcej."),
+            Drill(title: "Płytki", audio: "Die Fliesen sind die falsche Farbe.", ask: "Co jest nie tak?", options: ["Zły rozmiar", "Zły kolor", "Za mało kleju"], answer: 1, de: "Die Fliesen sind die falsche Farbe.", pl: "Płytki są w złym kolorze.")
+        ]),
+        ("Wymiary", [
+            Drill(title: "Głębokość", audio: "Mach das Loch achtzig Zentimeter tief, nicht sechzig.", ask: "Jak głęboko?", options: ["60 cm", "80 cm", "100 cm"], answer: 1, de: "Mach das Loch achtzig Zentimeter tief, nicht sechzig.", pl: "Zrób dół na osiemdziesiąt centymetrów, nie na sześćdziesiąt."),
+            Drill(title: "Odstęp", audio: "Stell die Balken im Abstand von vierzig Zentimetern.", ask: "Co ile belki?", options: ["Co 20 cm", "Co 40 cm", "Co 80 cm"], answer: 1, de: "Stell die Balken im Abstand von vierzig Zentimetern.", pl: "Ustaw belki co czterdzieści centymetrów."),
+            Drill(title: "Strona", audio: "Wir fangen links an, dann rechts.", ask: "Od której strony?", options: ["Od prawej", "Od lewej", "Od środka"], answer: 1, de: "Wir fangen links an, dann rechts.", pl: "Zaczynamy z lewej, potem z prawej.")
         ]),
         ("Nie rozumiem", [
-            Drill(title: "Za szybko", audio: "Können Sie das bitte langsamer sagen?", ask: "Co to za prośba?", options: ["Mów wolniej", "Jestem chory", "Gdzie jest autobus"], answer: 0, de: "Können Sie das bitte langsamer sagen?", pl: "Czy może pan powiedzieć to wolniej?")
+            Drill(title: "Za szybko", audio: "Können Sie das bitte langsamer sagen?", ask: "O co prosisz?", options: ["Żeby powtórzył głośniej", "Żeby powiedział wolniej", "Żeby napisał po polsku"], answer: 1, de: "Können Sie das bitte langsamer sagen?", pl: "Czy może pan powiedzieć to wolniej?"),
+            Drill(title: "Jeszcze raz", audio: "Ich habe das nicht verstanden. Können Sie das wiederholen?", ask: "Czego nie zrozumiałeś?", options: ["Ostatniego zdania", "Godziny przerwy", "Numeru bramy"], answer: 0, de: "Ich habe das nicht verstanden. Können Sie das wiederholen?", pl: "Nie zrozumiałem. Czy może pan powtórzyć?"),
+            Drill(title: "Która strona", audio: "Meinen Sie links oder rechts?", ask: "O co dopytujesz?", options: ["O godzinę", "O stronę", "O narzędzie"], answer: 1, de: "Meinen Sie links oder rechts?", pl: "Ma pan na myśli lewą czy prawą?")
         ]),
         ("Godziny i pieniądze", [
-            Drill(title: "Wypłata", audio: "Wann kommt das Geld?", ask: "O co pytasz?", options: ["Kiedy będzie wypłata", "Gdzie jest kask", "Czy mogę iść do domu"], answer: 0, de: "Wann kommt das Geld?", pl: "Kiedy będzie wypłata?"),
-            Drill(title: "Urlop", audio: "Ich brauche nächste Woche frei.", ask: "Co mówisz?", options: ["Potrzebuję wolnego w przyszłym tygodniu", "Pracuję w sobotę", "Nie mam kasku"], answer: 0, de: "Ich brauche nächste Woche frei.", pl: "Potrzebuję wolnego w przyszłym tygodniu.")
+            Drill(title: "Wypłata", audio: "Wann kommt das Geld diesen Monat?", ask: "O co pytasz?", options: ["Kiedy jest przerwa", "Kiedy będzie wypłata", "Kiedy koniec zmiany"], answer: 1, de: "Wann kommt das Geld diesen Monat?", pl: "Kiedy w tym miesiącu będzie wypłata?"),
+            Drill(title: "Nadgodziny", audio: "Ich habe zwölf Überstunden, nicht acht.", ask: "Ile nadgodzin zgłaszasz?", options: ["Osiem", "Dziesięć", "Dwanaście"], answer: 2, de: "Ich habe zwölf Überstunden, nicht acht.", pl: "Mam dwanaście nadgodzin, nie osiem."),
+            Drill(title: "Urlop", audio: "Ich brauche nächste Woche drei Tage frei.", ask: "Czego potrzebujesz?", options: ["Jednego dnia w tym tygodniu", "Trzech dni w przyszłym tygodniu", "Całego sierpnia"], answer: 1, de: "Ich brauche nächste Woche drei Tage frei.", pl: "W przyszłym tygodniu potrzebuję trzech dni wolnego."),
+            Drill(title: "Zmiana", audio: "Die Frühschicht beginnt um sechs, nicht um sieben.", ask: "O której start?", options: ["O szóstej", "O siódmej", "O ósmej"], answer: 0, de: "Die Frühschicht beginnt um sechs, nicht um sieben.", pl: "Poranna zmiana zaczyna się o szóstej, nie o siódmej.")
         ]),
         ("Maszyny i bezpieczeństwo", [
-            Drill(title: "Kabel", audio: "Pass auf, hier ist ein Kabel.", ask: "Co słyszysz?", options: ["Uważaj, tu jest kabel", "Przerwa jest o dziewiątej", "Przynieś kawę"], answer: 0, de: "Pass auf, hier ist ein Kabel.", pl: "Uważaj, tu jest kabel."),
-            Drill(title: "Kask", audio: "Ohne Helm geht hier gar nichts.", ask: "Czego nie wolno?", options: ["Pracy bez kasku", "Przerwy", "Rozmowy z szefem"], answer: 0, de: "Ohne Helm geht hier gar nichts.", pl: "Bez kasku tutaj nic nie da rady.")
+            Drill(title: "Kabel", audio: "Pass auf, hier ist ein offenes Kabel.", ask: "Na co uważać?", options: ["Na mokrą podłogę", "Na odsłonięty kabel", "Na luźną drabinę"], answer: 1, de: "Pass auf, hier ist ein offenes Kabel.", pl: "Uważaj, tu jest odsłonięty kabel."),
+            Drill(title: "Kask", audio: "Ohne Helm darfst du nicht aufs Gerüst.", ask: "Czego nie wolno bez kasku?", options: ["Wejść na rusztowanie", "Iść na przerwę", "Jeździć busem"], answer: 0, de: "Ohne Helm darfst du nicht aufs Gerüst.", pl: "Bez kasku nie wolno na rusztowanie."),
+            Drill(title: "Wózek", audio: "Fahr nicht mit dem Stapler, wenn die Batterie rot ist.", ask: "Kiedy nie jechać wózkiem?", options: ["Gdy bateria jest zielona", "Gdy bateria jest czerwona", "Gdy jest przerwa"], answer: 1, de: "Fahr nicht mit dem Stapler, wenn die Batterie rot ist.", pl: "Nie jedź wózkiem, gdy bateria jest czerwona."),
+            Drill(title: "Szlifierka", audio: "Ohne Brille keine Flex.", ask: "Czego brakuje do szlifierki?", options: ["Rękawic", "Okularów", "Kasku"], answer: 1, de: "Ohne Brille keine Flex.", pl: "Bez okularów nie ma szlifierki."),
+            Drill(title: "Brama", audio: "Der Lkw steht an Tor drei. Bitte entladen.", ask: "Przy której bramie?", options: ["Przy bramie dwa", "Przy bramie trzy", "Przy bramie cztery"], answer: 1, de: "Der Lkw steht an Tor drei. Bitte entladen.", pl: "Ciężarówka stoi przy bramie trzy. Rozładuj.")
+        ]),
+        ("Koniec dnia", [
+            Drill(title: "Sprzątanie", audio: "Kehr die Rampe, bevor du gehst.", ask: "Co przed wyjściem?", options: ["Zamknąć biuro", "Zamieść rampę", "Zatankować auto"], answer: 1, de: "Kehr die Rampe, bevor du gehst.", pl: "Zamieć rampę, zanim wyjdziesz."),
+            Drill(title: "Jutro", audio: "Morgen machen wir die rechte Seite.", ask: "Co jutro?", options: ["Lewą stronę", "Prawą stronę", "Dach"], answer: 1, de: "Morgen machen wir die rechte Seite.", pl: "Jutro robimy prawą stronę."),
+            Drill(title: "Zgłoszenie", audio: "Ich habe das Werkzeug schon zurückgebracht.", ask: "Co z narzędziami?", options: ["Zostały na placu", "Są już oddane", "Leżą w aucie"], answer: 1, de: "Ich habe das Werkzeug schon zurückgebracht.", pl: "Narzędzia już oddałem.")
         ])
     ]
 
@@ -38,6 +68,11 @@ struct WorkCourseView: View {
                     ForEach(drills) { drill in
                         NavigationLink(drill.title) { DrillView(drill: drill) }
                     }
+                }
+            }
+            Section("Dialogi z budowy") {
+                ForEach(SiteTalk.topics, id: \.self) { topic in
+                    NavigationLink(topic) { SiteTopicView(topic: topic) }
                 }
             }
         }
