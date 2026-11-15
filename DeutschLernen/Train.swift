@@ -282,10 +282,10 @@ struct TodayView: View {
                     Text("Twój trening")
                         .font(.title3.weight(.semibold))
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                        trainTile("Słuchanie", "Zrozum szybki niemiecki", "headphones", plan.blocks.first { $0.id == "listen" }?.minutes ?? 10) { ListenView() }
-                        trainTile("Rozmowa AI", "Rozmawiaj po niemiecku", "mic", plan.blocks.first { $0.id == "talk" }?.minutes ?? 10) { TutorView() }
-                        trainTile("Praca", "Szef i współpracownicy", "helmet", plan.blocks.first { $0.id == "work" }?.minutes ?? 10) { WorkHubView() }
-                        trainTile("Codzienne życie", "Niemiecki poza pracą", "house", plan.blocks.first { $0.id == "life" }?.minutes ?? 10) { DailySituationsView() }
+                        trainTile("Słuchanie", "Zrozum szybki niemiecki", "headphones", dayPlan.blocks.first { $0.id == "listen" }?.minutes ?? 10) { ListenView() }
+                        trainTile("Rozmowa AI", "Rozmawiaj po niemiecku", "mic", dayPlan.blocks.first { $0.id == "talk" }?.minutes ?? 10) { TutorView() }
+                        trainTile("Praca", "Szef i współpracownicy", "helmet", dayPlan.blocks.first { $0.id == "work" }?.minutes ?? 10) { WorkHubView() }
+                        trainTile("Codzienne życie", "Niemiecki poza pracą", "house", dayPlan.blocks.first { $0.id == "life" }?.minutes ?? 10) { DailySituationsView() }
                     }
                     NavigationLink { RepairView() } label: {
                         HStack(spacing: 12) {
@@ -310,7 +310,7 @@ struct TodayView: View {
                         HStack {
                             statBlock("\(sentences)", "Zdań")
                             statBlock("\(phrases)", "Zwrotów")
-                            statBlock(levelName, "Poziom")
+                            statBlock(bandNow, "Poziom")
                         }
                     }
                     .padding(16)
@@ -337,7 +337,7 @@ struct TodayView: View {
         }
     }
 
-    private var plan: (blocks: [PlanBlock], note: String) { DayPlan.make(store.journal) }
+    private var dayPlan: (blocks: [PlanBlock], note: String) { DayPlan.make(store.journal) }
 
     private var done: Set<String> {
         Set(UserDefaults.standard.stringArray(forKey: "plan45-\(LearningStore.dayKey())") ?? [])
@@ -348,14 +348,14 @@ struct TodayView: View {
     }
 
     private var doneMinutes: Int {
-        plan.blocks.filter { done.contains($0.id) }.reduce(0) { $0 + $1.minutes }
+        dayPlan.blocks.filter { done.contains($0.id) }.reduce(0) { $0 + $1.minutes }
     }
 
     private var phrases: Int {
         HardBook.all().filter { $0.hits >= 2 }.count
     }
 
-    private var levelName: String {
+    private var bandNow: String {
         let bands = store.bandProgress()
         return bands.first { Double($0.known) / Double(max($0.total, 1)) < 0.8 }?.name ?? "B2"
     }
@@ -884,6 +884,11 @@ struct PronounceView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text(item.pl).font(.headline)
             Text(item.de).font(.title2.bold())
+            Text("Mikrofon pokazuje tylko słowa, które naprawdę rozpoznał. To nie jest ocena akcentu.")
+                .font(.footnote)
+                .foregroundStyle(Theme.text2)
+            VoiceSexButtons()
+            PaceButtons()
             Text("\(min(index + 1, max(deck.count, 1))) z \(deck.count)")
                 .font(.footnote)
                 .foregroundStyle(Theme.text2)
