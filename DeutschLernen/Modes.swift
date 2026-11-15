@@ -23,10 +23,16 @@ struct ThinkView: View {
         ThinkItem(title: "Odpowiedz po niemiecku", prompt: "Der Chef sagt: Hol bitte die Schaufel.", audio: "Hol bitte die Schaufel.", words: ["Ich", "hole", "sie", "sofort"], extras: ["morgen", "Arzt", "nicht"], meaning: "Zaraz ją przyniosę."),
         ThinkItem(title: "Stuknij to, co słyszysz", prompt: "Bez polskiego. Najpierw ucho.", audio: "Drei Kilo Tomaten, bitte.", words: ["Drei", "Kilo", "Tomaten", "bitte"], extras: ["Kaffee", "fünf", "hallo"], meaning: "Trzy kilo pomidorów, poproszę."),
         ThinkItem(title: "Odpowiedz po niemiecku", prompt: "Der Kollege fragt: Wann kommst du?", audio: "Wann kommst du?", words: ["Ich", "komme", "um", "sechs"], extras: ["gestern", "Schaufel", "warum"], meaning: "Przyjdę o szóstej."),
-        ThinkItem(title: "Odpowiedz po niemiecku", prompt: "Jemand spricht zu schnell.", audio: "Können Sie das wiederholen?", words: ["Können", "Sie", "das", "bitte", "wiederholen"], extras: ["langsam", "heute", "Bus"], meaning: "Czy może Pan to powtórzyć?")
+        ThinkItem(title: "Odpowiedz po niemiecku", prompt: "Jemand spricht zu schnell.", audio: "Die Lieferung kommt erst um zehn, nicht um neun.", words: ["Können", "Sie", "bitte", "langsamer", "sprechen"], extras: ["Bus", "heute", "Wurst"], meaning: "Czy może Pan mówić wolniej?")
     ]
 
     private var item: ThinkItem { items[index % items.count] }
+
+    private var answer: String {
+        let base = item.words.joined(separator: " ")
+        if item.meaning.hasSuffix("?") { return base + "?" }
+        return base + "."
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -42,7 +48,7 @@ struct ThinkView: View {
             }
             Text(item.title).font(.title2.bold())
             Text(item.prompt).foregroundStyle(Theme.text2)
-            Button { Talk.de(item.audio, rate: 0.46) } label: {
+            Button { Talk.de(item.audio, rate: item.prompt.contains("schnell") ? 0.62 : 0.46) } label: {
                 Label("Odtwórz", systemImage: "speaker.wave.2.fill")
                     .frame(maxWidth: .infinity, minHeight: 64)
             }
@@ -55,9 +61,11 @@ struct ThinkView: View {
         .safeAreaInset(edge: .bottom) {
             if done {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(ok ? "Dobrze." : "Jeszcze nie ta kolejność.")
+                    Text(ok ? "Dobrze." : "Jeszcze nie.")
                         .font(.headline)
-                    Text("Po polsku, dopiero teraz: \(item.meaning)")
+                    Text(answer)
+                        .font(.title3.bold())
+                    Text(item.meaning)
                         .foregroundStyle(Theme.text2)
                     Button("Dalej") { advance() }.primaryButton()
                 }
@@ -118,7 +126,7 @@ struct ThinkView: View {
     private func advance() {
         index += 1
         lay()
-        Talk.de(item.audio, rate: 0.46)
+        Talk.de(item.audio, rate: item.prompt.contains("schnell") ? 0.62 : 0.46)
     }
 }
 
