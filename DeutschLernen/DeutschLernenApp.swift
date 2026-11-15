@@ -76,8 +76,8 @@ struct RootView: View {
                 Ping.plan(reviews: store.reviewsToday)
             }
         }
-        .alert("Zezwol na powiadomienia", isPresented: $askNotify) {
-            Button("Zezwol") {
+        .alert("Zezwól na powiadomienia", isPresented: $askNotify) {
+            Button("Zezwól") {
                 notifyExplained = true
                 Task {
                     _ = await Ping.poke(reviews: store.reviewsToday)
@@ -85,7 +85,7 @@ struct RootView: View {
             }
             Button("Nie teraz", role: .cancel) { notifyExplained = true }
         } message: {
-            Text("Rano przyjdzie zdanie po niemiecku, a o 18:00 informacja, ile slowek zostalo.")
+            Text("Rano przyjdzie zdanie po niemiecku, a o 18:00 informacja, ile słówek zostało.")
         }
     }
 }
@@ -96,21 +96,21 @@ struct AppDock: View {
     var body: some View {
         VStack(spacing: 8) {
             HStack(spacing: 8) {
-                card(5, "bubble.left.and.bubble.right.fill", "Mini dialogi", "100+ scenek z zycia")
-                card(6, "text.book.closed.fill", "Wzorce gramatyczne", "Gramatyka przez praktyke")
+                card(5, "bubble.left.and.bubble.right.fill", "Mini dialogi", "100+ scenek z życia")
+                card(6, "text.book.closed.fill", "Wzorce gramatyczne", "Gramatyka przez praktykę")
             }
             HStack(spacing: 0) {
                 icon(0, "house.fill", "Start")
-                icon(1, "character.book.closed", "Slowka")
-                icon(2, "headphones", "Sluchaj")
-                icon(3, "mic.fill", "Mow")
-                icon(4, "ellipsis", "Wiecej")
+                icon(1, "character.book.closed", "Słówka")
+                icon(2, "headphones", "Słuchaj")
+                icon(3, "mic.fill", "Mów")
+                icon(4, "ellipsis", "Więcej")
             }
             HStack(spacing: 0) {
                 icon(7, "waveform", "Wymowa")
                 icon(8, "checkmark.circle", "Test")
-                icon(9, "text.book.closed", "Slownik")
-                icon(10, "figure.run", "Cwic")
+                icon(9, "text.book.closed", "Słownik")
+                icon(10, "figure.run", "Ćwicz")
                 icon(11, "person", "Profil")
             }
         }
@@ -234,19 +234,19 @@ struct MoreView: View {
     var body: some View {
         NavigationStack {
             List {
-                more("Wiadomosci", "newspaper", Theme.orange) { NewsListView() }
+                more("Wiadomości", "newspaper", Theme.orange) { NewsListView() }
                 more("Gry", "gamecontroller", .white) { GamesHome() }
-                more("Moje slowka", "text.book.closed", Theme.accent) { WordsView() }
+                more("Moje słówka", "text.book.closed", Theme.accent) { WordsView() }
                 more("Niemiecki na budowie", "hammer", Theme.orange) { BuildView() }
-                more("Sluchanie", "ear", .white) { ListenView() }
-                more("Generator zdan", "text.badge.checkmark", .white) { SentenceView() }
-                more("Slowka z filmu", "play.rectangle", Theme.accent) { ClipView() }
-                more("Z zycia", "plus.circle.fill", Theme.ok) { CaptureView() }
-                more("Z twojego zycia", "sparkles", Theme.orange) { LifeView() }
-                more("Skan zdjecia", "camera", .white) { ScanView() }
+                more("Słuchanie", "ear", .white) { ListenView() }
+                more("Generator zdań", "text.badge.checkmark", .white) { SentenceView() }
+                more("Słówka z filmu", "play.rectangle", Theme.accent) { ClipView() }
+                more("Z życia", "plus.circle.fill", Theme.ok) { CaptureView() }
+                more("Z twojego życia", "sparkles", Theme.orange) { LifeView() }
+                more("Skan zdjęcia", "camera", .white) { ScanView() }
                 more("Ustawienia i klucz", "gear", .white) { SettingsView() }
             }
-            .navigationTitle("Wiecej")
+            .navigationTitle("Więcej")
             .scrollContentBackground(.hidden)
             .containerBackground(for: .navigation) { NightGlow() }
             .toolbarBackground(.hidden, for: .navigationBar)
