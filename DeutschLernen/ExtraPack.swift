@@ -49,13 +49,13 @@ struct ShadowView: View {
                 if !mic.note.isEmpty { Text(mic.note).font(.caption).foregroundStyle(.secondary) }
                 if mic.listening { Text(mic.text.isEmpty ? "Mów od razu po zdaniu…" : mic.text) }
                 if mic.note.contains("niepytany") || mic.note.contains("odmowa") || mic.note.contains("Brak zgody") {
-                    Button("Pozwól na mikrofon") { mic.allowPrompt() }.buttonStyle(.glassProminent)
+                    Button("Pozwól na mikrofon") { mic.allowPrompt() }.buttonStyle(MatteGlassButton())
                 }
                 Button { mic.toggle() } label: {
                     Label(mic.listening ? "Stop" : "Powtórz na głos", systemImage: "mic.fill")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.glassProminent)
+                .buttonStyle(MatteGlassButton())
                 .disabled(played < 2)
                 Button(index + 1 >= lines.count ? "Od początku" : "Następne zdanie") {
                     mic.stop()
@@ -388,7 +388,7 @@ struct WorkHubView: View {
             Text("Słyszysz polecenie. Tekst dopiero po odpowiedzi.")
                 .foregroundStyle(Theme.text2)
             Button { Talk.de("Hol bitte die Schaufel und komm zur Baustelle.", rate: 0.5) } label: { Label("Polecenie", systemImage: "speaker.wave.2.fill") }
-                .buttonStyle(.glassProminent)
+                .buttonStyle(MatteGlassButton())
             ForEach(Array(["Przynieś łopatę i przyjdź na budowę", "Zostań w aucie", "Idź na przerwę"].enumerated()), id: \.offset) { i, title in
                 Button(title) {
                     guard picked == nil else { return }
@@ -597,13 +597,13 @@ struct RescueView: View {
                 }
                 if mic.listening { Text(mic.text.isEmpty ? "Mów…" : mic.text) }
                 if mic.note.contains("niepytany") || mic.note.contains("odmowa") || mic.note.contains("Brak zgody") {
-                    Button("Pozwól na mikrofon") { mic.allowPrompt() }.buttonStyle(.glassProminent)
+                    Button("Pozwól na mikrofon") { mic.allowPrompt() }.buttonStyle(MatteGlassButton())
                 }
                 Button { mic.toggle() } label: {
                     Label(mic.listening ? "Stop" : "Powiedz to", systemImage: "mic.fill")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.glassProminent)
+                .buttonStyle(MatteGlassButton())
                 Button("Następny zwrot") {
                     index = (index + 1) % lines.count
                     parts = []

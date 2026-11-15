@@ -820,14 +820,14 @@ struct PronounceView: View {
             if mic.listening { Text(mic.text.isEmpty ? "Słucham…" : mic.text).font(.footnote) }
             if mic.note.contains("niepytany") || mic.note.contains("odmowa") || mic.note.contains("Brak zgody") {
                 Button("Pozwól na mikrofon") { mic.allowPrompt() }
-                    .buttonStyle(.glassProminent)
+                    .buttonStyle(MatteGlassButton())
             }
             HStack {
                 Button { mic.toggle() } label: {
                     Label(mic.listening ? "Stop" : "Powiedz", systemImage: "mic.fill")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.glassProminent)
+                .buttonStyle(MatteGlassButton())
                 .tint(mic.listening ? Ink.clay : Ink.brass)
                 Button(index + 1 >= deck.count ? "Od nowa" : "Następne") {
                     mic.stop()
@@ -934,7 +934,7 @@ struct BuildView: View {
                     .onTapGesture { Talk.de(line.de, rate: 0.42) }
                 }
                 Button("Dodaj ten dział do fiszek") { saveTopic() }
-                    .buttonStyle(.glassProminent)
+                    .buttonStyle(MatteGlassButton())
                     .tint(Ink.brass)
                 if !added.isEmpty { Text(added).font(.footnote).foregroundStyle(.secondary) }
             }
@@ -972,7 +972,7 @@ struct SentenceView: View {
                     .lineLimit(2...4)
                     .textFieldStyle(.roundedBorder)
                 Button("Sprawdź") { check() }
-                    .buttonStyle(.glassProminent)
+                    .buttonStyle(MatteGlassButton())
                     .tint(Ink.brass)
                     .disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
                 if !verdict.isEmpty {
@@ -1041,7 +1041,7 @@ struct ClipView: View {
                     .lineLimit(6...14)
                     .textFieldStyle(.roundedBorder)
                 Button(loading ? "Czytam…" : "Wyciągnij słówka") { Task { await pull() } }
-                    .buttonStyle(.glassProminent)
+                    .buttonStyle(MatteGlassButton())
                     .tint(Ink.brass)
                     .disabled(loading || text.trimmingCharacters(in: .whitespacesAndNewlines).count < 12)
                 if !note.isEmpty { Text(note).font(.footnote) }

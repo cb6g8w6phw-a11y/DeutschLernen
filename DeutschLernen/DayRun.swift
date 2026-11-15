@@ -202,7 +202,7 @@ struct DailyRunView: View {
                 Text(word.pl)
                 if !parts.isEmpty { SaidWords(parts: parts) }
                 Button { mic.toggle() } label: { Label(mic.listening ? "Stop" : "Powiedz", systemImage: "mic.fill") }
-                    .buttonStyle(.glassProminent)
+                    .buttonStyle(MatteGlassButton())
                 Text(voiceLine)
                     .font(.footnote)
                     .foregroundStyle(Theme.text2)

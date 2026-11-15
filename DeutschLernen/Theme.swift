@@ -55,6 +55,21 @@ extension View {
     }
 }
 
+struct MatteGlassButton: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 17, weight: .semibold, design: .rounded))
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .frame(minHeight: 50)
+            .padding(.horizontal, 12)
+            .background(.ultraThinMaterial, in: Capsule())
+            .background(Color.white.opacity(0.08), in: Capsule())
+            .overlay(Capsule().stroke(Color.white.opacity(0.22), lineWidth: 1))
+            .opacity(configuration.isPressed ? 0.65 : 1)
+    }
+}
+
 enum Haptic {
     static func good() { UINotificationFeedbackGenerator().notificationOccurred(.success) }
     static func bad() { UINotificationFeedbackGenerator().notificationOccurred(.error) }

@@ -43,7 +43,7 @@ struct ScanView: View {
                         } label: {
                             if busy { ProgressView() } else { Text("Przetłumacz i zapisz słowa") }
                         }
-                        .buttonStyle(.glassProminent)
+                        .buttonStyle(MatteGlassButton())
                         .tint(Ink.brass)
                         .disabled(busy)
                     }

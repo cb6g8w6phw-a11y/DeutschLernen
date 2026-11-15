@@ -196,7 +196,7 @@ struct SceneChatView: View {
                     Image(systemName: "paperplane.fill")
                         .frame(width: 40, height: 40)
                 }
-                .buttonStyle(.glassProminent)
+                .buttonStyle(MatteGlassButton())
                 .tint(Ink.brass)
                 .disabled(loading || input.trimmingCharacters(in: .whitespaces).isEmpty)
             }

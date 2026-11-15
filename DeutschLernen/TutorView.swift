@@ -197,7 +197,7 @@ struct TutorView: View {
                             showType = false
                             Task { await send(t) }
                         }
-                        .buttonStyle(.glassProminent)
+                        .buttonStyle(MatteGlassButton())
                         .tint(Ink.brass)
                         Spacer()
                     }
@@ -433,7 +433,7 @@ struct TutorView: View {
                 .font(.footnote)
                 .foregroundStyle(Ink.muted)
             Button("Zapytaj iPhone'a") { mic.allowPrompt() }
-                .buttonStyle(.glassProminent)
+                .buttonStyle(MatteGlassButton())
                 .tint(Ink.brass)
             Button("Nie teraz") { mic.wantsPrompt = false }
                 .buttonStyle(.glass)

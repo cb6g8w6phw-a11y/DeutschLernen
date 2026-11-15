@@ -55,7 +55,7 @@ private struct TopicPane: View {
                 } label: {
                     if busy { ProgressView() } else { Text("Generuj 10 zdań") }
                 }
-                .buttonStyle(.glassProminent)
+                .buttonStyle(MatteGlassButton())
                 .tint(Ink.brass)
                 .disabled(busy || topic.trimmingCharacters(in: .whitespaces).count < 3)
                 if !note.isEmpty { Text(note).font(.footnote).foregroundStyle(.secondary) }
@@ -121,7 +121,7 @@ private struct SOSPane: View {
                 Button { Task { await ask() } } label: {
                     if busy { ProgressView() } else { Text("Jak to powiedzieć") }
                 }
-                .buttonStyle(.glassProminent)
+                .buttonStyle(MatteGlassButton())
                 .tint(Ink.brass)
                 .disabled(busy || need.trimmingCharacters(in: .whitespaces).count < 4)
                 if !reply.isEmpty {
@@ -187,7 +187,7 @@ private struct CorrectPane: View {
                     Button { Task { await fix() } } label: {
                         if busy { ProgressView() } else { Text("Popraw") }
                     }
-                    .buttonStyle(.glassProminent)
+                    .buttonStyle(MatteGlassButton())
                     .tint(Ink.brass)
                     .disabled(busy || mine.trimmingCharacters(in: .whitespaces).count < 2)
                 }
@@ -300,7 +300,7 @@ private struct ShadowPane: View {
                     .lineLimit(2...4)
                     .padding(12)
                     .liquidGlass(radius: 18)
-                Button("Odtwórz") { Talk.de(line) }.buttonStyle(.glassProminent).tint(Ink.brass)
+                Button("Odtwórz") { Talk.de(line) }.buttonStyle(MatteGlassButton()).tint(Ink.brass)
                 Button(mic.listening ? "Stop" : "Powtórz na głos") { mic.toggle() }
                     .buttonStyle(.glass)
                 if !mic.note.isEmpty { Text(mic.note).font(.footnote) }

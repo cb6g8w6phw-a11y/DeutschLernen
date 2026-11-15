@@ -146,27 +146,29 @@ struct PictureTalk: View {
     @State private var busy = false
     @FocusState private var writing: Bool
 
-    private let scenes: [(title: String, see: String, need: [String], sample: String, symbol: String)] = [
-        ("Budowa", "Kask, łopata i bus. Opowiedz po niemiecku, co widzisz.", ["Schaufel", "Baustelle"], "Auf der Baustelle liegt eine Schaufel.", "helmet"),
-        ("Sklep", "Chleb i kasa. Powiedz, co jest w sklepie.", ["Brot", "Kasse"], "Im Laden gibt es Brot an der Kasse.", "cart"),
-        ("Ulica", "Autobus i ulica. Powiedz, co jedzie.", ["Bus", "Straße"], "Der Bus fährt auf der Straße.", "bus")
+    private let scenes: [(title: String, see: String, need: [String], sample: String, symbol: String, extra: String, side: String)] = [
+        ("Budowa", "Kask, łopata i bus. Opowiedz po niemiecku, co widzisz.", ["Schaufel", "Baustelle"], "Auf der Baustelle liegt eine Schaufel.", "helmet", "hammer", "bus"),
+        ("Sklep", "Chleb i kasa. Powiedz, co jest w sklepie.", ["Brot", "Kasse"], "Im Laden gibt es Brot an der Kasse.", "cart", "birthday.cake", "creditcard"),
+        ("Ulica", "Autobus i ulica. Powiedz, co jedzie.", ["Bus", "Straße"], "Der Bus fährt auf der Straße.", "bus", "car", "trafficlight")
     ]
 
-    private var scene: (title: String, see: String, need: [String], sample: String, symbol: String) { scenes[index % scenes.count] }
+    private var scene: (title: String, see: String, need: [String], sample: String, symbol: String, extra: String, side: String) { scenes[index % scenes.count] }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 Text(scene.title).font(.largeTitle.bold())
-                HStack(spacing: 18) {
+                HStack(spacing: 22) {
                     Image(systemName: scene.symbol)
-                        .font(.system(size: 64))
-                        .foregroundStyle(Theme.accent)
-                    Text(scene.see).foregroundStyle(Theme.text2)
+                    Image(systemName: scene.extra)
+                    Image(systemName: scene.side)
                 }
-                .padding(16)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .font(.system(size: 42))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 18)
                 .themedCard(radius: 18)
+                Text(scene.see).foregroundStyle(.white)
                 Text("Napisz albo powiedz całe zdanie. Polskiego tłumaczenia nie ma, dopóki nie sprawdzisz.")
                     .font(.footnote)
                     .foregroundStyle(Theme.text2)
@@ -179,7 +181,7 @@ struct PictureTalk: View {
                 Button { mic.toggle() } label: {
                     Label(mic.listening ? "Stop" : "Powiedz, co widzisz", systemImage: "mic.fill")
                 }
-                .buttonStyle(.glassProminent)
+                .buttonStyle(MatteGlassButton())
                 if mic.listening { Text(mic.text.isEmpty ? "Słucham…" : mic.text) }
                 Button("Sprawdź") { Task { await check() } }
                     .primaryButton()

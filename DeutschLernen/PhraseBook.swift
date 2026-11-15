@@ -392,7 +392,7 @@ struct ExamView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Słuchanie. Najpierw samo ucho.").font(.headline)
             Button { Talk.de(de, rate: 0.46) } label: { Label("Odtwórz", systemImage: "speaker.wave.2.fill") }
-                .buttonStyle(.glassProminent)
+                .buttonStyle(MatteGlassButton())
             Text(question).font(.headline)
             choiceList(options, answer: answer)
             if picked != nil {
@@ -424,10 +424,10 @@ struct ExamView: View {
             }
             if mic.listening { Text(mic.text.isEmpty ? "Słucham…" : mic.text) }
             if mic.note.contains("niepytany") || mic.note.contains("odmowa") || mic.note.contains("Brak zgody") {
-                Button("Pozwól na mikrofon") { mic.allowPrompt() }.buttonStyle(.glassProminent)
+                Button("Pozwól na mikrofon") { mic.allowPrompt() }.buttonStyle(MatteGlassButton())
             }
             Button { mic.toggle() } label: { Label(mic.listening ? "Stop" : "Powiedz", systemImage: "mic.fill") }
-                .buttonStyle(.glassProminent)
+                .buttonStyle(MatteGlassButton())
             Button("Zalicz mówienie") {
                 let ok = !parts.isEmpty && parts.allSatisfy(\.ok)
                 if ok { speak = 1 }

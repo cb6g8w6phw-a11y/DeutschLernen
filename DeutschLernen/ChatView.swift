@@ -66,7 +66,7 @@ struct ChatView: View {
                         Image(systemName: "paperplane.fill")
                             .frame(width: 44, height: 44)
                     }
-                    .buttonStyle(.glassProminent)
+                    .buttonStyle(MatteGlassButton())
                     .tint(Ink.brass)
                     .disabled(loading || input.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
