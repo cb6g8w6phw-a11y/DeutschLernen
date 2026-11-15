@@ -422,16 +422,25 @@ struct WorkHubView: View {
     @State private var typed = ""
     @State private var picked: Int?
     @State private var note = ""
+    @State private var bossI = 0
+    @State private var commandI = 0
+    @State private var safetyI = 0
+    @State private var commandShown: [String] = []
+    @State private var safetyShown: [String] = []
     @FocusState private var writing: Bool
+
+    private var boss: BossLine { WorkHub.bosses[bossI] }
+    private var command: ListenLine { WorkHub.commands[commandI] }
+    private var safety: ListenLine { WorkHub.safety[safetyI] }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Krok \(min(step + 1, 4)) z 4").font(.footnote).foregroundStyle(Theme.text2)
                 switch step {
-                case 0: boss
-                case 1: command
-                case 2: safety
+                case 0: bossStep
+                case 1: commandStep
+                case 2: safetyStep
                 default: done
                 }
                 NavigationLink { BuildView() } label: {
@@ -448,26 +457,30 @@ struct WorkHubView: View {
         }
         .navigationTitle("W pracy")
         .containerBackground(for: .navigation) { NightGlow() }
+        .onAppear {
+            if commandShown.isEmpty { fresh(avoidSame: false) }
+        }
         .onDisappear { Talk.stop() }
     }
 
-    private var boss: some View {
+    private var bossStep: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Szef pisze rano.").font(.headline)
-            Text("„Kacper, kommst du heute zur Frühschicht?”").font(.title3.bold())
-            Button { Talk.de("Kacper, kommst du heute zur Frühschicht?", rate: 0.46) } label: { Label("Odsłuchaj", systemImage: "speaker.wave.2") }
+            Text("Możesz wylosować inną sytuację. Poprawna odpowiedź nie stoi zawsze na początku.")
+                .font(.footnote)
+                .foregroundStyle(Theme.text2)
+            Text(boss.title).font(.headline)
+            Text("„\(boss.de)”").font(.title3.bold())
+            Button { Talk.de(boss.de, rate: 0.46) } label: { Label("Odsłuchaj", systemImage: "speaker.wave.2") }
                 .buttonStyle(.glass)
-            Text("Odpowiedz krótko: czy jesteś i kiedy.")
+            Text(boss.hint)
                 .foregroundStyle(Theme.text2)
             TextField("Po niemiecku", text: $typed, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .focused($writing)
             Button("Wyślij") {
                 let said = Normalizer.clean(typed)
-                let ok = said.contains("ja") || said.contains("komme") || said.contains("bus") || said.contains("minute")
-                note = ok
-                    ? "Wystarczy. Naturalnie: Ja. Der Bus hat Verspätung. Ich bin in zwanzig Minuten da."
-                    : "Za mało. Powiedz, że tak, i podaj czas. Wzorzec: Ja. Ich bin in zwanzig Minuten da."
+                let ok = boss.bits.contains { said.contains($0) }
+                note = ok ? boss.good : boss.bad
                 store.noteSkill("sentence", ok: ok)
                 writing = false
             }
@@ -477,50 +490,61 @@ struct WorkHubView: View {
                 Text(note).foregroundStyle(Theme.text2)
                 Button("Dalej, polecenie") { step = 1; note = ""; typed = "" }.primaryButton()
             }
+            Button("Inna sytuacja") { fresh(avoidSame: true) }
+                .buttonStyle(.glass)
         }
     }
 
-    private var command: some View {
+    private var commandStep: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Słyszysz polecenie. Tekst dopiero po odpowiedzi.")
                 .foregroundStyle(Theme.text2)
-            Button { Talk.de("Hol bitte die Schaufel und komm zur Baustelle.", rate: 0.5) } label: { Label("Polecenie", systemImage: "speaker.wave.2.fill") }
+            Text("Przykład \(commandI + 1) z \(WorkHub.commands.count)")
+                .font(.footnote)
+                .foregroundStyle(Theme.text2)
+            Button { Talk.de(command.audio, rate: 0.5) } label: { Label("Polecenie", systemImage: "speaker.wave.2.fill") }
                 .buttonStyle(MatteGlassButton())
-            ForEach(Array(["Przynieś łopatę i przyjdź na budowę", "Zostań w aucie", "Idź na przerwę"].enumerated()), id: \.offset) { i, title in
-                Button(title) {
+            ForEach(commandShown.indices, id: \.self) { i in
+                Button(commandShown[i]) {
                     guard picked == nil else { return }
                     picked = i
-                    store.noteListen(ok: i == 0)
+                    store.noteListen(ok: commandShown[i] == command.options[command.answer])
                 }
-                .frame(maxWidth: .infinity, minHeight: 48)
+                .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+                .padding(.horizontal, 12)
                 .foregroundStyle(.white)
-                .background(i == 0 && picked != nil ? Theme.ok.opacity(0.8) : (picked == i ? Theme.bad.opacity(0.8) : Theme.card), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .background(chip(i, commandShown, command), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
             if picked != nil {
-                Text("Hol bitte die Schaufel und komm zur Baustelle.").font(.headline)
+                Text(command.audio).font(.headline)
+                Text(command.pl).foregroundStyle(Theme.text2)
                 Button("Bezpieczeństwo") { step = 2; picked = nil }.primaryButton()
             }
         }
     }
 
-    private var safety: some View {
+    private var safetyStep: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Majster, zanim wejdziesz na górę.").font(.headline)
-            Button { Talk.de("Ohne Helm darfst du nicht hoch.", rate: 0.48) } label: { Label("Posłuchaj", systemImage: "speaker.wave.2") }
+            Text(safety.title).font(.headline)
+            Text("Przykład \(safetyI + 1) z \(WorkHub.safety.count)")
+                .font(.footnote)
+                .foregroundStyle(Theme.text2)
+            Button { Talk.de(safety.audio, rate: 0.48) } label: { Label("Posłuchaj", systemImage: "speaker.wave.2") }
                 .buttonStyle(.glass)
-            Text("Czego nie wolno?").font(.headline)
-            ForEach(Array(["Iść na górę bez kasku", "Pić wody", "Rozmawiać"].enumerated()), id: \.offset) { i, title in
-                Button(title) {
+            Text(safety.ask).font(.headline)
+            ForEach(safetyShown.indices, id: \.self) { i in
+                Button(safetyShown[i]) {
                     guard picked == nil else { return }
                     picked = i
-                    store.noteListen(ok: i == 0)
+                    store.noteListen(ok: safetyShown[i] == safety.options[safety.answer])
                 }
-                .frame(maxWidth: .infinity, minHeight: 48)
+                .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+                .padding(.horizontal, 12)
                 .foregroundStyle(.white)
-                .background(i == 0 && picked != nil ? Theme.ok.opacity(0.8) : (picked == i ? Theme.bad.opacity(0.8) : Theme.card), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .background(chip(i, safetyShown, safety), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
             if picked != nil {
-                Text("Ohne Helm darfst du nicht hoch. Bez kasku nie wchodzisz.").foregroundStyle(Theme.text2)
+                Text(safety.pl).foregroundStyle(Theme.text2)
                 Button("Koniec zmiany") { step = 3 }.primaryButton()
             }
         }
@@ -529,10 +553,107 @@ struct WorkHubView: View {
     private var done: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Ta zmiana zaliczona.").font(.title3.bold())
+            Text("Następnym razem będzie inny szef, inne polecenie i inne ostrzeżenie.")
+                .foregroundStyle(Theme.text2)
+            Button("Inna sytuacja") {
+                fresh(avoidSame: true)
+                step = 0
+            }
+            .primaryButton()
             Text("Narzędzia i materiały są niżej, w dziale Budowa. To ta sama baza, nie druga lista.")
                 .foregroundStyle(Theme.text2)
         }
     }
+
+    private func chip(_ i: Int, _ shown: [String], _ line: ListenLine) -> Color {
+        guard let picked, shown.indices.contains(i) else { return Theme.card }
+        if shown[i] == line.options[line.answer] { return Theme.ok.opacity(0.8) }
+        if i == picked { return Theme.bad.opacity(0.8) }
+        return Theme.card
+    }
+
+    private func fresh(avoidSame: Bool) {
+        bossI = next(WorkHub.bosses.count, avoid: avoidSame ? bossI : -1)
+        commandI = next(WorkHub.commands.count, avoid: avoidSame ? commandI : -1)
+        safetyI = next(WorkHub.safety.count, avoid: avoidSame ? safetyI : -1)
+        commandShown = WorkHub.commands[commandI].options.shuffled()
+        safetyShown = WorkHub.safety[safetyI].options.shuffled()
+        typed = ""
+        note = ""
+        picked = nil
+    }
+
+    private func next(_ count: Int, avoid: Int) -> Int {
+        guard count > 1 else { return 0 }
+        var n = Int.random(in: 0..<count)
+        if n == avoid { n = (n + 1) % count }
+        return n
+    }
+}
+
+private struct BossLine {
+    let title: String
+    let de: String
+    let hint: String
+    let bits: [String]
+    let good: String
+    let bad: String
+}
+
+private struct ListenLine {
+    let title: String
+    let audio: String
+    let ask: String
+    let options: [String]
+    let answer: Int
+    let pl: String
+}
+
+private enum WorkHub {
+    static let bosses: [BossLine] = [
+        BossLine(title: "Szef pisze rano.", de: "Kacper, kommst du heute zur Frühschicht?", hint: "Odpowiedz krótko: czy jesteś i kiedy.", bits: ["ja", "komm", "bus", "minut", "spaet", "spat", "uhr", "sechs", "sieben"], good: "Wystarczy. Naturalnie: Ja. Der Bus hat Verspätung. Ich bin in zwanzig Minuten da.", bad: "Za mało. Powiedz, że tak, i podaj czas. Wzorzec: Ja. Ich bin in zwanzig Minuten da."),
+        BossLine(title: "Szef chce, żebyś został.", de: "Kannst du heute länger bleiben, bis sechs?", hint: "Powiedz, czy możesz zostać, i do której.", bits: ["ja", "kann", "bis", "uhr", "nein", "spaet", "sechs", "schicht"], good: "Dobrze. Na przykład: Ja, ich kann bis sechs bleiben.", bad: "Napisz, czy możesz. Wzorzec: Ja, ich kann bis sechs bleiben."),
+        BossLine(title: "Ciężarówka już jest.", de: "Wo bist du? Der Lkw ist schon da.", hint: "Napisz, gdzie jesteś albo za ile będziesz.", bits: ["bin", "minut", "rampe", "unterwegs", "komm", "gleich", "tor"], good: "Dobrze. Na przykład: Ich bin unterwegs. In zehn Minuten bin ich an der Rampe.", bad: "Podaj miejsce albo czas. Wzorzec: Ich bin in zehn Minuten da."),
+        BossLine(title: "Klucze do magazynu.", de: "Hast du die Schlüssel fürs Lager?", hint: "Powiedz, czy masz klucze, albo że je przyniesiesz.", bits: ["ja", "habe", "schluessel", "hol", "lieg", "nein", "bring"], good: "Dobrze. Na przykład: Ja, ich habe sie. Ich bringe sie mit.", bad: "Napisz o kluczach. Wzorzec: Ja, ich habe die Schlüssel."),
+        BossLine(title: "Poranna odwołana.", de: "Die Frühschicht fällt aus. Kannst du zur Spätschicht kommen?", hint: "Powiedz, czy możesz przyjść na popołudnie.", bits: ["ja", "kann", "spat", "spaet", "nein", "komm", "schicht"], good: "Dobrze. Na przykład: Ja, ich kann zur Spätschicht kommen.", bad: "Odpowiedz o popołudniowej zmianie. Wzorzec: Ja, ich komme zur Spätschicht."),
+        BossLine(title: "Kto wiezie transport.", de: "Bringst du heute den Transporter?", hint: "Powiedz, czy bierzesz auto, czy jedziesz busem.", bits: ["ja", "bring", "bus", "nein", "fahre", "fahr", "auto"], good: "Dobrze. Na przykład: Ja, ich bringe den Transporter.", bad: "Napisz o aucie albo o busie. Wzorzec: Ja, ich bringe den Transporter."),
+        BossLine(title: "Szef nie wie, czy jesteś.", de: "Bist du krank oder kommst du?", hint: "Powiedz wprost: przychodzisz albo jesteś chory.", bits: ["krank", "komm", "bin", "ja", "nein"], good: "Dobrze. Na przykład: Ich komme. Ich bin nicht krank.", bad: "Napisz, czy przychodzisz. Wzorzec: Ich komme. Ich bin nicht krank."),
+        BossLine(title: "O której startujesz.", de: "Um wie viel Uhr bist du auf der Baustelle?", hint: "Podaj godzinę.", bits: ["uhr", "sechs", "sieben", "acht", "funf", "halb", "um"], good: "Dobrze. Na przykład: Um sechs. Ich bin pünktlich da.", bad: "Podaj godzinę. Wzorzec: Um sechs."),
+        BossLine(title: "Nowy kolega.", de: "Kannst du den neuen Kollegen vom Bahnhof abholen?", hint: "Powiedz, czy go odbierzesz.", bits: ["ja", "hol", "kann", "bahn", "nein", "komm"], good: "Dobrze. Na przykład: Ja, ich hole ihn vom Bahnhof ab.", bad: "Napisz, czy odbierasz kolegę. Wzorzec: Ja, ich hole ihn ab."),
+        BossLine(title: "Czy masz narzędzia.", de: "Fehlt dir noch Werkzeug für heute?", hint: "Powiedz, czy czegoś brakuje.", bits: ["nein", "fehlt", "habe", "bohr", "alles", "ja", "brauche"], good: "Dobrze. Na przykład: Nein, ich habe alles.", bad: "Napisz, czy czegoś brakuje. Wzorzec: Nein, ich habe alles."),
+        BossLine(title: "Start o piątej.", de: "Wir fangen heute früher an, um fünf. Schaffst du das?", hint: "Powiedz, czy zdążysz na piątą.", bits: ["ja", "schaff", "funf", "um", "nein", "kann", "fruh", "frueh"], good: "Dobrze. Na przykład: Ja, ich schaffe es. Um fünf bin ich da.", bad: "Odpowiedz o piątej. Wzorzec: Ja, um fünf bin ich da."),
+        BossLine(title: "Szef cię szuka.", de: "Der Chef sucht dich. Bist du auf der Rampe?", hint: "Powiedz, gdzie jesteś.", bits: ["ja", "rampe", "bin", "nein", "komm", "container", "geruest"], good: "Dobrze. Na przykład: Ja, ich bin auf der Rampe.", bad: "Napisz, gdzie jesteś. Wzorzec: Ja, ich bin auf der Rampe.")
+    ]
+
+    static let commands: [ListenLine] = [
+        ListenLine(title: "Łopata", audio: "Hol bitte die Schaufel und komm zur Baustelle.", ask: "Co masz zrobić?", options: ["Przynieś łopatę i przyjdź na budowę", "Zostań w aucie", "Idź na przerwę"], answer: 0, pl: "Przynieś łopatę i przyjdź na budowę."),
+        ListenLine(title: "Drabina", audio: "Stell die Leiter an die linke Wand.", ask: "Gdzie drabina?", options: ["Pod lewą ścianę", "Na dach", "Do biura"], answer: 0, pl: "Postaw drabinę pod lewą ścianą."),
+        ListenLine(title: "Wiertarka", audio: "Bring die Bohrmaschine zum Gerüst, nicht in den Keller.", ask: "Gdzie wiertarka?", options: ["Na rusztowanie, nie do piwnicy", "Do piwnicy", "Do domu"], answer: 0, pl: "Zanieś wiertarkę na rusztowanie, nie do piwnicy."),
+        ListenLine(title: "Gruz", audio: "Räum den Gang frei. Der Schutt muss weg.", ask: "Co z przejściem?", options: ["Opróżnić, gruz ma zniknąć", "Zostać jak jest", "Postawić tam paletę"], answer: 0, pl: "Opróżnij przejście. Gruz ma zniknąć."),
+        ListenLine(title: "Beton", audio: "Nicht mehr gießen. Der Beton ist schon zu fest.", ask: "Co z betonem?", options: ["Nie lać, jest już za twardy", "Lać dalej", "Zostawić na jutro w wiadrze otwartym"], answer: 0, pl: "Nie lać więcej. Beton jest już za twardy."),
+        ListenLine(title: "Miara", audio: "Miss die Öffnung noch einmal, bevor du schneidest.", ask: "Co najpierw?", options: ["Zmierzyć otwór, potem ciąć", "Ciąć od razu", "Malować"], answer: 0, pl: "Zmierz otwór jeszcze raz, zanim przetniesz."),
+        ListenLine(title: "Folia", audio: "Deck die Möbel ab, bevor du streichst.", ask: "Co przed malowaniem?", options: ["Zakryć meble", "Wyniesć meble na deszcz", "Nic nie robić"], answer: 0, pl: "Zakryj meble, zanim będziesz malować."),
+        ListenLine(title: "Brama", audio: "Der Lkw steht an Tor zwei. Bitte entladen.", ask: "Co zrobić?", options: ["Rozładować przy bramie dwa", "Czekać przy bramie cztery", "Odesłać ciężarówkę"], answer: 0, pl: "Ciężarówka stoi przy bramie dwa. Rozładuj."),
+        ListenLine(title: "Klucz", audio: "Zieh die Schrauben fest, aber nicht zu fest.", ask: "Jak dokręcić?", options: ["Mocno, ale nie za mocno", "W ogóle nie dokręcać", "Urwać śruby"], answer: 0, pl: "Dokręć śruby, ale nie za mocno."),
+        ListenLine(title: "Woda", audio: "Hol Wasser. Der Kleber ist zu trocken.", ask: "Po co woda?", options: ["Klej jest za suchy", "Do picia na przerwę", "Do mycia auta"], answer: 0, pl: "Przynieś wodę. Klej jest za suchy."),
+        ListenLine(title: "Koniec", audio: "Kehr die Rampe, bevor du gehst.", ask: "Co przed wyjściem?", options: ["Zamieść rampę", "Zostawić rampę", "Zamknąć tylko biuro"], answer: 0, pl: "Zamieć rampę, zanim wyjdziesz."),
+        ListenLine(title: "Kolega", audio: "Sag dem Markus Bescheid. Er wartet unten.", ask: "Co zrobić?", options: ["Dać znać Markusowi, czeka na dole", "Iść na górę sam", "Nic nie mówić"], answer: 0, pl: "Daj znać Markusowi. Czeka na dole.")
+    ]
+
+    static let safety: [ListenLine] = [
+        ListenLine(title: "Majster, zanim wejdziesz na górę.", audio: "Ohne Helm darfst du nicht hoch.", ask: "Czego nie wolno?", options: ["Iść na górę bez kasku", "Pić wody", "Rozmawiać"], answer: 0, pl: "Ohne Helm darfst du nicht hoch. Bez kasku nie wchodzisz."),
+        ListenLine(title: "Przy szlifierce.", audio: "Ohne Brille keine Flex.", ask: "Czego brakuje?", options: ["Okularów", "Kawy", "Telefonu"], answer: 0, pl: "Bez okularów nie ma szlifierki."),
+        ListenLine(title: "Kabel na ziemi.", audio: "Pass auf, hier liegt ein offenes Kabel.", ask: "Na co uważać?", options: ["Na odsłonięty kabel", "Na mokrą kurtkę w aucie", "Na przerwę"], answer: 0, pl: "Uważaj, tu leży odsłonięty kabel."),
+        ListenLine(title: "Wózek.", audio: "Fahr nicht mit dem Stapler, wenn die Batterie rot ist.", ask: "Kiedy nie jechać?", options: ["Gdy bateria jest czerwona", "Gdy bateria jest zielona", "Gdy jest przerwa i bateria jest pełna"], answer: 0, pl: "Nie jedź wózkiem, gdy bateria jest czerwona."),
+        ListenLine(title: "Pod ładunkiem.", audio: "Stell dich nicht unter die Last.", ask: "Gdzie nie stać?", options: ["Pod ładunkiem", "Obok bariery", "W szatni"], answer: 0, pl: "Nie stawaj pod ładunkiem."),
+        ListenLine(title: "Mokra podłoga.", audio: "Der Boden ist nass. Nicht mit der Maschine darüber.", ask: "Czego nie robić?", options: ["Nie jechać maszyną po mokrym", "Nie rozmawiać", "Nie pić"], answer: 0, pl: "Podłoga jest mokra. Nie jedź po niej maszyną."),
+        ListenLine(title: "Piła.", audio: "Zieh den Stecker, bevor du das Blatt wechselst.", ask: "Co przed wymianą tarczy?", options: ["Wyciągnąć wtyczkę", "Zostawić piłę włączoną", "Polać wodą"], answer: 0, pl: "Wyciągnij wtyczkę, zanim wymienisz tarczę."),
+        ListenLine(title: "Buty.", audio: "Ohne Sicherheitsschuhe kommst du nicht aufs Gelände.", ask: "Bez czego nie wejdziesz?", options: ["Bez butów roboczych", "Bez czapki", "Bez telefonu"], answer: 0, pl: "Bez butów roboczych nie wejdziesz na teren."),
+        ListenLine(title: "Bariera.", audio: "Hinter die Absperrung darf niemand.", ask: "Kto może za barierę?", options: ["Nikt", "Każdy", "Goście"], answer: 0, pl: "Za barierę nie może nikt."),
+        ListenLine(title: "Gorąca tarcza.", audio: "Fass das Sägeblatt nicht an. Es ist noch heiß.", ask: "Czego nie dotykać?", options: ["Tarczy, jest gorąca", "Kasku", "Rękawic na stole"], answer: 0, pl: "Nie dotykaj tarczy. Jest jeszcze gorąca."),
+        ListenLine(title: "Gaśnica.", audio: "Merk dir: der Feuerlöscher hängt neben der Tür.", ask: "Gdzie gaśnica?", options: ["Obok drzwi", "W prywatnym aucie", "Na dachu"], answer: 0, pl: "Gaśnica wisi obok drzwi."),
+        ListenLine(title: "Rusztowanie.", audio: "Das Gerüst wackelt. Geh da nicht hoch.", ask: "Czego nie robić?", options: ["Nie wchodzić, rusztowanie się kiwa", "Wejść szybko", "Skakać"], answer: 0, pl: "Rusztowanie się kiwa. Nie wchodź tam.")
+    ]
 }
 
 // MARK: - Plan dnia

@@ -1,6 +1,6 @@
 import SwiftUI
 
-private struct Drill: Identifiable {
+struct Drill: Identifiable {
     let id = UUID()
     let title: String
     let audio: String
@@ -64,8 +64,10 @@ struct WorkCourseView: View {
     var body: some View {
         List {
             ForEach(groups, id: \.0) { name, drills in
+                let all = drills + WorkListen.more(name)
                 Section(name) {
-                    ForEach(drills) { drill in
+                    NavigationLink("Po kolei, \(all.count) przykładów") { DrillRun(title: name, drills: all) }
+                    ForEach(all) { drill in
                         NavigationLink(drill.title) { DrillView(drill: drill) }
                     }
                 }
@@ -82,29 +84,12 @@ struct WorkCourseView: View {
 }
 
 struct DailySituationsView: View {
-    private let groups: [(String, [Drill])] = [
-        ("Załatwianie", [
-            Drill(title: "Sklep", audio: "Ich möchte das umtauschen. Ich habe den Bon.", ask: "Co chcesz?", options: ["Wymienić towar, masz paragon", "Kupić bilet", "Wezwać lekarza"], answer: 0, de: "Ich möchte das umtauschen. Ich habe den Bon.", pl: "Chcę to wymienić. Mam paragon."),
-            Drill(title: "Reklamacja", audio: "Das Gerät geht nicht. Ich möchte es zurückgeben.", ask: "O co chodzi?", options: ["Sprzęt nie działa, chcesz oddać", "Szukasz apteki", "Pytasz o autobus"], answer: 0, de: "Das Gerät geht nicht. Ich möchte es zurückgeben.", pl: "Sprzęt nie działa. Chcę go oddać.")
-        ]),
-        ("Zdrowie", [
-            Drill(title: "Lekarz", audio: "Mir tut der Rücken weh. Ich brauche eine Krankschreibung.", ask: "Czego potrzebujesz?", options: ["Zwolnienia, boli cię plecy", "Nowej opony", "Klucza do mieszkania"], answer: 0, de: "Mir tut der Rücken weh. Ich brauche eine Krankschreibung.", pl: "Boli mnie plecy. Potrzebuję zwolnienia."),
-            Drill(title: "Apteka", audio: "Haben Sie etwas gegen Halsschmerzen?", ask: "Czego szukasz?", options: ["Czegoś na ból gardła", "Chleba", "Biletu"], answer: 0, de: "Haben Sie etwas gegen Halsschmerzen?", pl: "Ma pan coś na ból gardła?")
-        ]),
-        ("Dzień", [
-            Drill(title: "Dojazd", audio: "Der Bus hat Verspätung. Ich bin in zwanzig Minuten da.", ask: "Co mówisz?", options: ["Autobus się spóźnia, będziesz za 20 minut", "Zostajesz w domu", "Nie masz pracy"], answer: 0, de: "Der Bus hat Verspätung. Ich bin in zwanzig Minuten da.", pl: "Autobus ma opóźnienie. Będę za dwadzieścia minut."),
-            Drill(title: "Warsztat", audio: "Vorne klopft es, wenn ich über ein Schlagloch fahre.", ask: "Co jest z autem?", options: ["Z przodu stuka na dziurze", "Nie ma paliwa", "Jest nowy"], answer: 0, de: "Vorne klopft es, wenn ich über ein Schlagloch fahre.", pl: "Z przodu stuka, gdy wjadę w dziurę."),
-            Drill(title: "Sąsiad", audio: "Können Sie die Musik etwas leiser machen?", ask: "O co prosi?", options: ["Żeby ściszyć muzykę", "Żeby pożyczyć wiertarkę", "Żeby otworzyć okno"], answer: 0, de: "Können Sie die Musik etwas leiser machen?", pl: "Czy może pan trochę ściszyć muzykę?"),
-            Drill(title: "Znajomi", audio: "Hast du heute Abend Zeit?", ask: "O co pyta?", options: ["Czy masz czas wieczorem", "Czy jesteś w pracy", "Czy masz kask"], answer: 0, de: "Hast du heute Abend Zeit?", pl: "Masz dziś wieczorem czas?")
-        ])
-    ]
-
     var body: some View {
         List {
-            ForEach(groups, id: \.0) { name, drills in
+            ForEach(LifeListen.groups, id: \.0) { name, topics in
                 Section(name) {
-                    ForEach(drills) { drill in
-                        NavigationLink(drill.title) { DrillView(drill: drill) }
+                    ForEach(topics, id: \.0) { title, drills in
+                        NavigationLink("\(title), \(drills.count) przykładów") { DrillRun(title: title, drills: drills) }
                     }
                 }
             }
@@ -122,6 +107,7 @@ private struct DrillView: View {
     let drill: Drill
     @State private var played = false
     @State private var picked: Int?
+    @State private var shown: [String] = []
 
     var body: some View {
         ScrollView {
@@ -137,11 +123,11 @@ private struct DrillView: View {
                 .buttonStyle(MatteGlassButton())
                 if played {
                     Text(drill.ask).font(.title3.bold())
-                    ForEach(drill.options.indices, id: \.self) { i in
-                        Button(drill.options[i]) {
+                    ForEach(shown.indices, id: \.self) { i in
+                        Button(shown[i]) {
                             guard picked == nil else { return }
                             picked = i
-                            let ok = i == drill.answer
+                            let ok = shown[i] == drill.options[drill.answer]
                             store.noteSkill("listen", ok: ok)
                             if !ok { HardBook.add(de: drill.de, pl: drill.pl) }
                         }
@@ -162,12 +148,105 @@ private struct DrillView: View {
         }
         .navigationTitle(drill.title)
         .containerBackground(for: .navigation) { Color.black }
+        .onAppear { if shown.isEmpty { shown = drill.options.shuffled() } }
         .onDisappear { Talk.stop() }
     }
 
     private func color(_ i: Int) -> Color {
-        guard let picked else { return Color.white.opacity(0.08) }
-        if i == drill.answer { return Theme.ok.opacity(0.8) }
+        guard let picked, shown.indices.contains(i) else { return Color.white.opacity(0.08) }
+        if shown[i] == drill.options[drill.answer] { return Theme.ok.opacity(0.8) }
+        if i == picked { return Theme.bad.opacity(0.8) }
+        return Color.white.opacity(0.08)
+    }
+}
+
+private struct DrillRun: View {
+    @EnvironmentObject var store: LearningStore
+    let title: String
+    let drills: [Drill]
+    @State private var order: [Int] = []
+    @State private var cursor = 0
+    @State private var played = false
+    @State private var picked: Int?
+    @State private var shown: [String] = []
+
+    private var drill: Drill? {
+        guard cursor < order.count else { return nil }
+        return drills[order[cursor]]
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                if let drill {
+                    Text("Przykład \(cursor + 1) z \(order.count)")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.text2)
+                    Text(drill.title).font(.largeTitle.bold())
+                    Button {
+                        played = true
+                        Talk.de(drill.audio, rate: 0.48)
+                    } label: {
+                        Label(played ? "Odtwórz jeszcze raz" : "Posłuchaj bez tekstu", systemImage: "speaker.wave.2.fill")
+                            .frame(maxWidth: .infinity, minHeight: 52)
+                    }
+                    .buttonStyle(MatteGlassButton())
+                    if played {
+                        Text(drill.ask).font(.title3.bold())
+                        ForEach(shown.indices, id: \.self) { i in
+                            Button(shown[i]) {
+                                guard picked == nil else { return }
+                                picked = i
+                                let ok = shown[i] == drill.options[drill.answer]
+                                store.noteSkill("listen", ok: ok)
+                                if !ok { HardBook.add(de: drill.de, pl: drill.pl) }
+                            }
+                            .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+                            .padding(.horizontal, 12)
+                            .foregroundStyle(.white)
+                            .background(tone(i, drill), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        }
+                    }
+                    if picked != nil {
+                        Text(drill.de).font(.title3.bold())
+                        Text(drill.pl).foregroundStyle(Theme.text2)
+                        Button("Posłuchaj z tekstem") { Talk.de(drill.de, rate: 0.42) }
+                            .buttonStyle(.glass)
+                        Button(cursor + 1 < order.count ? "Następny przykład" : "Od nowa, inna kolejność") {
+                            if cursor + 1 < order.count {
+                                cursor += 1
+                            } else {
+                                order.shuffle()
+                                cursor = 0
+                            }
+                            layout()
+                        }
+                        .primaryButton()
+                    }
+                }
+            }
+            .padding(20)
+        }
+        .navigationTitle(title)
+        .containerBackground(for: .navigation) { Color.black }
+        .onAppear {
+            if order.isEmpty {
+                order = Array(drills.indices).shuffled()
+                layout()
+            }
+        }
+        .onDisappear { Talk.stop() }
+    }
+
+    private func layout() {
+        played = false
+        picked = nil
+        shown = drill?.options.shuffled() ?? []
+    }
+
+    private func tone(_ i: Int, _ drill: Drill) -> Color {
+        guard let picked, shown.indices.contains(i) else { return Color.white.opacity(0.08) }
+        if shown[i] == drill.options[drill.answer] { return Theme.ok.opacity(0.8) }
         if i == picked { return Theme.bad.opacity(0.8) }
         return Color.white.opacity(0.08)
     }
