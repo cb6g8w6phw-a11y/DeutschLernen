@@ -159,6 +159,9 @@ struct StudyView: View {
                 .foregroundStyle(Theme.text2)
             Text(verdict)
                 .foregroundStyle(Theme.text2)
+            if !wasOK {
+                MerkeBox(text: "Gut zu wissen: zostaje cała poprawna forma, nie skrót. \(piece(word))")
+            }
             Button { Talk.de(sentence(word), rate: 0.42) } label: {
                 Label("Posłuchaj poprawnego", systemImage: "speaker.wave.2")
             }

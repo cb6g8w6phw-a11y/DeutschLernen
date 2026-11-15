@@ -758,7 +758,11 @@ struct ListenView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(item.de).font(.title3.bold())
                             Text(item.pl).foregroundStyle(Theme.text2)
-                            Text(picked == item.answer ? "Dobrze." : "Poprawnie: \(item.options[item.answer])")
+                            if picked == item.answer {
+                                Text("Dobrze.")
+                            } else {
+                                MerkeBox(text: "Gut zu wissen: poprawnie jest „\(item.options[item.answer])”. \(item.pl)")
+                            }
                                 .font(.headline)
                                 .foregroundStyle(picked == item.answer ? Theme.ok : Theme.bad)
                             Button { Talk.de(item.de, rate: speed, voice: voice.isEmpty ? nil : voice) } label: {

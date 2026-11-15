@@ -360,6 +360,7 @@ struct MoreTools: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 10) {
+                link("Praca", "helmet") { WorkHubView() }
                 link("Postępy", "chart.bar.fill") { StatsView() }
                 link("Słówka", "rectangle.stack.fill") { StudyView() }
                 link("Gramatyka", "textformat") { GrammarView() }

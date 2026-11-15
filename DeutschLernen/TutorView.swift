@@ -365,9 +365,15 @@ struct TutorView: View {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(t.flag == "fix" ? Ink.pine : Ink.accent)
                 }
-                Text(t.german)
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Theme.text)
+                if t.flag == "fix" {
+                    let wrong = t.err.components(separatedBy: "→").first ?? t.err
+                    MarkedGerman(text: t.german, marks: Merke.changed(wrong: wrong, right: t.german))
+                    MerkeBox(text: Merke.why(wrong: wrong, right: t.german))
+                } else {
+                    Text(t.german)
+                        .font(.system(size: 20, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Theme.text)
+                }
                 HStack(alignment: .center, spacing: 8) {
                     VoiceControls(text: speech(t))
                     Button { Task { await reveal(t) } } label: {
@@ -386,7 +392,7 @@ struct TutorView: View {
                         .font(.system(size: 16, design: .rounded))
                         .foregroundStyle(Theme.text2)
                 }
-                if !t.err.isEmpty {
+                if !t.err.isEmpty, t.flag != "fix" {
                     Text(t.err).font(.footnote).foregroundStyle(Ink.pine)
                 }
                 if !t.say.isEmpty, !blind, openPL.contains(t.id) {

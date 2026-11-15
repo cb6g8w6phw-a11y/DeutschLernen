@@ -30,9 +30,8 @@ struct RootView: View {
             NavigationStack { ListenView() }
                 .tabItem { Label("Słuchaj", systemImage: "headphones") }
             TutorView().tabItem { Label("Mów", systemImage: "mic.fill") }
-            NavigationStack { WorkHubView() }
-                .tabItem { Label("Praca", systemImage: "helmet") }
-            StatsView().tabItem { Label("Postęp", systemImage: "chart.bar.fill") }
+            NavigationStack { MoreTools() }
+                .tabItem { Label("Więcej", systemImage: "ellipsis") }
         }
         .tint(Theme.ok)
         .preferredColorScheme(.dark)
