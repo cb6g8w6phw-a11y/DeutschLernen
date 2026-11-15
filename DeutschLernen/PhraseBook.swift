@@ -119,6 +119,7 @@ struct PhraseView: View {
     @State private var show = true
     @State private var typed = ""
     @State private var note = ""
+    @State private var bank: [String] = []
     @FocusState private var writing: Bool
 
     private let packs: [VerbPack] = [
@@ -161,16 +162,51 @@ struct PhraseView: View {
                     Text(current.de).font(.title2.bold())
                     Button { Talk.de(current.de, rate: 0.42) } label: { Label("Posłuchaj zwrotu", systemImage: "speaker.wave.2") }
                         .buttonStyle(.glass)
-                    Button("Schowaj i napisz cały zwrot") {
+                    Button("Schowaj i ułóż zwrot") {
                         show = false
                         typed = ""
                         note = ""
+                        bank = current.de.split(separator: " ").map(String.init).shuffled()
                         writing = true
                     }
                     .primaryButton()
                 } else {
                     Text(current.pl).font(.title3.bold())
-                    TextField("Cały zwrot po niemiecku", text: $typed, axis: .vertical)
+                    Text("Ułóż z kafelków albo napisz sam.").font(.footnote).foregroundStyle(Theme.text2)
+                    HStack {
+                        Text(typed.isEmpty ? "Tu ułoży się zwrot" : typed)
+                            .font(.headline)
+                            .foregroundStyle(typed.isEmpty ? Theme.text2 : .white)
+                        Spacer()
+                        if !typed.isEmpty {
+                            Button("Cofnij") {
+                                let parts = typed.split(separator: " ").map(String.init)
+                                if let last = parts.last {
+                                    typed = parts.dropLast().joined(separator: " ")
+                                    bank.append(last)
+                                }
+                            }
+                            .font(.caption.weight(.semibold))
+                        }
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+                    .themedCard(radius: 14)
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 88), spacing: 8)], spacing: 8) {
+                        ForEach(bank.indices, id: \.self) { i in
+                            Button(bank[i]) {
+                                let word = bank.remove(at: i)
+                                typed = (typed + " " + word).trimmingCharacters(in: .whitespaces)
+                            }
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .padding(.vertical, 10)
+                            .frame(maxWidth: .infinity)
+                            .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Color.white.opacity(0.2), lineWidth: 1))
+                        }
+                    }
+                    TextField("albo napisz sam", text: $typed, axis: .vertical)
                         .textFieldStyle(.roundedBorder)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -215,6 +251,7 @@ struct PhraseView: View {
         show = true
         typed = ""
         note = ""
+        bank = []
     }
 }
 

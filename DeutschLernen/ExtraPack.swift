@@ -268,17 +268,26 @@ struct RepairView: View {
 
     private func ask(_ de: String) -> String {
         let key = Normalizer.clean(de)
+        if let line = HardBook.all().first(where: { Normalizer.clean($0.de) == key }), !line.pl.isEmpty {
+            return line.pl
+        }
         let found = (store.words + FreqBank.all).first {
             Normalizer.clean($0.de) == key || Normalizer.clean($0.ex) == key
         }
         if let found, !found.pl.isEmpty { return found.pl }
         if let found, !found.exPl.isEmpty { return found.exPl }
-        let parts = de.split(separator: " ").map(String.init)
+        let parts = de.split(separator: " ").map { String($0).trimmingCharacters(in: .punctuationCharacters) }.filter { !$0.isEmpty }
         let articles = ["der", "die", "das", "ein", "eine", "einen", "einem", "einer"]
         if let first = parts.first?.lowercased(), articles.contains(first), parts.count > 1 {
             return "Rzeczownik: \(parts.dropFirst().joined(separator: " ")). Dopisz der, die albo das."
         }
-        return "Napisz to zdanie jeszcze raz, poprawnie."
+        if parts.count >= 2 {
+            var shown = parts
+            shown[parts.count >= 3 ? 1 : 0] = "_____"
+            return "Uzupełnij i napisz całe zdanie: \(shown.joined(separator: " "))"
+        }
+        let start = de.prefix(1)
+        return "Napisz to słowo po niemiecku. Zaczyna się od \(start)."
     }
 
     private func why(_ de: String, _ stat: WordStat) -> String {

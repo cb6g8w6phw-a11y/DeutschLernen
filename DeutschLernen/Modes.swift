@@ -219,21 +219,27 @@ struct PictureTalk: View {
         busy = true
         defer { busy = false }
         let said = typed.trimmingCharacters(in: .whitespacesAndNewlines)
-        let clean = Normalizer.clean(said)
-        let hit = scene.order.filter { clean.contains(Normalizer.clean($0)) }
-        let inOrder = follows(said, scene.order)
-        if inOrder {
-            note = "Kolejność się zgadza: \(scene.sample)"
+        let right = exact(said, scene.order)
+        if right {
+            note = "Tak. \(scene.sample)"
+            fix = ""
             store.noteSkill("sentence", ok: true)
             let word = Word(de: said, pl: scene.title, ex: scene.sample, exPl: scene.see, topic: "Obrazek", level: "A2")
             store.grade(word, .easy, produced: true)
+            Talk.de(scene.sample, rate: 0.44)
         } else {
-            note = hit.isEmpty ? "Ułóż: \(scene.order.joined(separator: " "))." : "Są słowa, ale szyk jest inny. Wzorzec: \(scene.sample)"
+            note = "Jeszcze nie. Bez zbędnego słowa, w tej kolejności: \(scene.sample)"
             store.noteSkill("sentence", ok: false)
             HardBook.add(de: scene.sample, pl: scene.see)
+            fix = await polish(said) ?? ""
+            Talk.de(scene.sample, rate: 0.44)
         }
-        fix = await polish(said) ?? ""
-        Talk.de(scene.sample, rate: 0.44)
+    }
+
+    private func exact(_ said: String, _ order: [String]) -> Bool {
+        let got = Normalizer.clean(said).split(separator: " ").map(String.init)
+        let want = order.map { Normalizer.clean($0) }
+        return got == want
     }
 
     private var answerLine: some View {
@@ -283,16 +289,6 @@ struct PictureTalk: View {
         guard let last = parts.last else { return }
         typed = parts.dropLast().joined(separator: " ")
         if !bank.contains(last) { bank.append(last) }
-    }
-
-    private func follows(_ said: String, _ order: [String]) -> Bool {
-        var rest = Normalizer.clean(said).split(separator: " ").map(String.init)
-        for word in order {
-            let key = Normalizer.clean(word)
-            guard let at = rest.firstIndex(of: key) else { return false }
-            rest = Array(rest.dropFirst(at + 1))
-        }
-        return true
     }
 
     private func polish(_ said: String) async -> String? {
