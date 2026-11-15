@@ -24,19 +24,19 @@ struct RootView: View {
     @AppStorage("notifyExplained") private var notifyExplained = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            Group {
-                switch tab {
-                case 1: NavigationStack { WortHome() }
-                case 2: NavigationStack { ListenView() }
-                case 3: TutorView()
-                case 4: NavigationStack { MoreTools() }
-                case 5: NavigationStack { SceneLibraryView() }
-                case 6: NavigationStack { GrammarLibraryView() }
-                default: TodayView()
-                }
+        Group {
+            switch tab {
+            case 1: NavigationStack { WortHome() }
+            case 2: NavigationStack { ListenView() }
+            case 3: TutorView()
+            case 4: NavigationStack { MoreTools() }
+            case 5: NavigationStack { SceneLibraryView() }
+            case 6: NavigationStack { GrammarLibraryView() }
+            default: TodayView()
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .safeAreaBar(edge: .bottom, spacing: 8) {
             AppDock(tab: $tab)
         }
         .background(Color.black)
@@ -77,29 +77,59 @@ struct AppDock: View {
     @Binding var tab: Int
 
     var body: some View {
-        HStack(spacing: 0) {
-            icon(0, "house.fill", "Start")
-            icon(1, "character.book.closed", "Słówka")
-            icon(5, "bubble.left.and.bubble.right.fill", "Dialogi")
-            icon(2, "headphones", "Słuchaj")
-            icon(3, "mic.fill", "Mów")
-            icon(6, "text.book.closed.fill", "Wzorce")
-            icon(4, "ellipsis", "Więcej")
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                card(5, "bubble.left.and.bubble.right.fill", "Mini dialogi", "100+ scenek z życia")
+                card(6, "text.book.closed.fill", "Wzorce gramatyczne", "Gramatyka przez praktykę")
+            }
+            HStack(spacing: 0) {
+                icon(0, "house.fill", "Start")
+                icon(1, "character.book.closed", "Słówka")
+                icon(2, "headphones", "Słuchaj")
+                icon(3, "mic.fill", "Mów")
+                icon(4, "ellipsis", "Więcej")
+            }
         }
-        .padding(.top, 8)
-        .padding(.bottom, 6)
-        .background(.ultraThinMaterial)
-        .overlay(alignment: .top) { Rectangle().fill(Color.white.opacity(0.12)).frame(height: 0.5) }
+        .padding(10)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
+        .padding(.horizontal, 10)
+    }
+
+    private func card(_ value: Int, _ symbol: String, _ title: String, _ subtitle: String) -> some View {
+        Button { tab = value } label: {
+            VStack(alignment: .leading, spacing: 6) {
+                Image(systemName: symbol)
+                    .font(.title3)
+                    .foregroundStyle(Theme.ok)
+                Text(title)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(Theme.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Text(subtitle)
+                    .font(.caption2)
+                    .foregroundStyle(Theme.text2)
+                    .lineLimit(1)
+                Text("Nowa kategoria")
+                    .font(.caption2.weight(.bold))
+                    .foregroundStyle(Theme.ink)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Theme.ok, in: Capsule())
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(10)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(tab == value ? Theme.ok : Color.white.opacity(0.16), lineWidth: tab == value ? 1.5 : 0.5))
+        }
+        .buttonStyle(.plain)
     }
 
     private func icon(_ value: Int, _ symbol: String, _ title: String) -> some View {
         Button { tab = value } label: {
             VStack(spacing: 3) {
                 Image(systemName: symbol).font(.body.weight(.semibold))
-                Text(title)
-                    .font(.system(size: 10, weight: .semibold))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                Text(title).font(.system(size: 10, weight: .semibold)).lineLimit(1)
             }
             .frame(maxWidth: .infinity)
             .foregroundStyle(tab == value ? Theme.ok : Theme.text2)
