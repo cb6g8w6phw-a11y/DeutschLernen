@@ -109,7 +109,10 @@ private struct VerbPack: Identifiable {
     var id: String { verb }
     let verb: String
     let why: String
+    let forms: String
     let lines: [(pl: String, de: String)]
+    let links: [(String, String)]
+    let decoy: String
 }
 
 struct PhraseView: View {
@@ -127,30 +130,156 @@ struct PhraseView: View {
     @FocusState private var writing: Bool
 
     private let packs: [VerbPack] = [
-        VerbPack(verb: "machen", why: "Samego „machen” nie użyjesz. Uczysz się całego pytania i całej odpowiedzi.", lines: [
+        VerbPack(verb: "kommen", why: "Przychodzić, przyjeżdżać, zdążyć. Nie zostawiaj samego „kommen”. Mów, kiedy i dokąd.", forms: "ich komme · du kommst · er kommt · wir kommen · ihr kommt · sie kommen", lines: [
+            ("Kiedy przychodzisz do pracy?", "Wann kommst du zur Arbeit?"),
+            ("Przyjdę za dziesięć minut.", "Ich komme in zehn Minuten."),
+            ("Przyjdź proszę natychmiast.", "Komm bitte sofort!"),
+            ("Przyjdę dzisiaj trochę później.", "Ich komme heute etwas später."),
+            ("Jak dostaniesz się do domu?", "Wie kommst du nach Hause?"),
+            ("Beton przyjdzie po przerwie.", "Der Beton kommt nach der Pause."),
+            ("Daję sobie z tym radę.", "Ich komme damit klar."),
+            ("Spóźniłem się przez autobus.", "Ich bin zu spät gekommen, weil der Bus Verspätung hatte.")
+        ], links: [("zur Arbeit kommen", "przyjść do pracy"), ("klar kommen", "dać sobie radę"), ("zu spät kommen", "spóźnić się")], decoy: "skończyć pracę"),
+        VerbPack(verb: "machen", why: "Robić, ale w stałych zwrotach: przerwę, fajrant, bałagan. Samo machen jest puste.", forms: "ich mache · du machst · er macht · wir machen", lines: [
             ("Co mam zrobić?", "Was muss ich machen?"),
             ("Zrobię to później.", "Ich mache das später."),
             ("Robię to teraz.", "Ich mache das jetzt."),
             ("Co mam teraz zrobić?", "Was soll ich jetzt machen?"),
-            ("Zaraz to zrobię.", "Ich mache das sofort.")
-        ]),
-        VerbPack(verb: "brauchen", why: "„brauchen” bez rzeczy nic nie znaczy w pracy. Mów, czego potrzebujesz.", lines: [
+            ("Zaraz to zrobię.", "Ich mache das sofort."),
+            ("Robimy przerwę.", "Wir machen jetzt Pause."),
+            ("Kończę na dziś.", "Ich mache Feierabend."),
+            ("Nie rób tego sam.", "Mach das nicht allein.")
+        ], links: [("Pause machen", "zrobić przerwę"), ("Feierabend machen", "skończyć pracę"), ("Sauber machen", "posprzątać")], decoy: "iść do domu"),
+        VerbPack(verb: "gehen", why: "Iść. Przy muss, kann, will czasownik idzie na koniec.", forms: "ich gehe · du gehst · er geht · wir gehen", lines: [
+            ("Idę do domu.", "Ich gehe nach Hause."),
+            ("Muszę iść do lekarza.", "Ich muss zum Arzt gehen."),
+            ("Idziemy na górę.", "Wir gehen nach oben."),
+            ("To nie przejdzie.", "Das geht nicht."),
+            ("Czy mogę wejść?", "Kann ich reingehen?"),
+            ("Idź ostrożnie, tu jest kabel.", "Geh vorsichtig, hier liegt ein Kabel."),
+            ("Wychodzę o szóstej.", "Ich gehe um sechs."),
+            ("Idziemy na przerwę.", "Wir gehen in die Pause.")
+        ], links: [("nach Hause gehen", "iść do domu"), ("das geht nicht", "to nie przejdzie"), ("zur Arbeit gehen", "iść do pracy")], decoy: "dać znać"),
+        VerbPack(verb: "brauchen", why: "Potrzebować konkretnej rzeczy. Mów, czego brakuje.", forms: "ich brauche · du brauchst · er braucht · wir brauchen", lines: [
             ("Potrzebuję zwolnienia.", "Ich brauche eine Krankschreibung."),
             ("Czego do tego potrzebujesz?", "Was brauchst du dafür?"),
-            ("Potrzebuję materiału.", "Ich brauche Material.")
-        ]),
-        VerbPack(verb: "kommen", why: "Nie „kommen”. Mów, o której przychodzisz albo czy jesteś na zmianie.", lines: [
-            ("Przyjdę o dziewiątej.", "Ich komme um neun."),
-            ("Jesteś dziś na poranną?", "Kommst du heute zur Frühschicht?")
-        ]),
-        VerbPack(verb: "sagen", why: "„sagen” samo nie załatwia sprawy. Mów, komu i kiedy dasz znać.", lines: [
+            ("Potrzebuję materiału.", "Ich brauche Material."),
+            ("Potrzebuję pomocy przy palecie.", "Ich brauche Hilfe bei der Palette."),
+            ("Nie potrzebuję już klucza.", "Ich brauche den Schlüssel nicht mehr."),
+            ("Potrzebujemy więcej czasu.", "Wir brauchen mehr Zeit."),
+            ("Potrzebujesz kasku na górze.", "Du brauchst oben den Helm."),
+            ("Potrzebuję jutro wolne.", "Ich brauche morgen frei.")
+        ], links: [("Hilfe brauchen", "potrzebować pomocy"), ("Zeit brauchen", "potrzebować czasu"), ("frei brauchen", "potrzebować wolnego")], decoy: "spóźnić się"),
+        VerbPack(verb: "sagen", why: "Powiedzieć komuś konkret. Najczęstsze: Bescheid sagen, dać znać.", forms: "ich sage · du sagst · er sagt · wir sagen", lines: [
             ("Daj znać, jak skończysz.", "Sag Bescheid, wenn du fertig bist."),
-            ("Powiem szefowi.", "Ich sage dem Chef Bescheid.")
-        ]),
-        VerbPack(verb: "gehen", why: "Czasownik na końcu, gdy jest muss. Uczysz się całego zdania, nie samego gehen.", lines: [
-            ("Muszę iść do lekarza.", "Ich muss zum Arzt gehen."),
-            ("Idę do domu.", "Ich gehe nach Hause.")
-        ])
+            ("Powiem szefowi.", "Ich sage dem Chef Bescheid."),
+            ("Powiedz to jeszcze raz wolniej.", "Sag das noch einmal langsamer."),
+            ("Nie powiedziałem tego.", "Das habe ich nicht gesagt."),
+            ("Powiedz mi, kiedy.", "Sag mir, wann."),
+            ("On mówi, że beton idzie.", "Er sagt, der Beton kommt."),
+            ("Powiemy to rano.", "Wir sagen das morgen früh."),
+            ("Nie mów tego przy kliencie.", "Sag das nicht vor dem Kunden.")
+        ], links: [("Bescheid sagen", "dać znać"), ("die Wahrheit sagen", "powiedzieć prawdę"), ("noch einmal sagen", "powiedzieć jeszcze raz")], decoy: "zrobić przerwę"),
+        VerbPack(verb: "haben", why: "Mieć. Też w zwrotach: czas, ból, rację.", forms: "ich habe · du hast · er hat · wir haben", lines: [
+            ("Nie mam czasu.", "Ich habe keine Zeit."),
+            ("Masz klucz?", "Hast du den Schlüssel?"),
+            ("Boli mnie głowa.", "Ich habe Kopfschmerzen."),
+            ("Mamy problem z dostawą.", "Wir haben ein Problem mit der Lieferung."),
+            ("On ma rację.", "Er hat recht."),
+            ("Nie mam drobnych.", "Ich habe kein Kleingeld."),
+            ("Masz dziś zmianę?", "Hast du heute Schicht?"),
+            ("Mieliśmy to wczoraj.", "Das haben wir gestern gehabt.")
+        ], links: [("recht haben", "mieć rację"), ("Zeit haben", "mieć czas"), ("Schicht haben", "mieć zmianę")], decoy: "przyjść do pracy"),
+        VerbPack(verb: "sein", why: "Być. Gdzie jesteś, czy coś jest zepsute, czy jesteś w drodze.", forms: "ich bin · du bist · er ist · wir sind", lines: [
+            ("Jestem w drodze.", "Ich bin unterwegs."),
+            ("Jesteś już na placu?", "Bist du schon auf dem Platz?"),
+            ("Grzejnik jest zepsuty.", "Die Heizung ist kaputt."),
+            ("Jesteśmy na przerwie.", "Wir sind in der Pause."),
+            ("To jest za ciężkie.", "Das ist zu schwer."),
+            ("Byłem u lekarza.", "Ich bin beim Arzt gewesen."),
+            ("Sklep jest w niedzielę zamknięty.", "Der Laden ist sonntags zu."),
+            ("Jestem za dziesięć minut.", "Ich bin in zehn Minuten da.")
+        ], links: [("unterwegs sein", "być w drodze"), ("kaputt sein", "być zepsutym"), ("zu sein", "być zamkniętym")], decoy: "potrzebować pomocy"),
+        VerbPack(verb: "müssen", why: "Musieć. Nicht müssen znaczy nie muszę, nie nie wolno.", forms: "ich muss · du musst · er muss · wir müssen", lines: [
+            ("Muszę iść do lekarza.", "Ich muss zum Arzt."),
+            ("Nie musisz zostawać.", "Du musst nicht bleiben."),
+            ("Musimy to poprawić.", "Wir müssen das korrigieren."),
+            ("On musi zadzwonić do szefa.", "Er muss den Chef anrufen."),
+            ("Czy muszę to podpisać?", "Muss ich das unterschreiben?"),
+            ("Muszę jeszcze wypłacić pieniądze.", "Ich muss noch Geld abheben."),
+            ("Nie musimy tego dziś kończyć.", "Wir müssen das heute nicht fertig machen."),
+            ("Musisz założyć kask.", "Du musst den Helm aufsetzen.")
+        ], links: [("nicht müssen", "nie musieć"), ("fertig machen müssen", "musieć skończyć"), ("anrufen müssen", "musieć zadzwonić")], decoy: "dać sobie radę"),
+        VerbPack(verb: "können", why: "Móc, umieć. Pytanie o zgodę: Kann ich…?", forms: "ich kann · du kannst · er kann · wir können", lines: [
+            ("Czy możesz mi pomóc?", "Kannst du mir helfen?"),
+            ("Nie mogę tego dźwignąć sam.", "Ich kann das nicht allein heben."),
+            ("Możemy to przełożyć?", "Können wir das verschieben?"),
+            ("Może pan powtórzyć?", "Können Sie das wiederholen?"),
+            ("Nie mogę jutro rano.", "Ich kann morgen früh nicht."),
+            ("Umiem to zrobić.", "Ich kann das machen."),
+            ("Nie możemy wejść na rusztowanie.", "Wir können nicht aufs Gerüst."),
+            ("Czy mogę zapłacić kartą?", "Kann ich mit Karte zahlen?")
+        ], links: [("helfen können", "móc pomóc"), ("verschieben können", "móc przełożyć"), ("mit Karte zahlen können", "móc zapłacić kartą")], decoy: "mieć rację"),
+        VerbPack(verb: "fahren", why: "Jechać. Do domu, do pracy, następnym pociągiem.", forms: "ich fahre · du fährst · er fährt · wir fahren", lines: [
+            ("Jadę do domu.", "Ich fahre nach Hause."),
+            ("Jak jedziesz do pracy?", "Wie fährst du zur Arbeit?"),
+            ("Autobus już odjechał.", "Der Bus ist schon gefahren."),
+            ("Jedziemy następnym pociągiem.", "Wir fahren mit dem nächsten Zug."),
+            ("Jedź ostrożnie, jest ślisko.", "Fahr vorsichtig, es ist glatt."),
+            ("Jadę rowerem.", "Ich fahre mit dem Fahrrad."),
+            ("Czy ten autobus jedzie na dworzec?", "Fährt dieser Bus zum Bahnhof?"),
+            ("Pojechałem za daleko.", "Ich bin eine Station zu weit gefahren.")
+        ], links: [("nach Hause fahren", "jechać do domu"), ("zu weit fahren", "pojechać za daleko"), ("mit dem Bus fahren", "jechać autobusem")], decoy: "zrobić przerwę"),
+        VerbPack(verb: "arbeiten", why: "Pracować. Gdzie, do której, w sobotę czy nie.", forms: "ich arbeite · du arbeitest · er arbeitet · wir arbeiten", lines: [
+            ("Pracuję do szóstej.", "Ich arbeite bis sechs."),
+            ("Pracujesz w sobotę?", "Arbeitest du am Samstag?"),
+            ("Pracujemy na dachu.", "Wir arbeiten auf dem Dach."),
+            ("Dziś nie pracuję.", "Ich arbeite heute nicht."),
+            ("On pracuje za wolno.", "Er arbeitet zu langsam."),
+            ("Pracuję tu od pół roku.", "Ich arbeite hier seit einem halben Jahr."),
+            ("Nie pracujcie przy wietrze na górze.", "Arbeitet oben nicht bei dem Wind."),
+            ("Pracowałem wczoraj dziesięć godzin.", "Ich habe gestern zehn Stunden gearbeitet.")
+        ], links: [("auf dem Dach arbeiten", "pracować na dachu"), ("bis sechs arbeiten", "pracować do szóstej"), ("am Samstag arbeiten", "pracować w sobotę")], decoy: "spóźnić się"),
+        VerbPack(verb: "holen", why: "Przynosić, odbierać, iść po coś.", forms: "ich hole · du holst · er holt · wir holen", lines: [
+            ("Przyniosę drabinę.", "Ich hole die Leiter."),
+            ("Idziesz po kawę?", "Holst du den Kaffee?"),
+            ("Odbieram paczkę o piątej.", "Ich hole das Paket um fünf ab."),
+            ("Przynieś kask z auta.", "Hol den Helm aus dem Auto."),
+            ("On przyniesie śruby.", "Er holt die Schrauben."),
+            ("Możemy to odebrać jutro.", "Wir können das morgen abholen."),
+            ("Idę po wodę.", "Ich hole Wasser."),
+            ("Nie przynoś tego sam.", "Hol das nicht allein.")
+        ], links: [("abholen", "odebrać"), ("Wasser holen", "iść po wodę"), ("aus dem Auto holen", "przynieść z auta")], decoy: "być w drodze"),
+        VerbPack(verb: "warten", why: "Czekać. Na kogo, jak długo, gdzie.", forms: "ich warte · du wartest · er wartet · wir warten", lines: [
+            ("Czekam na dole.", "Ich warte unten."),
+            ("Czekaj chwilę.", "Warte kurz."),
+            ("Autobus nie czeka.", "Der Bus wartet nicht."),
+            ("Czekamy na beton.", "Wir warten auf den Beton."),
+            ("Na kogo czekasz?", "Auf wen wartest du?"),
+            ("Nie mogę dłużej czekać.", "Ich kann nicht länger warten."),
+            ("Poczekaj przy wejściu.", "Warte am Eingang."),
+            ("Czekaliśmy dwadzieścia minut.", "Wir haben zwanzig Minuten gewartet.")
+        ], links: [("auf den Bus warten", "czekać na autobus"), ("kurz warten", "chwilę poczekać"), ("unten warten", "czekać na dole")], decoy: "mieć zmianę"),
+        VerbPack(verb: "fragen", why: "Pytać konkretnie: kogo i o co.", forms: "ich frage · du fragst · er fragt · wir fragen", lines: [
+            ("Zapytam szefa.", "Ich frage den Chef."),
+            ("Pytasz jeszcze raz?", "Fragst du noch einmal?"),
+            ("On pyta o termin.", "Er fragt nach dem Termin."),
+            ("Możemy zapytać w kasie.", "Wir können an der Kasse fragen."),
+            ("Nie pytaj mnie teraz.", "Frag mich jetzt nicht."),
+            ("Zapytałem o cenę.", "Ich habe nach dem Preis gefragt."),
+            ("Zapytaj, czy to jest w czynszu.", "Frag, ob das in der Miete ist."),
+            ("Pytam, bo nie zrozumiałem.", "Ich frage, weil ich es nicht verstanden habe.")
+        ], links: [("nach dem Preis fragen", "pytać o cenę"), ("den Chef fragen", "pytać szefa"), ("noch einmal fragen", "zapytać jeszcze raz")], decoy: "jechać do domu"),
+        VerbPack(verb: "bleiben", why: "Zostać. Do której, czy dłużej, czy w domu.", forms: "ich bleibe · du bleibst · er bleibt · wir bleiben", lines: [
+            ("Zostaję do szóstej.", "Ich bleibe bis sechs."),
+            ("Zostajesz dłużej?", "Bleibst du länger?"),
+            ("Zostajemy przy tym planie.", "Wir bleiben bei dem Plan."),
+            ("Zostań na dole.", "Bleib unten."),
+            ("On zostaje w sobotę.", "Er bleibt am Samstag."),
+            ("Nie zostaję dziś dłużej.", "Ich bleibe heute nicht länger."),
+            ("Zostało jeszcze trochę betonu.", "Es ist noch etwas Beton übrig geblieben."),
+            ("Zostańmy przy jednej osobie na sobotę.", "Bleiben wir bei einer Person am Samstag.")
+        ], links: [("länger bleiben", "zostać dłużej"), ("unten bleiben", "zostać na dole"), ("bei dem Plan bleiben", "zostać przy planie")], decoy: "przynieść z auta")
     ]
 
     private var pack: VerbPack { packs[verb % packs.count] }
@@ -161,10 +290,20 @@ struct PhraseView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text(pack.verb).font(.largeTitle.bold())
                 Text(pack.why).foregroundStyle(Theme.text2)
-                Picker("Czasownik", selection: $verb) {
-                    ForEach(packs.indices, id: \.self) { Text(packs[$0].verb).tag($0) }
+                Text(pack.forms).font(.subheadline.weight(.semibold))
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack {
+                        ForEach(packs.indices, id: \.self) { i in
+                            Button(packs[i].verb) { verb = i }
+                                .font(.caption.weight(.semibold))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .foregroundStyle(verb == i ? Theme.ink : .white)
+                                .background { if verb == i { Capsule().fill(Theme.ok) } }
+                                .overlay(Capsule().stroke(Color.white.opacity(0.2), lineWidth: 1))
+                        }
+                    }
                 }
-                .pickerStyle(.segmented)
                 if show {
                     Text("Po polsku").font(.caption.weight(.semibold)).foregroundStyle(Theme.text2)
                     Text(current.pl).font(.title3.bold())
@@ -315,25 +454,9 @@ struct PhraseView: View {
         quiz = nil
     }
 
-    private var links: [(String, String)] {
-        switch pack.verb {
-        case "machen": return [("Pause machen", "zrobić przerwę"), ("Feierabend machen", "skończyć pracę")]
-        case "brauchen": return [("Hilfe brauchen", "potrzebować pomocy"), ("Zeit brauchen", "potrzebować czasu")]
-        case "kommen": return [("zu spät kommen", "spóźnić się"), ("klar kommen", "dać sobie radę")]
-        case "sagen": return [("Bescheid sagen", "dać znać"), ("die Wahrheit sagen", "powiedzieć prawdę")]
-        default: return [("nach Hause gehen", "iść do domu"), ("in Ordnung gehen", "być w porządku")]
-        }
-    }
+    private var links: [(String, String)] { pack.links }
 
-    private var decoy: String {
-        switch pack.verb {
-        case "machen": return "iść do domu"
-        case "brauchen": return "skończyć pracę"
-        case "kommen": return "dać znać"
-        case "sagen": return "zrobić przerwę"
-        default: return "potrzebować pomocy"
-        }
-    }
+    private var decoy: String { pack.decoy }
 
     private func saveOwn() {
         let row = "\(ownDe.trimmingCharacters(in: .whitespaces))|\(ownPl.trimmingCharacters(in: .whitespaces))"
@@ -383,7 +506,7 @@ enum Gloss {
             "zahlen": "płacić", "pass": "uważaj", "auf": "na", "hier": "tu", "ein": "jeden",
             "kabel": "kabel"
         ]
-        return map[word.lowercased()] ?? "…"
+        return map[word.lowercased()] ?? "nie mam osobnego skrótu"
     }
 }
 

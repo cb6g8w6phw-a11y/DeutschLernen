@@ -148,6 +148,7 @@ struct SceneStudyView: View {
     @EnvironmentObject var store: LearningStore
     let scene: MiniScene
     @State private var picked: Int?
+    @State private var endPick: String?
     @State private var typed = ""
     @State private var verdict = ""
     @State private var fav = false
@@ -167,6 +168,9 @@ struct SceneStudyView: View {
                 }
                 Text(scene.title).font(.title2.bold())
                 Text(scene.situation).foregroundStyle(Theme.text2)
+                Text("Poziom \(scene.level). Przewiń w dół: cała rozmowa, tłumaczenie, słówka i ćwiczenie są pod spodem. Nic nie jest obcięte.")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.text2)
                 Button {
                     Talk.de(scene.lines.map(\.de).joined(separator: " "), rate: Speaker.savedPace())
                 } label: {
@@ -192,6 +196,10 @@ struct SceneStudyView: View {
                             .foregroundStyle(Theme.ok)
                         }
                         LineWords(text: line.de, meaning: meaning)
+                        Text(line.pl)
+                            .font(.subheadline)
+                            .foregroundStyle(Theme.text2)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -220,6 +228,29 @@ struct SceneStudyView: View {
                 if let picked {
                     Text(picked == scene.answer ? "Dobrze." : "Poprawnie: \(scene.options[scene.answer])")
                         .foregroundStyle(picked == scene.answer ? Theme.ok : Theme.bad)
+                }
+                Text("Kto mówi na końcu całej historii?").font(.title3.bold())
+                let lastWho = scene.lines.last?.who ?? ""
+                let people = Array(Set(scene.lines.map(\.who)))
+                ForEach(people, id: \.self) { name in
+                    Button(name) {
+                        guard endPick == nil else { return }
+                        endPick = name
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                    .padding(.horizontal, 12)
+                    .foregroundStyle(.white)
+                    .background {
+                        if endPick != nil {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(name == lastWho ? Theme.ok.opacity(0.85) : (endPick == name ? Theme.bad.opacity(0.85) : Color.white.opacity(0.08)))
+                        }
+                    }
+                    .modifier(IdleGlassRect(active: endPick == nil))
+                }
+                if let endPick {
+                    Text(endPick == lastWho ? "Dobrze. Na końcu mówi \(lastWho)." : "Na końcu mówi \(lastWho).")
+                        .foregroundStyle(endPick == lastWho ? Theme.ok : Theme.bad)
                 }
                 Text("Słówka").font(.headline)
                 ForEach(scene.words) { word in
@@ -263,11 +294,82 @@ struct SceneStudyView: View {
         if let hit = scene.words.first(where: { gloss in
             gloss.de.lowercased().split { !($0.isLetter || "äöüß".contains($0)) }.contains { String($0) == bare }
         }) {
-            return "\(hit.de) — \(hit.pl)"
+            let plural = Self.plurals[bare].map { "\nLiczba mnoga: \($0)" } ?? ""
+            return "\(hit.de) — \(hit.pl)\(plural)\nPrzykład z tej rozmowy: \(exampleFor(bare))"
+        }
+        if let verb = Self.verbs[bare] {
+            return "\(token) — \(verb.pl)\nBezokolicznik: \(verb.inf)\nOdmiana: \(verb.forms)\nPrzykład: \(verb.ex)"
         }
         if let known = Self.bits[bare] { return "\(token) — \(known)" }
         return "Nie mam osobnego tłumaczenia dla „\(token)”."
     }
+
+    private func exampleFor(_ bare: String) -> String {
+        scene.lines.first { $0.de.lowercased().contains(bare) }?.de ?? scene.lines[0].de
+    }
+
+    private static let verbs: [String: (pl: String, inf: String, forms: String, ex: String)] = [
+        "komme": ("przyjdę", "kommen", "ich komme, du kommst, er kommt, wir kommen", "Ich komme in zehn Minuten."),
+        "kommst": ("przychodzisz", "kommen", "ich komme, du kommst, er kommt", "Wann kommst du zur Arbeit?"),
+        "kommt": ("przychodzi", "kommen", "ich komme, du kommst, er kommt", "Der Bus kommt in fünf Minuten."),
+        "kommen": ("przyjść, przyjechać", "kommen", "ich komme, du kommst, er kommt", "Komm bitte sofort!"),
+        "gekommen": ("przyszedł", "kommen", "ich bin gekommen", "Ich bin zu spät gekommen."),
+        "gehe": ("idę", "gehen", "ich gehe, du gehst, er geht", "Ich gehe nach Hause."),
+        "gehst": ("idziesz", "gehen", "ich gehe, du gehst, er geht", "Gehst du schon?"),
+        "geht": ("idzie", "gehen", "ich gehe, du gehst, er geht", "Das geht nicht."),
+        "gehen": ("iść", "gehen", "ich gehe, du gehst, er geht", "Ich muss zum Arzt gehen."),
+        "mache": ("robię", "machen", "ich mache, du machst, er macht", "Ich mache das jetzt."),
+        "machst": ("robisz", "machen", "ich mache, du machst, er macht", "Was machst du da?"),
+        "macht": ("robi", "machen", "ich mache, du machst, er macht", "Er macht Pause."),
+        "machen": ("robić", "machen", "ich mache, du machst, er macht", "Was muss ich machen?"),
+        "habe": ("mam", "haben", "ich habe, du hast, er hat", "Ich habe Kopfschmerzen."),
+        "hast": ("masz", "haben", "ich habe, du hast, er hat", "Hast du den Schlüssel?"),
+        "hat": ("ma", "haben", "ich habe, du hast, er hat", "Der Zug hat Verspätung."),
+        "haben": ("mieć", "haben", "ich habe, du hast, er hat", "Wir haben keine Zeit."),
+        "bin": ("jestem", "sein", "ich bin, du bist, er ist", "Ich bin unterwegs."),
+        "bist": ("jesteś", "sein", "ich bin, du bist, er ist", "Bist du schon da?"),
+        "ist": ("jest", "sein", "ich bin, du bist, er ist", "Die Heizung ist kaputt."),
+        "sind": ("jesteśmy, są", "sein", "wir sind, sie sind", "Wir sind auf der Baustelle."),
+        "muss": ("muszę", "müssen", "ich muss, du musst, er muss", "Ich muss noch Geld abheben."),
+        "musst": ("musisz", "müssen", "ich muss, du musst, er muss", "Du musst den Helm aufsetzen."),
+        "kann": ("mogę", "können", "ich kann, du kannst, er kann", "Ich kann später kommen."),
+        "kannst": ("możesz", "können", "ich kann, du kannst, er kann", "Kannst du mir bitte helfen?"),
+        "will": ("chcę", "wollen", "ich will, du willst, er will", "Ich will früher gehen."),
+        "fahre": ("jadę", "fahren", "ich fahre, du fährst, er fährt", "Ich fahre nach Hause."),
+        "fährst": ("jedziesz", "fahren", "ich fahre, du fährst, er fährt", "Wie fährst du zur Arbeit?"),
+        "fährt": ("jedzie", "fahren", "ich fahre, du fährst, er fährt", "Der Bus fährt gleich."),
+        "arbeite": ("pracuję", "arbeiten", "ich arbeite, du arbeitest, er arbeitet", "Ich arbeite heute länger."),
+        "arbeitest": ("pracujesz", "arbeiten", "ich arbeite, du arbeitest", "Arbeitest du am Samstag?"),
+        "arbeitet": ("pracuje", "arbeiten", "ich arbeite, du arbeitest, er arbeitet", "Er arbeitet auf dem Dach."),
+        "hole": ("biorę, przynoszę", "holen", "ich hole, du holst, er holt", "Ich hole die Leiter."),
+        "holst": ("bierzesz", "holen", "ich hole, du holst, er holt", "Holst du den Kaffee?"),
+        "holt": ("bierze", "holen", "ich hole, du holst, er holt", "Er holt den Schlüssel."),
+        "warte": ("czekam", "warten", "ich warte, du wartest, er wartet", "Ich warte am Eingang."),
+        "wartet": ("czeka", "warten", "ich warte, du wartest, er wartet", "Der Bus wartet nicht."),
+        "frage": ("pytam", "fragen", "ich frage, du fragst, er fragt", "Ich frage den Chef."),
+        "fragst": ("pytasz", "fragen", "ich frage, du fragst, er fragt", "Fragst du noch mal nach?"),
+        "fragt": ("pyta", "fragen", "ich frage, du fragst, er fragt", "Der Chef fragt nach dir."),
+        "bleibe": ("zostaję", "bleiben", "ich bleibe, du bleibst, er bleibt", "Ich bleibe bis sechs."),
+        "bleibst": ("zostajesz", "bleiben", "ich bleibe, du bleibst, er bleibt", "Bleibst du länger?"),
+        "bleibt": ("zostaje", "bleiben", "ich bleibe, du bleibst, er bleibt", "Das bleibt so."),
+        "sage": ("mówię", "sagen", "ich sage, du sagst, er sagt", "Ich sage dem Chef Bescheid."),
+        "sagst": ("mówisz", "sagen", "ich sage, du sagst, er sagt", "Sagst du mir Bescheid?"),
+        "sagt": ("mówi", "sagen", "ich sage, du sagst, er sagt", "Der Meister sagt Bescheid."),
+        "brauche": ("potrzebuję", "brauchen", "ich brauche, du brauchst, er braucht", "Ich brauche den Schlüssel."),
+        "brauchst": ("potrzebujesz", "brauchen", "ich brauche, du brauchst", "Was brauchst du dafür?"),
+        "braucht": ("potrzebuje", "brauchen", "ich brauche, du brauchst, er braucht", "Er braucht Hilfe.")
+    ]
+
+    private static let plurals = [
+        "schlüssel": "die Schlüssel", "rechnung": "die Rechnungen", "waschmaschine": "die Waschmaschinen",
+        "filter": "die Filter", "musik": "—", "fenster": "die Fenster", "joghurt": "die Joghurts",
+        "flasche": "die Flaschen", "brot": "die Brote", "brötchen": "die Brötchen", "tisch": "die Tische",
+        "bus": "die Busse", "zug": "die Züge", "karte": "die Karten", "helm": "die Helme",
+        "leiter": "die Leitern", "kabel": "die Kabel", "beton": "—", "chef": "die Chefs",
+        "palette": "die Paletten", "schraube": "die Schrauben", "wohnung": "die Wohnungen",
+        "heizung": "die Heizungen", "miete": "die Mieten", "kaution": "die Kautionen",
+        "termin": "die Termine", "rezept": "die Rezepte", "zahn": "die Zähne", "rücken": "die Rücken"
+    ]
 
     private static let bits = [
         "ich": "ja", "du": "ty", "er": "on", "sie": "ona, oni albo pan", "es": "to",
@@ -344,13 +446,24 @@ struct LineWords: View {
                 }
             }
             if let open {
-                Text(meaning(open))
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.text)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Theme.ok.opacity(0.55), lineWidth: 1))
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(meaning(open))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.text)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button {
+                        Talk.de(String(open.filter { $0.isLetter || "äöüÄÖÜß ".contains($0) }), rate: 0.4)
+                    } label: {
+                        Label("Posłuchaj tego słowa", systemImage: "speaker.wave.2.fill")
+                            .font(.caption.weight(.semibold))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Theme.ok)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Theme.ok.opacity(0.55), lineWidth: 1))
             }
         }
     }
