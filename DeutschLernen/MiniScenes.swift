@@ -17,8 +17,8 @@ enum MiniBook {
             SayLine(id: "s001-3", who: "Partner", de: "Nimm ihn mit. Der Bus wartet nicht.", pl: "Weź go. Autobus nie czeka.")
             ],
             words: [
-            Gloss(de: "der Schlüssel", pl: "klucz"),
-            Gloss(de: "die Rechnung", pl: "rachunek")
+            LineGloss(de: "der Schlüssel", pl: "klucz"),
+            LineGloss(de: "die Rechnung", pl: "rachunek")
             ],
             phrases: ["Wo ist mein Schlüssel?", "Der Bus wartet nicht."],
             note: "Pytanie o miejsce zaczyna się od wo, nie od gdzie w niemieckim szyku.",
@@ -41,8 +41,8 @@ enum MiniBook {
             SayLine(id: "s002-3", who: "Partner", de: "Unten rechts. Dreh ihn vorsichtig auf.", pl: "Na dole z prawej. Odkręć go ostrożnie.")
             ],
             words: [
-            Gloss(de: "die Waschmaschine", pl: "pralka"),
-            Gloss(de: "der Filter", pl: "filtr")
+            LineGloss(de: "die Waschmaschine", pl: "pralka"),
+            LineGloss(de: "der Filter", pl: "filtr")
             ],
             phrases: ["Die Waschmaschine schleudert nicht.", "Hast du den Filter geprüft?"],
             note: "Schleudern to wirowanie. Samo waschen to tylko pranie.",
@@ -65,8 +65,8 @@ enum MiniBook {
             SayLine(id: "s003-3", who: "Sąsiad", de: "Ich mache sofort leiser.", pl: "Zaraz ściszam.")
             ],
             words: [
-            Gloss(de: "die Musik", pl: "muzyka"),
-            Gloss(de: "die Ruhe", pl: "cisza")
+            LineGloss(de: "die Musik", pl: "muzyka"),
+            LineGloss(de: "die Ruhe", pl: "cisza")
             ],
             phrases: ["etwas leiser machen", "Ab zehn soll es ruhig sein."],
             note: "Prośbę do obcego zaczynasz od können Sie, nie od mach leiser.",
@@ -89,8 +89,8 @@ enum MiniBook {
             SayLine(id: "s004-3", who: "Wynajmujący", de: "Dann schicke ich am Donnerstag jemanden.", pl: "W takim razie w czwartek kogoś przyślę.")
             ],
             words: [
-            Gloss(de: "der Schimmel", pl: "pleśń"),
-            Gloss(de: "das Fenster", pl: "okno")
+            LineGloss(de: "der Schimmel", pl: "pleśń"),
+            LineGloss(de: "das Fenster", pl: "okno")
             ],
             phrases: ["An dem Fenster ist Schimmel.", "Die Wand bleibt nass."],
             note: "Schimmel mówisz wynajmującemu wprost. To nie jest zwykły brud.",
@@ -113,8 +113,8 @@ enum MiniBook {
             SayLine(id: "s005-3", who: "Kasjer", de: "Dann streiche ich ihn. Sie zahlen ihn nicht.", pl: "To go skreślam. Nie płaci pan za niego.")
             ],
             words: [
-            Gloss(de: "der Joghurt", pl: "jogurt"),
-            Gloss(de: "das Regal", pl: "półka")
+            LineGloss(de: "der Joghurt", pl: "jogurt"),
+            LineGloss(de: "das Regal", pl: "półka")
             ],
             phrases: ["Der Joghurt ist abgelaufen.", "Sie zahlen ihn nicht."],
             note: "Abgelaufen to po dacie. Nie myl z geschlossen, czyli zamknięte.",
@@ -137,9 +137,9 @@ enum MiniBook {
             SayLine(id: "s006-3", who: "Pracownik", de: "Drehen Sie die Flasche. Der Code muss nach oben.", pl: "Obróć pan butelkę. Kod ma być u góry.")
             ],
             words: [
-            Gloss(de: "die Flasche", pl: "butelka"),
-            Gloss(de: "der Automat", pl: "automat"),
-            Gloss(de: "der Bon", pl: "paragon")
+            LineGloss(de: "die Flasche", pl: "butelka"),
+            LineGloss(de: "der Automat", pl: "automat"),
+            LineGloss(de: "der Bon", pl: "paragon")
             ],
             phrases: ["Wo kann ich die Flaschen abgeben?", "Der Code muss nach oben."],
             note: "Pfand oddajesz w automacie. Bon z automatu dajesz potem przy kasie.",
@@ -163,8 +163,8 @@ enum MiniBook {
             SayLine(id: "s007-4", who: "Obsługa", de: "Alles klar. Sie können gehen.", pl: "W porządku. Może pan iść.")
             ],
             words: [
-            Gloss(de: "die Tasche", pl: "torba"),
-            Gloss(de: "der Artikel", pl: "towar")
+            LineGloss(de: "die Tasche", pl: "torba"),
+            LineGloss(de: "der Artikel", pl: "towar")
             ],
             phrases: ["Das ist meine eigene Tasche.", "Sie können gehen."],
             note: "Eigene Tasche mówisz, gdy kasa bierze twoją siatkę za towar.",
@@ -187,8 +187,8 @@ enum MiniBook {
             SayLine(id: "s008-3", who: "Ty", de: "Das dunkle. Zum Mitnehmen.", pl: "Ciemny. Na wynos.")
             ],
             words: [
-            Gloss(de: "das Brötchen", pl: "bułka"),
-            Gloss(de: "das Brot", pl: "chleb")
+            LineGloss(de: "das Brötchen", pl: "bułka"),
+            LineGloss(de: "das Brot", pl: "chleb")
             ],
             phrases: ["Was darf es sein?", "Zum Mitnehmen."],
             note: "W piekarni słyszysz was darf es sein, nie was willst du haben.",
@@ -211,8 +211,8 @@ enum MiniBook {
             SayLine(id: "s009-3", who: "Ekspedientka", de: "Name und Nummer, bitte.", pl: "Nazwisko i numer, poproszę.")
             ],
             words: [
-            Gloss(de: "die Torte", pl: "tort"),
-            Gloss(de: "die Abholung", pl: "odbiór")
+            LineGloss(de: "die Torte", pl: "tort"),
+            LineGloss(de: "die Abholung", pl: "odbiór")
             ],
             phrases: ["Kann ich eine Torte bestellen?", "Um zwölf ist zu."],
             note: "W niedzielę wiele piekarni zamyka się w południe. Um zwölf ist zu.",
@@ -235,8 +235,8 @@ enum MiniBook {
             SayLine(id: "s010-3", who: "Ekspedientka", de: "Möchten Sie es geschnitten?", pl: "Pokroić?")
             ],
             words: [
-            Gloss(de: "das Brot", pl: "chleb"),
-            Gloss(de: "geschnitten", pl: "pokrojony")
+            LineGloss(de: "das Brot", pl: "chleb"),
+            LineGloss(de: "geschnitten", pl: "pokrojony")
             ],
             phrases: ["Das große ist aus.", "Möchten Sie es geschnitten?"],
             note: "Aus przy towarze znaczy, że się skończył. Nie że sklep jest zamknięty.",
@@ -259,9 +259,9 @@ enum MiniBook {
             SayLine(id: "s011-3", who: "Ty", de: "Danke. Die Karte, bitte.", pl: "Dziękuję. Kartę, poproszę.")
             ],
             words: [
-            Gloss(de: "der Tisch", pl: "stolik"),
-            Gloss(de: "die Karte", pl: "karta dań"),
-            Gloss(de: "das Fenster", pl: "okno")
+            LineGloss(de: "der Tisch", pl: "stolik"),
+            LineGloss(de: "die Karte", pl: "karta dań"),
+            LineGloss(de: "das Fenster", pl: "okno")
             ],
             phrases: ["Haben Sie reserviert?", "Die Karte, bitte."],
             note: "Karte w restauracji to menu, nie karta do płacenia. Karta płatnicza to die Karte zum Zahlen albo EC-Karte.",
@@ -284,9 +284,9 @@ enum MiniBook {
             SayLine(id: "s012-3", who: "Kelner", de: "Die Suppe ist ohne Nüsse. Ich sage Bescheid.", pl: "Zupa jest bez orzechów. Powiem im.")
             ],
             words: [
-            Gloss(de: "die Nuss", pl: "orzech"),
-            Gloss(de: "die Suppe", pl: "zupa"),
-            Gloss(de: "die Küche", pl: "kuchnia")
+            LineGloss(de: "die Nuss", pl: "orzech"),
+            LineGloss(de: "die Suppe", pl: "zupa"),
+            LineGloss(de: "die Küche", pl: "kuchnia")
             ],
             phrases: ["Ich vertrage keine Nüsse.", "Die Suppe ist ohne Nüsse."],
             note: "Vertragen to znosić jedzenie. Nie myl z verstehen, czyli rozumieć.",
@@ -309,8 +309,8 @@ enum MiniBook {
             SayLine(id: "s013-3", who: "Ty", de: "Mit Karte. Eine Quittung, bitte.", pl: "Kartą. Pokwitowanie, poproszę.")
             ],
             words: [
-            Gloss(de: "die Quittung", pl: "pokwitowanie"),
-            Gloss(de: "die Karte", pl: "karta")
+            LineGloss(de: "die Quittung", pl: "pokwitowanie"),
+            LineGloss(de: "die Karte", pl: "karta")
             ],
             phrases: ["Zusammen oder getrennt?", "Eine Quittung, bitte."],
             note: "Getrennt znaczy każdy swój rachunek. Quittung przyda się, gdy płaci firma.",
@@ -333,8 +333,8 @@ enum MiniBook {
             SayLine(id: "s014-3", who: "Ty", de: "Zum Mitnehmen. Nicht zu heiß.", pl: "Na wynos. Nie za gorącą.")
             ],
             words: [
-            Gloss(de: "der Kaffee", pl: "kawa"),
-            Gloss(de: "die Hafermilch", pl: "mleko owsiane")
+            LineGloss(de: "der Kaffee", pl: "kawa"),
+            LineGloss(de: "die Hafermilch", pl: "mleko owsiane")
             ],
             phrases: ["mit Hafermilch", "zum Mitnehmen"],
             note: "Zum Mitnehmen to na wynos. Zum Hiertrinken to na miejscu.",
@@ -357,8 +357,8 @@ enum MiniBook {
             SayLine(id: "s015-3", who: "Barista", de: "Nehmen Sie Gast, nicht Mitarbeiter.", pl: "Weź pan sieć Gast, nie Mitarbeiter.")
             ],
             words: [
-            Gloss(de: "das Passwort", pl: "hasło"),
-            Gloss(de: "das WLAN", pl: "wifi")
+            LineGloss(de: "das Passwort", pl: "hasło"),
+            LineGloss(de: "das WLAN", pl: "wifi")
             ],
             phrases: ["Wie ist das WLAN-Passwort?", "Es steht auf dem Bon."],
             note: "Gast to sieć dla klientów. Mitarbeiter jest dla pracowników.",
@@ -381,8 +381,8 @@ enum MiniBook {
             SayLine(id: "s016-3", who: "Przechodzień", de: "Zehn Minuten. Die Ampel ist da vorne.", pl: "Dziesięć minut. Światła są tam z przodu.")
             ],
             words: [
-            Gloss(de: "der Bahnhof", pl: "dworzec"),
-            Gloss(de: "die Ampel", pl: "sygnalizacja")
+            LineGloss(de: "der Bahnhof", pl: "dworzec"),
+            LineGloss(de: "die Ampel", pl: "sygnalizacja")
             ],
             phrases: ["Wo ist der Bahnhof?", "Die nächste Straße links."],
             note: "Geradeaus to prosto. Links i rechts mówisz od razu, zanim ktoś zdąży odejść.",
@@ -405,8 +405,8 @@ enum MiniBook {
             SayLine(id: "s017-3", who: "Przechodzień", de: "Prüfen Sie, ob er noch angeht.", pl: "Sprawdź, czy jeszcze się włącza.")
             ],
             words: [
-            Gloss(de: "das Handy", pl: "telefon"),
-            Gloss(de: "das Wartehäuschen", pl: "wiata")
+            LineGloss(de: "das Handy", pl: "telefon"),
+            LineGloss(de: "das Wartehäuschen", pl: "wiata")
             ],
             phrases: ["Ich habe mein Handy verloren.", "Ob er noch angeht."],
             note: "Handy to telefon komórkowy. Telefon w niemieckim często znaczy telefon stacjonarny.",
@@ -429,9 +429,9 @@ enum MiniBook {
             SayLine(id: "s018-3", who: "Robotnik", de: "Bis Freitag. Die Umleitung ist ausgeschildert.", pl: "Do piątku. Objazd jest oznaczony.")
             ],
             words: [
-            Gloss(de: "der Gehweg", pl: "chodnik"),
-            Gloss(de: "die Umleitung", pl: "objazd"),
-            Gloss(de: "das Kabel", pl: "kabel")
+            LineGloss(de: "der Gehweg", pl: "chodnik"),
+            LineGloss(de: "die Umleitung", pl: "objazd"),
+            LineGloss(de: "das Kabel", pl: "kabel")
             ],
             phrases: ["Der Gehweg ist gesperrt.", "Die Umleitung ist ausgeschildert."],
             note: "Gesperrt to zamknięte dla przejścia. Ausgeschildert znaczy, że są tabliczki.",
@@ -454,9 +454,9 @@ enum MiniBook {
             SayLine(id: "s019-3", who: "Ty", de: "Mache ich. Ich schreibe, wenn ich da bin.", pl: "Tak zrobię. Napiszę, jak będę na miejscu.")
             ],
             words: [
-            Gloss(de: "die Verspätung", pl: "opóźnienie"),
-            Gloss(de: "die Frühschicht", pl: "poranna zmiana"),
-            Gloss(de: "die Rampe", pl: "rampa")
+            LineGloss(de: "die Verspätung", pl: "opóźnienie"),
+            LineGloss(de: "die Frühschicht", pl: "poranna zmiana"),
+            LineGloss(de: "die Rampe", pl: "rampa")
             ],
             phrases: ["Der Bus hat Verspätung.", "Fang an der Rampe an."],
             note: "Podajesz czas, nie sam fakt spóźnienia. In zwanzig Minuten da jest konkret.",
@@ -479,8 +479,8 @@ enum MiniBook {
             SayLine(id: "s020-3", who: "Ty", de: "Jetzt. Der gilt bis Burgwedel.", pl: "Już. Ważny jest do Burgwedel.")
             ],
             words: [
-            Gloss(de: "der Fahrschein", pl: "bilet"),
-            Gloss(de: "der Code", pl: "kod")
+            LineGloss(de: "der Fahrschein", pl: "bilet"),
+            LineGloss(de: "der Code", pl: "kod")
             ],
             phrases: ["Fahrscheine, bitte.", "Der Code ist unscharf."],
             note: "Fahrschein i Ticket to bilet. Handy hell machen znaczy podnieść jasność.",
@@ -503,8 +503,8 @@ enum MiniBook {
             SayLine(id: "s021-3", who: "Kierowca", de: "Steigen Sie hier aus und gehen Sie fünf Minuten zurück.", pl: "Wysiądź pan tutaj i pięć minut z powrotem.")
             ],
             words: [
-            Gloss(de: "die Haltestelle", pl: "przystanek"),
-            Gloss(de: "die Baustelle", pl: "budowa")
+            LineGloss(de: "die Haltestelle", pl: "przystanek"),
+            LineGloss(de: "die Baustelle", pl: "budowa")
             ],
             phrases: ["eine zu weit gefahren", "fünf Minuten zurück"],
             note: "Nazwa przystanku bywa inna niż nazwa firmy. Pytaj o Haltestelle, nie tylko o Baustelle.",
@@ -527,8 +527,8 @@ enum MiniBook {
             SayLine(id: "s022-3", who: "Informacja", de: "Acht Minuten. Der Aufzug ist links.", pl: "Osiem minut. Winda jest po lewej.")
             ],
             words: [
-            Gloss(de: "das Gleis", pl: "peron"),
-            Gloss(de: "der Aufzug", pl: "winda")
+            LineGloss(de: "das Gleis", pl: "peron"),
+            LineGloss(de: "der Aufzug", pl: "winda")
             ],
             phrases: ["Jetzt Gleis sieben.", "Der Aufzug ist links."],
             note: "Gleis to peron albo tor. Bahnsteig też usłyszysz.",
@@ -551,8 +551,8 @@ enum MiniBook {
             SayLine(id: "s023-3", who: "Informacja", de: "Knapp. Der Anschluss wartet nicht.", pl: "Ciasno. Przesiadka nie czeka.")
             ],
             words: [
-            Gloss(de: "der Anschluss", pl: "przesiadka"),
-            Gloss(de: "die Verspätung", pl: "opóźnienie")
+            LineGloss(de: "der Anschluss", pl: "przesiadka"),
+            LineGloss(de: "die Verspätung", pl: "opóźnienie")
             ],
             phrases: ["Hat der Zug Verspätung?", "Der Anschluss wartet nicht."],
             note: "Anschluss to przesiadka, nie podłączenie prądu.",
@@ -575,8 +575,8 @@ enum MiniBook {
             SayLine(id: "s024-3", who: "Ochrona", de: "Bis Mitternacht. Danach wird sie ausgeräumt.", pl: "Do północy. Potem ją wyjmują.")
             ],
             words: [
-            Gloss(de: "das Schließfach", pl: "szafka"),
-            Gloss(de: "die Tasche", pl: "torba")
+            LineGloss(de: "das Schließfach", pl: "szafka"),
+            LineGloss(de: "die Tasche", pl: "torba")
             ],
             phrases: ["Wo sind die Schließfächer?", "Danach wird sie ausgeräumt."],
             note: "Schließfach to szafka na klucz albo kod. Nie myl z Schließzeit, czyli godziną zamknięcia.",
@@ -599,8 +599,8 @@ enum MiniBook {
             SayLine(id: "s025-3", who: "Ty", de: "Seit Montag. Ich brauche eine Krankschreibung.", pl: "Od poniedziałku. Potrzebuję zwolnienia.")
             ],
             words: [
-            Gloss(de: "der Rücken", pl: "plecy"),
-            Gloss(de: "die Krankschreibung", pl: "zwolnienie")
+            LineGloss(de: "der Rücken", pl: "plecy"),
+            LineGloss(de: "die Krankschreibung", pl: "zwolnienie")
             ],
             phrases: ["Mir tut der Rücken weh.", "Ich brauche eine Krankschreibung."],
             note: "Ból mówisz: mir tut ... weh. Zwolnienie to Krankschreibung, nie Rezept.",
@@ -623,8 +623,8 @@ enum MiniBook {
             SayLine(id: "s026-3", who: "Rejestracja", de: "Der Dritte um zehn nach sieben ist frei.", pl: "Trzeciego o dziesięć po siódmej jest wolne.")
             ],
             words: [
-            Gloss(de: "der Termin", pl: "termin"),
-            Gloss(de: "die Schicht", pl: "zmiana")
+            LineGloss(de: "der Termin", pl: "termin"),
+            LineGloss(de: "die Schicht", pl: "zmiana")
             ],
             phrases: ["Ich brauche einen Kontrolltermin.", "vor der Schicht"],
             note: "Mówisz, że termin ma być przed zmianą. Inaczej dadzą ci godzinę w środku roboty.",
@@ -647,8 +647,8 @@ enum MiniBook {
             SayLine(id: "s027-3", who: "Farmaceuta", de: "Alle zwei Stunden eine.", pl: "Co dwie godziny jedna.")
             ],
             words: [
-            Gloss(de: "die Halsschmerzen", pl: "ból gardła"),
-            Gloss(de: "die Packung", pl: "opakowanie")
+            LineGloss(de: "die Halsschmerzen", pl: "ból gardła"),
+            LineGloss(de: "die Packung", pl: "opakowanie")
             ],
             phrases: ["etwas gegen Halsschmerzen", "ohne Zucker"],
             note: "Gegen plus ból: gegen Halsschmerzen, gegen Kopfschmerzen.",
@@ -671,8 +671,8 @@ enum MiniBook {
             SayLine(id: "s028-3", who: "Farmaceuta", de: "Die Gesundheitskarte. Die Bankkarte nicht.", pl: "Kartę ubezpieczenia. Nie kartę bankową.")
             ],
             words: [
-            Gloss(de: "das E-Rezept", pl: "e-recepta"),
-            Gloss(de: "die Gesundheitskarte", pl: "karta ubezpieczenia")
+            LineGloss(de: "das E-Rezept", pl: "e-recepta"),
+            LineGloss(de: "die Gesundheitskarte", pl: "karta ubezpieczenia")
             ],
             phrases: ["Ich habe ein E-Rezept.", "Die Gesundheitskarte."],
             note: "Gesundheitskarte to karta kasy chorych. Karta z banku tu nie działa.",
@@ -695,8 +695,8 @@ enum MiniBook {
             SayLine(id: "s029-3", who: "Ty", de: "Können Sie das heute noch behandeln?", pl: "Może pan to dziś jeszcze opatrzyć?")
             ],
             words: [
-            Gloss(de: "der Zahn", pl: "ząb"),
-            Gloss(de: "die Wurzel", pl: "korzeń")
+            LineGloss(de: "der Zahn", pl: "ząb"),
+            LineGloss(de: "die Wurzel", pl: "korzeń")
             ],
             phrases: ["Ich kann nicht kauen.", "Die Wurzel ist entzündet."],
             note: "Kauen to gryźć. Weh tun zostaje przy bólu.",
@@ -719,8 +719,8 @@ enum MiniBook {
             SayLine(id: "s030-3", who: "Ty", de: "Das passt. Ich komme nach der Schicht.", pl: "Pasuje. Przyjdę po zmianie.")
             ],
             words: [
-            Gloss(de: "der Termin", pl: "termin"),
-            Gloss(de: "die Schicht", pl: "zmiana")
+            LineGloss(de: "der Termin", pl: "termin"),
+            LineGloss(de: "die Schicht", pl: "zmiana")
             ],
             phrases: ["Das passt.", "nach der Schicht"],
             note: "Das passt znaczy, że godzina ci odpowiada.",
@@ -743,8 +743,8 @@ enum MiniBook {
             SayLine(id: "s031-3", who: "Szef", de: "Melde dich bei Tim, nicht bei mir.", pl: "Zgłoś się do Tima, nie do mnie.")
             ],
             words: [
-            Gloss(de: "der Stau", pl: "korek"),
-            Gloss(de: "die Umgehung", pl: "obwodnica")
+            LineGloss(de: "der Stau", pl: "korek"),
+            LineGloss(de: "die Umgehung", pl: "obwodnica")
             ],
             phrases: ["Ich stecke im Stau.", "Melde dich bei Tim."],
             note: "Podajesz minuty. Samo ich komme später nic szefowi nie mówi.",
@@ -767,8 +767,8 @@ enum MiniBook {
             SayLine(id: "s032-3", who: "Ty", de: "Heute nicht. Ich muss zum Arzt. Morgen geht.", pl: "Dziś nie. Muszę do lekarza. Jutro tak.")
             ],
             words: [
-            Gloss(de: "der Lkw", pl: "ciężarówka"),
-            Gloss(de: "der Arzt", pl: "lekarz")
+            LineGloss(de: "der Lkw", pl: "ciężarówka"),
+            LineGloss(de: "der Arzt", pl: "lekarz")
             ],
             phrases: ["Kannst du länger bleiben?", "Morgen geht."],
             note: "Odmawiasz i od razu dajesz inny dzień.",
@@ -791,8 +791,8 @@ enum MiniBook {
             SayLine(id: "s033-3", who: "Szef", de: "Nur die obere Reihe. Der Rest bleibt.", pl: "Tylko górny rząd. Reszta zostaje.")
             ],
             words: [
-            Gloss(de: "die Reihe", pl: "rząd"),
-            Gloss(de: "die Wand", pl: "ściana")
+            LineGloss(de: "die Reihe", pl: "rząd"),
+            LineGloss(de: "die Wand", pl: "ściana")
             ],
             phrases: ["Rechts zuerst.", "Nur die obere Reihe."],
             note: "Zanim rozbierzesz całość, dopytaj, która część jest zła.",
@@ -815,8 +815,8 @@ enum MiniBook {
             SayLine(id: "s034-3", who: "Ty", de: "Alles klar. Ich bringe sie nach hinten.", pl: "Jasne. Zanoszę ją do tyłu.")
             ],
             words: [
-            Gloss(de: "die Leiter", pl: "drabina"),
-            Gloss(de: "der Container", pl: "kontener")
+            LineGloss(de: "die Leiter", pl: "drabina"),
+            LineGloss(de: "der Container", pl: "kontener")
             ],
             phrases: ["Hol die Leiter.", "nach hinten"],
             note: "Nach hinten to do tyłu. Nach vorne byłoby do przodu.",
@@ -839,8 +839,8 @@ enum MiniBook {
             SayLine(id: "s035-3", who: "Kolega", de: "Gut. Ich gehe da nicht rein.", pl: "Dobrze. Nie wchodzę tam.")
             ],
             words: [
-            Gloss(de: "das Kabel", pl: "kabel"),
-            Gloss(de: "der Elektriker", pl: "elektryk")
+            LineGloss(de: "das Kabel", pl: "kabel"),
+            LineGloss(de: "der Elektriker", pl: "elektryk")
             ],
             phrases: ["Hier liegt ein Kabel offen.", "Ich hole den Elektriker."],
             note: "Jak nie wiesz, czy jest prąd, nie sprawdzasz ręką.",
@@ -863,8 +863,8 @@ enum MiniBook {
             SayLine(id: "s036-3", who: "Szef", de: "Nicht mehr gießen. Ich rufe das Werk an.", pl: "Już nie lać. Dzwonię do wytwórni.")
             ],
             words: [
-            Gloss(de: "der Beton", pl: "beton"),
-            Gloss(de: "das Werk", pl: "wytwórnia")
+            LineGloss(de: "der Beton", pl: "beton"),
+            LineGloss(de: "das Werk", pl: "wytwórnia")
             ],
             phrases: ["Der Beton wird fest.", "nicht mehr gießen"],
             note: "Przy betonie fest werden znaczy, że wiąże. Wody nie dolewasz sam.",
@@ -887,8 +887,8 @@ enum MiniBook {
             SayLine(id: "s037-3", who: "Ty", de: "Ich messe danach noch einmal.", pl: "Potem zmierzę jeszcze raz.")
             ],
             words: [
-            Gloss(de: "das Loch", pl: "dół"),
-            Gloss(de: "der Plan", pl: "plan")
+            LineGloss(de: "das Loch", pl: "dół"),
+            LineGloss(de: "der Plan", pl: "plan")
             ],
             phrases: ["Im Plan stehen achtzig.", "Nicht breiter."],
             note: "Mówisz obie liczby: swoją i z planu.",
@@ -911,8 +911,8 @@ enum MiniBook {
             SayLine(id: "s038-3", who: "Szef", de: "Trag es ins Formular ein.", pl: "Wpisz to w formularz.")
             ],
             words: [
-            Gloss(de: "der Urlaub", pl: "urlop"),
-            Gloss(de: "das Formular", pl: "formularz")
+            LineGloss(de: "der Urlaub", pl: "urlop"),
+            LineGloss(de: "das Formular", pl: "formularz")
             ],
             phrases: ["frei nehmen", "ins Formular eintragen"],
             note: "Podajesz daty od-do. Samo im August jest za szerokie.",
@@ -935,8 +935,8 @@ enum MiniBook {
             SayLine(id: "s039-3", who: "Szef", de: "Schick mir die Zeiten. Ich gebe sie weiter.", pl: "Przyślij godziny. Przekażę je.")
             ],
             words: [
-            Gloss(de: "die Abrechnung", pl: "rozliczenie"),
-            Gloss(de: "die Überstunde", pl: "nadgodzina")
+            LineGloss(de: "die Abrechnung", pl: "rozliczenie"),
+            LineGloss(de: "die Überstunde", pl: "nadgodzina")
             ],
             phrases: ["Es fehlen zwölf Stunden.", "Schick mir die Zeiten."],
             note: "Mówisz liczbę i tydzień. Inaczej księgowość zgaduje.",
@@ -959,8 +959,8 @@ enum MiniBook {
             SayLine(id: "s040-3", who: "Ty", de: "Blaue Palette, Tor drei. Stimmt das?", pl: "Niebieska paleta, brama trzy. Zgadza się?")
             ],
             words: [
-            Gloss(de: "die Palette", pl: "paleta"),
-            Gloss(de: "das Tor", pl: "brama")
+            LineGloss(de: "die Palette", pl: "paleta"),
+            LineGloss(de: "das Tor", pl: "brama")
             ],
             phrases: ["Langsamer, bitte.", "Stimmt das?"],
             note: "Na końcu powtarzasz polecenie. Wtedy słyszysz, czy dobrze złapałeś.",
@@ -983,8 +983,8 @@ enum MiniBook {
             SayLine(id: "s041-3", who: "Kolega", de: "Ich nehme links.", pl: "Biorę z lewej.")
             ],
             words: [
-            Gloss(de: "die Palette", pl: "paleta"),
-            Gloss(de: "die Rampe", pl: "rampa")
+            LineGloss(de: "die Palette", pl: "paleta"),
+            LineGloss(de: "die Rampe", pl: "rampa")
             ],
             phrases: ["zu schwer", "nur bis zur Rampe"],
             note: "Mówisz, gdzie kończycie. Inaczej kolega niesie za daleko.",
@@ -1007,8 +1007,8 @@ enum MiniBook {
             SayLine(id: "s042-3", who: "Kolega", de: "In fünf Minuten hast du ihn.", pl: "Za pięć minut ją masz.")
             ],
             words: [
-            Gloss(de: "der Akkuschrauber", pl: "wkrętarka"),
-            Gloss(de: "der Akku", pl: "akumulator")
+            LineGloss(de: "der Akkuschrauber", pl: "wkrętarka"),
+            LineGloss(de: "der Akku", pl: "akumulator")
             ],
             phrases: ["Hast du meinen Akkuschrauber?", "in fünf Minuten"],
             note: "Meinen mówi, że to twoje narzędzie.",
@@ -1031,8 +1031,8 @@ enum MiniBook {
             SayLine(id: "s043-3", who: "Ty", de: "Ja, schwarz. Danke.", pl: "Tak, czarną. Dzięki.")
             ],
             words: [
-            Gloss(de: "die Pumpe", pl: "pompa"),
-            Gloss(de: "der Kaffee", pl: "kawa")
+            LineGloss(de: "die Pumpe", pl: "pompa"),
+            LineGloss(de: "der Kaffee", pl: "kawa")
             ],
             phrases: ["nicht allein laufen", "schwarz"],
             note: "Schwarz przy kawie znaczy bez mleka.",
@@ -1055,8 +1055,8 @@ enum MiniBook {
             SayLine(id: "s044-3", who: "Ty", de: "Ich hole es heute und komme morgen wieder.", pl: "Wezmę je dziś i wrócę jutro.")
             ],
             words: [
-            Gloss(de: "der Ausweis", pl: "dowód"),
-            Gloss(de: "die Anmeldung", pl: "meldunek")
+            LineGloss(de: "der Ausweis", pl: "dowód"),
+            LineGloss(de: "die Anmeldung", pl: "meldunek")
             ],
             phrases: ["Ohne das Papier geht es nicht.", "Ich komme morgen wieder."],
             note: "Wohnungsgeberbestätigung to papier od osoby, która ci wynajmuje. Sam dowód nie wystarczy.",
@@ -1079,8 +1079,8 @@ enum MiniBook {
             SayLine(id: "s045-3", who: "Ochrona", de: "Noch einmal ziehen. Der alte gilt dann nicht.", pl: "Bierzesz nowy. Stary wtedy nie działa.")
             ],
             words: [
-            Gloss(de: "der Schalter", pl: "okienko"),
-            Gloss(de: "die Nummer", pl: "numerek")
+            LineGloss(de: "der Schalter", pl: "okienko"),
+            LineGloss(de: "die Nummer", pl: "numerek")
             ],
             phrases: ["Schalter drei", "noch einmal ziehen"],
             note: "Schalter to okienko. Nie myl z Schalter na ścianie, czyli włącznikiem.",
@@ -1103,9 +1103,9 @@ enum MiniBook {
             SayLine(id: "s046-3", who: "Bank", de: "Ohne die Nummer kann ich das Konto nicht fertigmachen.", pl: "Bez tego numeru nie domknę konta.")
             ],
             words: [
-            Gloss(de: "das Girokonto", pl: "konto"),
-            Gloss(de: "der Ausweis", pl: "dowód"),
-            Gloss(de: "die Steuer-ID", pl: "numer podatkowy")
+            LineGloss(de: "das Girokonto", pl: "konto"),
+            LineGloss(de: "der Ausweis", pl: "dowód"),
+            LineGloss(de: "die Steuer-ID", pl: "numer podatkowy")
             ],
             phrases: ["ein Girokonto eröffnen", "die Steuer-ID"],
             note: "Steuer-ID jest na pismach z urzędu skarbowego. To nie jest numer konta.",
@@ -1128,8 +1128,8 @@ enum MiniBook {
             SayLine(id: "s047-3", who: "Bank", de: "Ich sperre sie jetzt. Eine neue kommt per Post.", pl: "Blokuję ją teraz. Nowa przyjdzie pocztą.")
             ],
             words: [
-            Gloss(de: "die Karte", pl: "karta"),
-            Gloss(de: "sperren", pl: "zastrzec")
+            LineGloss(de: "die Karte", pl: "karta"),
+            LineGloss(de: "sperren", pl: "zastrzec")
             ],
             phrases: ["die Karte sperren lassen", "per Post"],
             note: "Sperren to blokada. Nie czekasz do jutra, jeśli karty nie ma.",
@@ -1152,8 +1152,8 @@ enum MiniBook {
             SayLine(id: "s048-3", who: "Bank", de: "Empfänger und IBAN, bitte.", pl: "Odbiorca i IBAN, poproszę.")
             ],
             words: [
-            Gloss(de: "die Miete", pl: "czynsz"),
-            Gloss(de: "die Dauerüberweisung", pl: "zlecenie stałe")
+            LineGloss(de: "die Miete", pl: "czynsz"),
+            LineGloss(de: "die Dauerüberweisung", pl: "zlecenie stałe")
             ],
             phrases: ["Dauerüberweisung", "immer am Fünften"],
             note: "Dauerüberweisung samo schodzi co miesiąc. Einmalige Überweisung robisz ręcznie.",
@@ -1176,8 +1176,8 @@ enum MiniBook {
             SayLine(id: "s049-3", who: "Poczta", de: "Ja. Unterschreiben Sie hier.", pl: "Tak. Proszę tu podpisać.")
             ],
             words: [
-            Gloss(de: "das Paket", pl: "paczka"),
-            Gloss(de: "der Ausweis", pl: "dowód")
+            LineGloss(de: "das Paket", pl: "paczka"),
+            LineGloss(de: "der Ausweis", pl: "dowód")
             ],
             phrases: ["ein Paket abholen", "unterschreiben"],
             note: "Bez awizo i dowodu paczki często nie wydadzą.",
@@ -1200,8 +1200,8 @@ enum MiniBook {
             SayLine(id: "s050-3", who: "Poczta", de: "Bis achtzehn Uhr. Morgen ab acht.", pl: "Do osiemnastej. Jutro od ósmej.")
             ],
             words: [
-            Gloss(de: "das Paket", pl: "paczka"),
-            Gloss(de: "das Fach", pl: "skrytka")
+            LineGloss(de: "das Paket", pl: "paczka"),
+            LineGloss(de: "das Fach", pl: "skrytka")
             ],
             phrases: ["passt nicht ins Fach", "bis achtzehn Uhr"],
             note: "Fach to skrzynka albo przegródka. Schalter to okienko z człowiekiem.",
@@ -1224,9 +1224,9 @@ enum MiniBook {
             SayLine(id: "s051-3", who: "Ty", de: "Wann kann ich einziehen?", pl: "Kiedy mogę się wprowadzić?")
             ],
             words: [
-            Gloss(de: "die Miete", pl: "czynsz"),
-            Gloss(de: "das Zimmer", pl: "pokój"),
-            Gloss(de: "der Strom", pl: "prąd")
+            LineGloss(de: "die Miete", pl: "czynsz"),
+            LineGloss(de: "das Zimmer", pl: "pokój"),
+            LineGloss(de: "der Strom", pl: "prąd")
             ],
             phrases: ["warm oder kalt", "Strom extra"],
             note: "Warm to z ogrzewaniem i często z wodą. Strom prawie zawsze jest obok.",
@@ -1249,9 +1249,9 @@ enum MiniBook {
             SayLine(id: "s052-3", who: "Wynajmujący", de: "Das geht, wenn es im Vertrag steht.", pl: "Da się, jeśli będzie w umowie.")
             ],
             words: [
-            Gloss(de: "die Kaution", pl: "kaucja"),
-            Gloss(de: "der Vertrag", pl: "umowa"),
-            Gloss(de: "die Kaltmiete", pl: "czynsz bez mediów")
+            LineGloss(de: "die Kaution", pl: "kaucja"),
+            LineGloss(de: "der Vertrag", pl: "umowa"),
+            LineGloss(de: "die Kaltmiete", pl: "czynsz bez mediów")
             ],
             phrases: ["Wie hoch ist die Kaution?", "im Vertrag"],
             note: "Kaltmiete to czynsz bez ogrzewania. Od niego liczy się kaucję.",
@@ -1274,8 +1274,8 @@ enum MiniBook {
             SayLine(id: "s053-3", who: "Wynajmujący", de: "Dann kommt morgen der Monteur.", pl: "To jutro przyjdzie monter.")
             ],
             words: [
-            Gloss(de: "die Heizung", pl: "ogrzewanie"),
-            Gloss(de: "der Monteur", pl: "monter")
+            LineGloss(de: "die Heizung", pl: "ogrzewanie"),
+            LineGloss(de: "der Monteur", pl: "monter")
             ],
             phrases: ["Die Heizung bleibt kalt.", "morgen der Monteur"],
             note: "Entlüften to odpowietrzyć. Jak idzie samo powietrze, to już nie twoja robota.",
@@ -1298,8 +1298,8 @@ enum MiniBook {
             SayLine(id: "s054-3", who: "Ty", de: "Ich sage ihm Bescheid.", pl: "Dam mu znać.")
             ],
             words: [
-            Gloss(de: "das Paket", pl: "paczka"),
-            Gloss(de: "der Nachbar", pl: "sąsiad")
+            LineGloss(de: "das Paket", pl: "paczka"),
+            LineGloss(de: "der Nachbar", pl: "sąsiad")
             ],
             phrases: ["das Paket annehmen", "Bescheid sagen"],
             note: "Annehmen to przyjąć przesyłkę. Potem naprawdę musisz powiedzieć sąsiadowi.",
@@ -1322,8 +1322,8 @@ enum MiniBook {
             SayLine(id: "s055-3", who: "Sąsiad", de: "Ich fahre sofort weg.", pl: "Zaraz odjeżdżam.")
             ],
             words: [
-            Gloss(de: "der Stellplatz", pl: "miejsce parkingowe"),
-            Gloss(de: "der Gast", pl: "gość")
+            LineGloss(de: "der Stellplatz", pl: "miejsce parkingowe"),
+            LineGloss(de: "der Gast", pl: "gość")
             ],
             phrases: ["mein Stellplatz", "vor dem Haus"],
             note: "Stellplatz to przypisane miejsce. Parkplatz bywa ogólny.",
@@ -1346,8 +1346,8 @@ enum MiniBook {
             SayLine(id: "s056-3", who: "Ty", de: "Noch nicht. Ich mache mir gleich etwas.", pl: "Jeszcze nie. Zaraz coś sobie zrobię.")
             ],
             words: [
-            Gloss(de: "die Arbeit", pl: "praca"),
-            Gloss(de: "zu Hause", pl: "w domu")
+            LineGloss(de: "die Arbeit", pl: "praca"),
+            LineGloss(de: "zu Hause", pl: "w domu")
             ],
             phrases: ["Wie war die Arbeit?", "Ich bin schon zu Hause."],
             note: "Zu Hause piszesz osobno. Zuhause jednym słowem też zobaczysz, ale tu masz zwrot.",
@@ -1370,8 +1370,8 @@ enum MiniBook {
             SayLine(id: "s057-3", who: "Ty", de: "Gut. Um sechs musst du los.", pl: "Dobrze. O szóstej musisz iść.")
             ],
             words: [
-            Gloss(de: "der Sonntag", pl: "niedziela"),
-            Gloss(de: "der Nachmittag", pl: "popołudnie")
+            LineGloss(de: "der Sonntag", pl: "niedziela"),
+            LineGloss(de: "der Nachmittag", pl: "popołudnie")
             ],
             phrases: ["Hast du Sonntag Zeit?", "früh schlafen"],
             note: "Mówisz do której godziny wizyta ma sens, skoro rano jest zmiana.",
@@ -1394,8 +1394,8 @@ enum MiniBook {
             SayLine(id: "s058-3", who: "Szef", de: "Ruf mich in fünf Minuten noch einmal an.", pl: "Zadzwoń do mnie jeszcze raz za pięć minut.")
             ],
             words: [
-            Gloss(de: "das Dach", pl: "dach"),
-            Gloss(de: "der Wind", pl: "wiatr")
+            LineGloss(de: "das Dach", pl: "dach"),
+            LineGloss(de: "der Wind", pl: "wiatr")
             ],
             phrases: ["Ich verstehe Sie schlecht.", "noch einmal anrufen"],
             note: "Schlecht verstehen mówisz, gdy łącze jest złe. Nicht verstehen mówisz, gdy nie znasz słów.",
@@ -1418,8 +1418,8 @@ enum MiniBook {
             SayLine(id: "s059-3", who: "Ty", de: "In zwanzig Minuten, in der Pause.", pl: "Za dwadzieścia minut, na przerwie.")
             ],
             words: [
-            Gloss(de: "die Säge", pl: "piła"),
-            Gloss(de: "die Pause", pl: "przerwa")
+            LineGloss(de: "die Säge", pl: "piła"),
+            LineGloss(de: "die Pause", pl: "przerwa")
             ],
             phrases: ["Jetzt nicht.", "zurückrufen"],
             note: "Zurückrufen to oddzwonić. Podajesz kiedy, nie tylko später.",
@@ -1442,8 +1442,8 @@ enum MiniBook {
             SayLine(id: "s060-3", who: "Biuro", de: "Fünfzehn Uhr geht. Ich trage es um.", pl: "Piętnasta pasuje. Przepisuję.")
             ],
             words: [
-            Gloss(de: "der Termin", pl: "spotkanie"),
-            Gloss(de: "schieben", pl: "przesunąć")
+            LineGloss(de: "der Termin", pl: "spotkanie"),
+            LineGloss(de: "schieben", pl: "przesunąć")
             ],
             phrases: ["den Termin schieben", "fünfzehn Uhr geht"],
             note: "Schieben przy terminie znaczy przesunąć. Nie pchać fizycznie.",
@@ -1466,8 +1466,8 @@ enum MiniBook {
             SayLine(id: "s061-3", who: "Biuro", de: "Wir machen einen neuen Termin, wenn Sie gesund sind.", pl: "Zrobimy nowy termin, jak pan wyzdrowieje.")
             ],
             words: [
-            Gloss(de: "absagen", pl: "odwołać"),
-            Gloss(de: "das Attest", pl: "zaświadczenie")
+            LineGloss(de: "absagen", pl: "odwołać"),
+            LineGloss(de: "das Attest", pl: "zaświadczenie")
             ],
             phrases: ["den Termin absagen", "wenn Sie gesund sind"],
             note: "Absagen to odwołać. Verschieben to przesunąć na inną godzinę.",
@@ -1490,8 +1490,8 @@ enum MiniBook {
             SayLine(id: "s062-3", who: "Ty", de: "Heute nicht. Ich bin kaputt. Samstag ja.", pl: "Dziś nie. Jestem padnięty. W sobotę tak.")
             ],
             words: [
-            Gloss(de: "das Kino", pl: "kino"),
-            Gloss(de: "kaputt", pl: "padnięty")
+            LineGloss(de: "das Kino", pl: "kino"),
+            LineGloss(de: "kaputt", pl: "padnięty")
             ],
             phrases: ["Kommst du mit?", "Samstag ja."],
             note: "Kaputt o człowieku znaczy wykończony, nie zepsuty jak maszyna.",
@@ -1514,8 +1514,8 @@ enum MiniBook {
             SayLine(id: "s063-3", who: "Ty", de: "Um acht hören wir auf, wegen der Ruhezeit.", pl: "O ósmej kończymy, przez ciszę nocną.")
             ],
             words: [
-            Gloss(de: "grillen", pl: "grillować"),
-            Gloss(de: "die Ruhezeit", pl: "cisza nocna")
+            LineGloss(de: "grillen", pl: "grillować"),
+            LineGloss(de: "die Ruhezeit", pl: "cisza nocna")
             ],
             phrases: ["Soll ich etwas mitbringen?", "wegen der Ruhezeit"],
             note: "Ruhezeit to godziny ciszy. Grill po nich denerwuje blok.",
@@ -1538,8 +1538,8 @@ enum MiniBook {
             SayLine(id: "s064-3", who: "Ty", de: "Gut. Ich komme oft morgens.", pl: "Dobrze. Często będę rano.")
             ],
             words: [
-            Gloss(de: "die Mitgliedschaft", pl: "karnet"),
-            Gloss(de: "die Schicht", pl: "zmiana")
+            LineGloss(de: "die Mitgliedschaft", pl: "karnet"),
+            LineGloss(de: "die Schicht", pl: "zmiana")
             ],
             phrases: ["Ich arbeite Schicht.", "den ganzen Tag"],
             note: "Schicht sagen, zanim kupisz karnet tylko na wieczór.",
@@ -1562,8 +1562,8 @@ enum MiniBook {
             SayLine(id: "s065-3", who: "Kolega", de: "Setz dich. Ich hole Eis.", pl: "Siadaj. Przyniosę lód.")
             ],
             words: [
-            Gloss(de: "das Knie", pl: "kolano"),
-            Gloss(de: "das Eis", pl: "lód")
+            LineGloss(de: "das Knie", pl: "kolano"),
+            LineGloss(de: "das Eis", pl: "lód")
             ],
             phrases: ["weggeknickt", "auftreten"],
             note: "Auftreten to stanąć na nodze. Nie myl z auftreten na scenie.",
@@ -1586,9 +1586,9 @@ enum MiniBook {
             SayLine(id: "s066-3", who: "Ty", de: "Ich sichere mich und komme runter.", pl: "Przypnę się i schodzę.")
             ],
             words: [
-            Gloss(de: "das Dach", pl: "dach"),
-            Gloss(de: "die Plane", pl: "plandeka"),
-            Gloss(de: "der Zement", pl: "cement")
+            LineGloss(de: "das Dach", pl: "dach"),
+            LineGloss(de: "die Plane", pl: "plandeka"),
+            LineGloss(de: "der Zement", pl: "cement")
             ],
             phrases: ["Runter vom Dach.", "über den Zement"],
             note: "Najpierw zejście, potem materiał. Śliski dach nie czeka.",
@@ -1611,8 +1611,8 @@ enum MiniBook {
             SayLine(id: "s067-3", who: "Szef", de: "Nicht mit Gewalt. Erst auftauen.", pl: "Nie na siłę. Najpierw odtajać.")
             ],
             words: [
-            Gloss(de: "der Kompressor", pl: "kompresor"),
-            Gloss(de: "gefroren", pl: "zamarznięte")
+            LineGloss(de: "der Kompressor", pl: "kompresor"),
+            LineGloss(de: "gefroren", pl: "zamarznięte")
             ],
             phrases: ["Das Wasser ist gefroren.", "erst auftauen"],
             note: "Auftauen to odtajać. Gewalt przy maszynie kończy się naprawą.",
@@ -1635,8 +1635,8 @@ enum MiniBook {
             SayLine(id: "s068-3", who: "Dostawca", de: "Ich tausche sie heute noch.", pl: "Wymienię je jeszcze dziś.")
             ],
             words: [
-            Gloss(de: "die Schraube", pl: "śruba"),
-            Gloss(de: "die Lieferung", pl: "dostawa")
+            LineGloss(de: "die Schraube", pl: "śruba"),
+            LineGloss(de: "die Lieferung", pl: "dostawa")
             ],
             phrases: ["die falschen Schrauben", "heute noch tauschen"],
             note: "Mówisz numer, nie tylko falsche Schrauben. Inaczej przywiozą znowu to samo.",
@@ -1659,8 +1659,8 @@ enum MiniBook {
             SayLine(id: "s069-3", who: "Księgowość", de: "Ich prüfe das heute. Sie bekommen eine Mail.", pl: "Sprawdzę to dziś. Dostanie pan maila.")
             ],
             words: [
-            Gloss(de: "der Lohn", pl: "wypłata"),
-            Gloss(de: "das Konto", pl: "konto")
+            LineGloss(de: "der Lohn", pl: "wypłata"),
+            LineGloss(de: "das Konto", pl: "konto")
             ],
             phrases: ["Der Lohn ist nicht da.", "die IBAN im Vertrag"],
             note: "Mówisz, które konto jest aktualne. Stare konto to częsty powód.",
@@ -1683,8 +1683,8 @@ enum MiniBook {
             SayLine(id: "s070-3", who: "Kolega", de: "Ich hole den Chef. Du setzt dich.", pl: "Wołam szefa. Ty siadasz.")
             ],
             words: [
-            Gloss(de: "der Verbandskasten", pl: "apteczka"),
-            Gloss(de: "sich schneiden", pl: "skaleczyć się")
+            LineGloss(de: "der Verbandskasten", pl: "apteczka"),
+            LineGloss(de: "sich schneiden", pl: "skaleczyć się")
             ],
             phrases: ["Ich habe mich geschnitten.", "neben der Tür"],
             note: "Mówisz, że krew nie staje. Samo skaleczyłem się może poczekać, to nie.",
@@ -1707,8 +1707,8 @@ enum MiniBook {
             SayLine(id: "s071-3", who: "Szef", de: "Tim hat den Ersatzschlüssel im Büro.", pl: "Tim ma zapasowy klucz w biurze.")
             ],
             words: [
-            Gloss(de: "der Schlüssel", pl: "klucz"),
-            Gloss(de: "der Ersatzschlüssel", pl: "klucz zapasowy")
+            LineGloss(de: "der Schlüssel", pl: "klucz"),
+            LineGloss(de: "der Ersatzschlüssel", pl: "klucz zapasowy")
             ],
             phrases: ["Die Tür ist zu.", "den Ersatzschlüssel"],
             note: "Mówisz, że nikt nie został w środku. To pierwsza rzecz, o którą pytają.",
@@ -1731,8 +1731,8 @@ enum MiniBook {
             SayLine(id: "s072-3", who: "Obsługa", de: "Ja. Schauen Sie auf die Tafel.", pl: "Tak. Patrz pan na tablicę.")
             ],
             words: [
-            Gloss(de: "der Flug", pl: "lot"),
-            Gloss(de: "das Gate", pl: "brama")
+            LineGloss(de: "der Flug", pl: "lot"),
+            LineGloss(de: "das Gate", pl: "brama")
             ],
             phrases: ["zwei Stunden Verspätung", "auf die Tafel schauen"],
             note: "Gate może się zmienić. Tafel sprawdzasz jeszcze raz przed wejściem.",
@@ -1755,8 +1755,8 @@ enum MiniBook {
             SayLine(id: "s073-3", who: "Recepcja", de: "Hier, unter dem Firmennamen. Zimmer 214.", pl: "Tu, pod nazwą firmy. Pokój 214.")
             ],
             words: [
-            Gloss(de: "das Zimmer", pl: "pokój"),
-            Gloss(de: "die Firma", pl: "firma")
+            LineGloss(de: "das Zimmer", pl: "pokój"),
+            LineGloss(de: "die Firma", pl: "firma")
             ],
             phrases: ["auf den Namen", "unter dem Firmennamen"],
             note: "Jak rezerwuje firma, szukaj nazwy firmy, nie tylko swojego imienia.",
@@ -1779,8 +1779,8 @@ enum MiniBook {
             SayLine(id: "s074-3", who: "Sąsiad", de: "Nur kleine. Die großen erst Montag.", pl: "Tylko małe. Duże dopiero w poniedziałek.")
             ],
             words: [
-            Gloss(de: "der Baumarkt", pl: "market budowlany"),
-            Gloss(de: "die Tankstelle", pl: "stacja benzynowa")
+            LineGloss(de: "der Baumarkt", pl: "market budowlany"),
+            LineGloss(de: "die Tankstelle", pl: "stacja benzynowa")
             ],
             phrases: ["Sonntag ist zu.", "erst Montag"],
             note: "W niedzielę większość sklepów stoi. Tankstelle bywa wyjątkiem.",
@@ -1803,9 +1803,9 @@ enum MiniBook {
             SayLine(id: "s075-3", who: "Kasjer", de: "Ja. Den Bon lösen Sie bei mir ein.", pl: "Tak. Bon realizuje pan u mnie.")
             ],
             words: [
-            Gloss(de: "der Pfandautomat", pl: "automat kaucyjny"),
-            Gloss(de: "die Dose", pl: "puszka"),
-            Gloss(de: "der Bon", pl: "bon")
+            LineGloss(de: "der Pfandautomat", pl: "automat kaucyjny"),
+            LineGloss(de: "die Dose", pl: "puszka"),
+            LineGloss(de: "der Bon", pl: "bon")
             ],
             phrases: ["Wo ist der Pfandautomat?", "den Bon einlösen"],
             note: "Bon z automatu nie jest pieniądzem, dopóki nie dasz go przy kasie.",
@@ -1828,8 +1828,8 @@ enum MiniBook {
             SayLine(id: "s076-3", who: "Ty", de: "In Ordnung. Ich mache morgen um acht weiter.", pl: "W porządku. Jutro o ósmej dokończę.")
             ],
             words: [
-            Gloss(de: "die Bohrmaschine", pl: "wiertarka"),
-            Gloss(de: "der Dübel", pl: "kołek")
+            LineGloss(de: "die Bohrmaschine", pl: "wiertarka"),
+            LineGloss(de: "der Dübel", pl: "kołek")
             ],
             phrases: ["nach zehn", "morgen um acht"],
             note: "Po 22. hałas w bloku jest złym pomysłem, nawet jeden kołek.",
@@ -1852,8 +1852,8 @@ enum MiniBook {
             SayLine(id: "s077-3", who: "Barista", de: "Macht zwölf Euro.", pl: "Będzie dwanaście euro.")
             ],
             words: [
-            Gloss(de: "der Käsekuchen", pl: "sernik"),
-            Gloss(de: "die Serviette", pl: "serwetka")
+            LineGloss(de: "der Käsekuchen", pl: "sernik"),
+            LineGloss(de: "die Serviette", pl: "serwetka")
             ],
             phrases: ["einzeln verpackt", "zum Mitnehmen"],
             note: "Einzeln verpackt mówisz, gdy każdy kawałek ma być osobno.",
@@ -1876,9 +1876,9 @@ enum MiniBook {
             SayLine(id: "s078-3", who: "Obsługa", de: "Ich brauche die Karte, mit der Sie gezahlt haben.", pl: "Potrzebuję karty, którą pan płacił.")
             ],
             words: [
-            Gloss(de: "die Bohrmaschine", pl: "wiertarka"),
-            Gloss(de: "der Umtausch", pl: "wymiana"),
-            Gloss(de: "der Bon", pl: "paragon")
+            LineGloss(de: "die Bohrmaschine", pl: "wiertarka"),
+            LineGloss(de: "der Umtausch", pl: "wymiana"),
+            LineGloss(de: "der Bon", pl: "paragon")
             ],
             phrases: ["Umtausch oder Geld", "die gleiche Karte"],
             note: "Przy zwrocie na kartę często chcą tej samej karty, nie gotówki.",
@@ -1901,8 +1901,8 @@ enum MiniBook {
             SayLine(id: "s079-3", who: "Ty", de: "Trotzdem. Ich fahre auf die Baustelle.", pl: "Mimo to. Jadę na budowę.")
             ],
             words: [
-            Gloss(de: "das Auto", pl: "auto"),
-            Gloss(de: "die Vollkasko", pl: "pełne ubezpieczenie")
+            LineGloss(de: "das Auto", pl: "auto"),
+            LineGloss(de: "die Vollkasko", pl: "pełne ubezpieczenie")
             ],
             phrases: ["mit Vollkasko", "trotzdem"],
             note: "Trotzdem znaczy mimo to. Mówisz, czemu dopłacasz.",
@@ -1925,9 +1925,9 @@ enum MiniBook {
             SayLine(id: "s080-3", who: "Wynajmujący", de: "Ja. Mündlich reicht nicht.", pl: "Tak. Ustnie nie wystarczy.")
             ],
             words: [
-            Gloss(de: "die Kündigung", pl: "wypowiedzenie"),
-            Gloss(de: "der Mietvertrag", pl: "umowa najmu"),
-            Gloss(de: "die Frist", pl: "termin")
+            LineGloss(de: "die Kündigung", pl: "wypowiedzenie"),
+            LineGloss(de: "der Mietvertrag", pl: "umowa najmu"),
+            LineGloss(de: "die Frist", pl: "termin")
             ],
             phrases: ["schriftlich kündigen", "mündlich reicht nicht"],
             note: "Wypowiedzenie mieszkania ma być na piśmie. Rozmowa tego nie załatwia.",
@@ -1950,8 +1950,8 @@ enum MiniBook {
             SayLine(id: "s081-3", who: "Szef", de: "Gut. Ihr bleibt unten, bis der Wind nachlässt.", pl: "Dobrze. Zostajecie na dole, aż wiatr osłabnie.")
             ],
             words: [
-            Gloss(de: "das Gerüst", pl: "rusztowanie"),
-            Gloss(de: "der Wind", pl: "wiatr")
+            LineGloss(de: "das Gerüst", pl: "rusztowanie"),
+            LineGloss(de: "der Wind", pl: "wiatr")
             ],
             phrases: ["nicht aufs Gerüst", "bis der Wind nachlässt"],
             note: "Mówisz, co widzisz: rusztowanie się rusza. To jest powód, nie humor.",
@@ -1975,9 +1975,9 @@ enum MiniBook {
             SayLine(id: "s082-4", who: "Ty", de: "Danke. Ich schau mal kurz.", pl: "Dzięki. Zerknę na chwilę.")
             ],
             words: [
-            Gloss(de: "die Lampe", pl: "lampa"),
-            Gloss(de: "die Sicherung", pl: "bezpiecznik"),
-            Gloss(de: "der Keller", pl: "piwnica")
+            LineGloss(de: "die Lampe", pl: "lampa"),
+            LineGloss(de: "die Sicherung", pl: "bezpiecznik"),
+            LineGloss(de: "der Keller", pl: "piwnica")
             ],
             phrases: ["Die Lampe im Flur ist aus.", "Ich schau mal kurz."],
             note: "Schauen mal jest potoczne: zerknę, sprawdzę. Nie musisz mówić ich werde prüfen.",
@@ -2001,9 +2001,9 @@ enum MiniBook {
             SayLine(id: "s083-4", who: "Ty", de: "Alles klar. Die kommt in den Schrank.", pl: "Jasne. Pudełko idzie do szafki.")
             ],
             words: [
-            Gloss(de: "die Spülmaschine", pl: "zmywarka"),
-            Gloss(de: "die Dose", pl: "pudełko"),
-            Gloss(de: "der Schrank", pl: "szafka")
+            LineGloss(de: "die Spülmaschine", pl: "zmywarka"),
+            LineGloss(de: "die Dose", pl: "pudełko"),
+            LineGloss(de: "der Schrank", pl: "szafka")
             ],
             phrases: ["Du kannst ausräumen.", "Alles klar."],
             note: "Ausräumen to wyciągnąć rzeczy ze środka. Ausmachen byłoby wyłączyć.",
@@ -2027,9 +2027,9 @@ enum MiniBook {
             SayLine(id: "s084-4", who: "Ty", de: "Passt. Ich bin ab sechzehn Uhr da.", pl: "Pasuje. Od szesnastej będę.")
             ],
             words: [
-            Gloss(de: "feucht", pl: "wilgotny"),
-            Gloss(de: "der Lüfter", pl: "wentylator"),
-            Gloss(de: "lüften", pl: "wietrzyć")
+            LineGloss(de: "feucht", pl: "wilgotny"),
+            LineGloss(de: "der Lüfter", pl: "wentylator"),
+            LineGloss(de: "lüften", pl: "wietrzyć")
             ],
             phrases: ["Die Wand bleibt feucht.", "Ich bin ab sechzehn Uhr da."],
             note: "Auch wenn znaczy nawet jeśli. Czasownik lüfte zostaje na końcu tej części.",
@@ -2053,9 +2053,9 @@ enum MiniBook {
             SayLine(id: "s085-4", who: "Ty", de: "Danke, das finde ich.", pl: "Dzięki, znajdę.")
             ],
             words: [
-            Gloss(de: "die Milch", pl: "mleko"),
-            Gloss(de: "das Kühlregal", pl: "chłodziarka"),
-            Gloss(de: "ohne Laktose", pl: "bez laktozy")
+            LineGloss(de: "die Milch", pl: "mleko"),
+            LineGloss(de: "das Kühlregal", pl: "chłodziarka"),
+            LineGloss(de: "ohne Laktose", pl: "bez laktozy")
             ],
             phrases: ["Wo steht die Milch?", "im selben Regal"],
             note: "Wo steht pyta o miejsce rzeczy, która stoi. Wo ist też jest dobre, ale przy półce Niemcy często mówią steht.",
@@ -2079,9 +2079,9 @@ enum MiniBook {
             SayLine(id: "s086-4", who: "Ty", de: "Dann mit Karte, bitte.", pl: "To kartą, proszę.")
             ],
             words: [
-            Gloss(de: "das Wechselgeld", pl: "reszta"),
-            Gloss(de: "die Karte", pl: "karta"),
-            Gloss(de: "bar", pl: "gotówką")
+            LineGloss(de: "das Wechselgeld", pl: "reszta"),
+            LineGloss(de: "die Karte", pl: "karta"),
+            LineGloss(de: "bar", pl: "gotówką")
             ],
             phrases: ["Haben Sie es kleiner?", "Karte ist kein Problem."],
             note: "Kleiner haben znaczy mieć drobniejsze nominały, nie mniejszy portfel.",
@@ -2105,9 +2105,9 @@ enum MiniBook {
             SayLine(id: "s087-4", who: "Ty", de: "Zusammen. Ich hole das für die Kollegen.", pl: "Razem. Biorę to dla kolegów.")
             ],
             words: [
-            Gloss(de: "die Brezel", pl: "precel"),
-            Gloss(de: "das Käsebrötchen", pl: "bułka z serem"),
-            Gloss(de: "zum Mitnehmen", pl: "na wynos")
+            LineGloss(de: "die Brezel", pl: "precel"),
+            LineGloss(de: "das Käsebrötchen", pl: "bułka z serem"),
+            LineGloss(de: "zum Mitnehmen", pl: "na wynos")
             ],
             phrases: ["Ich hätte gern", "zum Mitnehmen", "Zusammen oder einzeln?"],
             note: "Ich hätte gern jest grzeczniejsze niż ich will. W piekarni tak właśnie zamawiasz.",
@@ -2131,9 +2131,9 @@ enum MiniBook {
             SayLine(id: "s088-4", who: "Ty", de: "Danke. Ich brauche nur eine Minute.", pl: "Dzięki. Potrzebuję tylko minuty.")
             ],
             words: [
-            Gloss(de: "reserviert", pl: "zarezerwowany"),
-            Gloss(de: "das Fenster", pl: "okno"),
-            Gloss(de: "die Karte", pl: "karta dań")
+            LineGloss(de: "reserviert", pl: "zarezerwowany"),
+            LineGloss(de: "das Fenster", pl: "okno"),
+            LineGloss(de: "die Karte", pl: "karta dań")
             ],
             phrases: ["Der ist reserviert.", "Der ist frei."],
             note: "Der przy stoliku, bo der Tisch. Nie mów das Tisch.",
@@ -2157,9 +2157,9 @@ enum MiniBook {
             SayLine(id: "s089-4", who: "Ty", de: "Danke. Ich habe nicht viel Zeit, ich muss zur Schicht.", pl: "Dzięki. Nie mam dużo czasu, muszę na zmianę.")
             ],
             words: [
-            Gloss(de: "die Suppe", pl: "zupa"),
-            Gloss(de: "salzig", pl: "słony"),
-            Gloss(de: "absetzen", pl: "odjąć z rachunku")
+            LineGloss(de: "die Suppe", pl: "zupa"),
+            LineGloss(de: "salzig", pl: "słony"),
+            LineGloss(de: "absetzen", pl: "odjąć z rachunku")
             ],
             phrases: ["zu salzig", "Die Suppe setzen wir ab."],
             note: "Zu plus przymiotnik to za bardzo: zu salzig, zu laut, zu teuer. Absetzen na rachunku znaczy zdjąć pozycję.",
@@ -2183,9 +2183,9 @@ enum MiniBook {
             SayLine(id: "s090-4", who: "Ty", de: "Ja. Ich bleibe ungefähr zwanzig Minuten.", pl: "Tak. Zostanę jakieś dwadzieścia minut.")
             ],
             words: [
-            Gloss(de: "ruhig", pl: "cichy"),
-            Gloss(de: "der Milchkaffee", pl: "kawa z mlekiem"),
-            Gloss(de: "ungefähr", pl: "około")
+            LineGloss(de: "ruhig", pl: "cichy"),
+            LineGloss(de: "der Milchkaffee", pl: "kawa z mlekiem"),
+            LineGloss(de: "ungefähr", pl: "około")
             ],
             phrases: ["einen ruhigeren Tisch", "Zum Hiertrinken?"],
             note: "Ruhigeren to stopień wyższy: cichszy. Końcówka -en jest tu przez einen Tisch.",
@@ -2209,9 +2209,9 @@ enum MiniBook {
             SayLine(id: "s091-4", who: "Ty", de: "Super, danke schön.", pl: "Świetnie, dziękuję.")
             ],
             words: [
-            Gloss(de: "die Straße", pl: "ulica"),
-            Gloss(de: "geradeaus", pl: "prosto"),
-            Gloss(de: "die Hausnummer", pl: "numer domu")
+            LineGloss(de: "die Straße", pl: "ulica"),
+            LineGloss(de: "geradeaus", pl: "prosto"),
+            LineGloss(de: "die Hausnummer", pl: "numer domu")
             ],
             phrases: ["Wie komme ich zur Gartenstraße?", "immer geradeaus"],
             note: "Zur to skrót zu der, bo die Straße. Przy der Bahnhof byłoby zum.",
@@ -2235,9 +2235,9 @@ enum MiniBook {
             SayLine(id: "s092-4", who: "Mieszkanka", de: "Danke. Passen Sie auf, da ist eine Kante.", pl: "Dzięki. Uważaj pan, tam jest krawężnik.")
             ],
             words: [
-            Gloss(de: "die Palette", pl: "paleta"),
-            Gloss(de: "der Kinderwagen", pl: "wózek"),
-            Gloss(de: "die Kante", pl: "krawędź")
+            LineGloss(de: "die Palette", pl: "paleta"),
+            LineGloss(de: "der Kinderwagen", pl: "wózek"),
+            LineGloss(de: "die Kante", pl: "krawędź")
             ],
             phrases: ["kurz zur Seite stellen", "Ich ziehe sie an die Wand."],
             note: "Sie przy palecie, bo die Palette. Zur Seite stellen to odsunąć na bok, nie schować do magazynu.",
@@ -2262,9 +2262,9 @@ enum MiniBook {
             SayLine(id: "s093-5", who: "Kierowca", de: "Die dritte Haltestelle.", pl: "Trzeci przystanek.")
             ],
             words: [
-            Gloss(de: "aussteigen", pl: "wysiąść"),
-            Gloss(de: "die Haltestelle", pl: "przystanek"),
-            Gloss(de: "einmal", pl: "jeden bilet")
+            LineGloss(de: "aussteigen", pl: "wysiąść"),
+            LineGloss(de: "die Haltestelle", pl: "przystanek"),
+            LineGloss(de: "einmal", pl: "jeden bilet")
             ],
             phrases: ["Einmal bis zum Bahnhof.", "Die dritte Haltestelle."],
             note: "Einmal plus dokąd to zwykły sposób kupowania biletu u kierowcy.",
@@ -2289,9 +2289,9 @@ enum MiniBook {
             SayLine(id: "s094-5", who: "Informacja", de: "Nein, Ihr Ticket gilt. Zeigen Sie es dem Fahrer.", pl: "Nie, bilet jest ważny. Pokaż go pan kierowcy.")
             ],
             words: [
-            Gloss(de: "fällt aus", pl: "jest odwołany"),
-            Gloss(de: "der Schienenersatzverkehr", pl: "autobus zastępczy za pociąg"),
-            Gloss(de: "gelten", pl: "obowiązywać")
+            LineGloss(de: "fällt aus", pl: "jest odwołany"),
+            LineGloss(de: "der Schienenersatzverkehr", pl: "autobus zastępczy za pociąg"),
+            LineGloss(de: "gelten", pl: "obowiązywać")
             ],
             phrases: ["Der fällt aus.", "Ihr Ticket gilt."],
             note: "Fällt aus to odwołany kurs. Verspätung to tylko opóźnienie. To nie jest to samo.",
@@ -2315,9 +2315,9 @@ enum MiniBook {
             SayLine(id: "s095-4", who: "Ty", de: "Gut, dann warte ich hier.", pl: "Dobrze, to poczekam tutaj.")
             ],
             words: [
-            Gloss(de: "verpassen", pl: "spóźnić się na"),
-            Gloss(de: "dazuzahlen", pl: "dopłacić"),
-            Gloss(de: "gelten", pl: "być ważnym")
+            LineGloss(de: "verpassen", pl: "spóźnić się na"),
+            LineGloss(de: "dazuzahlen", pl: "dopłacić"),
+            LineGloss(de: "gelten", pl: "być ważnym")
             ],
             phrases: ["den Zug verpasst", "Ihr Ticket gilt heute noch."],
             note: "Halb fünf to 16:30, nie 17:30. W niemieckim halb jest przed pełną godziną.",
@@ -2341,9 +2341,9 @@ enum MiniBook {
             SayLine(id: "s096-4", who: "Ty", de: "Danke. Den Zettel schicke ich dem Chef.", pl: "Dzięki. Kartkę wyślę szefowi.")
             ],
             words: [
-            Gloss(de: "das Fieber", pl: "gorączka"),
-            Gloss(de: "krankschreiben", pl: "wypisać zwolnienie"),
-            Gloss(de: "der Zettel", pl: "karteczka, druk")
+            LineGloss(de: "das Fieber", pl: "gorączka"),
+            LineGloss(de: "krankschreiben", pl: "wypisać zwolnienie"),
+            LineGloss(de: "der Zettel", pl: "karteczka, druk")
             ],
             phrases: ["Ich habe Fieber.", "Ich schreibe Sie krank."],
             note: "Krankschreiben to oficjalne zwolnienie. Samo ich bin krank szefowi nie zawsze wystarcza.",
@@ -2367,9 +2367,9 @@ enum MiniBook {
             SayLine(id: "s097-4", who: "Ty", de: "Verstanden. Ich sage dem Chef Bescheid, dass ich noch ausfalle.", pl: "Rozumiem. Powiem szefowi, że jeszcze mnie nie będzie.")
             ],
             words: [
-            Gloss(de: "verlängern", pl: "przedłużyć"),
-            Gloss(de: "das Heben", pl: "dźwiganie"),
-            Gloss(de: "ausfallen", pl: "wypaść, nie być")
+            LineGloss(de: "verlängern", pl: "przedłużyć"),
+            LineGloss(de: "das Heben", pl: "dźwiganie"),
+            LineGloss(de: "ausfallen", pl: "wypaść, nie być")
             ],
             phrases: ["noch nicht heben", "Kein Heben über fünf Kilo."],
             note: "Müsste ich to przypuszczenie: musiałbym. To grzeczniejsze i ostrożniejsze niż ich muss.",
@@ -2394,9 +2394,9 @@ enum MiniBook {
             SayLine(id: "s098-5", who: "Farmaceuta", de: "Genau. Wenn es stärker wird, zum Arzt.", pl: "Dokładnie. Jak się nasili, do lekarza.")
             ],
             words: [
-            Gloss(de: "die Rückenschmerzen", pl: "ból pleców"),
-            Gloss(de: "das Schmerzmittel", pl: "lek przeciwbólowy"),
-            Gloss(de: "die Tablette", pl: "tabletka")
+            LineGloss(de: "die Rückenschmerzen", pl: "ból pleców"),
+            LineGloss(de: "das Schmerzmittel", pl: "lek przeciwbólowy"),
+            LineGloss(de: "die Tablette", pl: "tabletka")
             ],
             phrases: ["nicht noch einmal", "eine nach dem Essen"],
             note: "Gegen plus dopełniacz albo biernik przy leku: gegen Rückenschmerzen. Nicht noch einmal to nie kolejny raz.",
@@ -2420,9 +2420,9 @@ enum MiniBook {
             SayLine(id: "s099-4", who: "Ty", de: "Okay. Sagen Sie Bescheid, wenn ich zumachen soll.", pl: "Dobrze. Proszę powiedzieć, kiedy mam zamknąć.")
             ],
             words: [
-            Gloss(de: "der Zahn", pl: "ząb"),
-            Gloss(de: "weh tun", pl: "boleć"),
-            Gloss(de: "kalt", pl: "zimny")
+            LineGloss(de: "der Zahn", pl: "ząb"),
+            LineGloss(de: "weh tun", pl: "boleć"),
+            LineGloss(de: "kalt", pl: "zimny")
             ],
             phrases: ["Rechts oben tut es weh.", "Mund auf, bitte."],
             note: "Weh tun rozdziela się: tut weh. Przy wenn czasownik trinke idzie na koniec.",
@@ -2447,9 +2447,9 @@ enum MiniBook {
             SayLine(id: "s100-5", who: "Ty", de: "Den nehme ich. Die Rechnung brauche ich für mich.", pl: "Biorę ten. Rachunek będzie mi potrzebny.")
             ],
             words: [
-            Gloss(de: "die Füllung", pl: "plomba"),
-            Gloss(de: "der Eigenanteil", pl: "dopłata własna"),
-            Gloss(de: "die Kasse", pl: "kasa chorych")
+            LineGloss(de: "die Füllung", pl: "plomba"),
+            LineGloss(de: "der Eigenanteil", pl: "dopłata własna"),
+            LineGloss(de: "die Kasse", pl: "kasa chorych")
             ],
             phrases: ["Was kostet das ungefähr?", "Eigenanteil"],
             note: "Doch tutaj nie znaczy jednak nie. Po przeczeniu doch znaczy wręcz przeciwnie: da się.",
@@ -2473,9 +2473,9 @@ enum MiniBook {
             SayLine(id: "s101-4", who: "Ty", de: "Alles klar. Helm behalte ich bei mir.", pl: "Jasne. Kask zostawiam przy sobie.")
             ],
             words: [
-            Gloss(de: "die Umkleide", pl: "szatnia"),
-            Gloss(de: "der Spind", pl: "szafka pracownicza"),
-            Gloss(de: "das Schloss", pl: "kłódka")
+            LineGloss(de: "die Umkleide", pl: "szatnia"),
+            LineGloss(de: "der Spind", pl: "szafka pracownicza"),
+            LineGloss(de: "das Schloss", pl: "kłódka")
             ],
             phrases: ["Wo ist die Umkleide?", "einen freien Spind"],
             note: "Neben den Duschen: den, bo po neben przy miejscu jest celownik liczby mnogiej od die Duschen.",
@@ -2500,9 +2500,9 @@ enum MiniBook {
             SayLine(id: "s102-5", who: "Szef", de: "Mache ich. Danke, dass du es sagst.", pl: "Tak zrobię. Dzięki, że to mówisz.")
             ],
             words: [
-            Gloss(de: "der Plan", pl: "grafik"),
-            Gloss(de: "fest", pl: "na sztywno"),
-            Gloss(de: "vorher", pl: "wcześniej")
+            LineGloss(de: "der Plan", pl: "grafik"),
+            LineGloss(de: "fest", pl: "na sztywno"),
+            LineGloss(de: "vorher", pl: "wcześniej")
             ],
             phrases: ["niemand hat mich gefragt", "Montag frei"],
             note: "Dass du es sagst wysyła czasownik na koniec. To nie jest dass du sagst es.",
@@ -2526,9 +2526,9 @@ enum MiniBook {
             SayLine(id: "s103-4", who: "Szef", de: "Genau. Jetzt kannst du festmachen.", pl: "Dokładnie. Teraz możesz mocować.")
             ],
             words: [
-            Gloss(de: "die Latte", pl: "łata"),
-            Gloss(de: "die Blase", pl: "bąbelek poziomicy"),
-            Gloss(de: "unterlegen", pl: "podłożyć")
+            LineGloss(de: "die Latte", pl: "łata"),
+            LineGloss(de: "die Blase", pl: "bąbelek poziomicy"),
+            LineGloss(de: "unterlegen", pl: "podłożyć")
             ],
             phrases: ["nicht im Wasser", "Die Blase ist in der Mitte."],
             note: "Im Wasser na budowie znaczy w poziomie, bańka między kreskami. To nie jest wiadro z wodą.",
@@ -2553,9 +2553,9 @@ enum MiniBook {
             SayLine(id: "s104-5", who: "Ty", de: "Mache ich. Foto habe ich auch.", pl: "Zrobię. Zdjęcie też mam.")
             ],
             words: [
-            Gloss(de: "die Fuge", pl: "spoina"),
-            Gloss(de: "abnehmen", pl: "odebrać robotę"),
-            Gloss(de: "das Protokoll", pl: "protokół")
+            LineGloss(de: "die Fuge", pl: "spoina"),
+            LineGloss(de: "abnehmen", pl: "odebrać robotę"),
+            LineGloss(de: "das Protokoll", pl: "protokół")
             ],
             phrases: ["nicht abnehmen", "ins Protokoll"],
             note: "Abnehmen przy odbiorze to zaakceptować robotę. Zwykłe nehmen byłoby tylko wziąć.",
@@ -2579,9 +2579,9 @@ enum MiniBook {
             SayLine(id: "s105-4", who: "Ty", de: "Mache ich. Bis gleich.", pl: "Zrobię tak. Do zaraz.")
             ],
             words: [
-            Gloss(de: "der Stau", pl: "korek"),
-            Gloss(de: "die Brücke", pl: "most"),
-            Gloss(de: "sich melden", pl: "zgłosić się")
+            LineGloss(de: "der Stau", pl: "korek"),
+            LineGloss(de: "die Brücke", pl: "most"),
+            LineGloss(de: "sich melden", pl: "zgłosić się")
             ],
             phrases: ["Ich stehe im Stau.", "Bis gleich."],
             note: "Bis gleich mówisz, kiedy naprawdę widzicie się za chwilę. Bis später jest dalsze.",
@@ -2606,9 +2606,9 @@ enum MiniBook {
             SayLine(id: "s106-5", who: "Szef", de: "Kriegst du. Ich schicke dir die Zeile heute.", pl: "Dostaniesz. Wyślę ci tę linijkę dziś.")
             ],
             words: [
-            Gloss(de: "der Lohn", pl: "stawka, wypłata"),
-            Gloss(de: "die Abnahme", pl: "odbiór"),
-            Gloss(de: "schriftlich", pl: "na piśmie")
+            LineGloss(de: "der Lohn", pl: "stawka, wypłata"),
+            LineGloss(de: "die Abnahme", pl: "odbiór"),
+            LineGloss(de: "schriftlich", pl: "na piśmie")
             ],
             phrases: ["über den Lohn sprechen", "schriftlich"],
             note: "Wären fair to tryb przypuszczający: byłyby w porządku. Mniej twarde niż ich will.",
@@ -2632,9 +2632,9 @@ enum MiniBook {
             SayLine(id: "s107-4", who: "Ty", de: "Sehe ich. Danke dir.", pl: "Widzę. Dzięki.")
             ],
             words: [
-            Gloss(de: "der Helm", pl: "kask"),
-            Gloss(de: "der Riemen", pl: "pasek"),
-            Gloss(de: "die Kiste", pl: "skrzynka")
+            LineGloss(de: "der Helm", pl: "kask"),
+            LineGloss(de: "der Riemen", pl: "pasek"),
+            LineGloss(de: "die Kiste", pl: "skrzynka")
             ],
             phrases: ["deinen zweiten Helm", "in der Pause zurück"],
             note: "Sonst tutaj znaczy w przeciwnym razie, nie inaczej jako przysłówek miejsca.",
@@ -2658,9 +2658,9 @@ enum MiniBook {
             SayLine(id: "s108-4", who: "Kolega", de: "Geht klar. Ich sage dem Chef Bescheid.", pl: "Jasne. Powiem szefowi.")
             ],
             words: [
-            Gloss(de: "dran sein", pl: "przypadać na kogoś"),
-            Gloss(de: "die Gruppe", pl: "grupa na telefonie"),
-            Gloss(de: "erst ab", pl: "dopiero od")
+            LineGloss(de: "dran sein", pl: "przypadać na kogoś"),
+            LineGloss(de: "die Gruppe", pl: "grupa na telefonie"),
+            LineGloss(de: "erst ab", pl: "dopiero od")
             ],
             phrases: ["Ich war letzte Woche dran.", "erst ab sieben"],
             note: "Dran sein to potoczne: teraz twoja kolej. Erst ab znaczy nie wcześniej niż.",
@@ -2684,9 +2684,9 @@ enum MiniBook {
             SayLine(id: "s109-4", who: "Ty", de: "Danke. Ich fülle es noch mal aus.", pl: "Dziękuję. Wypełnię je jeszcze raz.")
             ],
             words: [
-            Gloss(de: "das Formular", pl: "formularz"),
-            Gloss(de: "die Anmeldung", pl: "meldunek"),
-            Gloss(de: "ausfüllen", pl: "wypełnić")
+            LineGloss(de: "das Formular", pl: "formularz"),
+            LineGloss(de: "die Anmeldung", pl: "meldunek"),
+            LineGloss(de: "ausfüllen", pl: "wypełnić")
             ],
             phrases: ["das gelbe", "noch mal ausfüllen"],
             note: "Noch mal to jeszcze raz, potocznie. Officjalnie erneut, ale przy okienku noch mal jest normalne.",
@@ -2711,9 +2711,9 @@ enum MiniBook {
             SayLine(id: "s110-5", who: "Urzędnik", de: "Original zur Akte, Scan schicken Sie zusätzlich an die Mail auf dem Zettel.", pl: "Oryginał do akt, skan proszę dodatkowo na maila z karteczki.")
             ],
             words: [
-            Gloss(de: "dringend", pl: "pilny"),
-            Gloss(de: "die Bescheinigung", pl: "zaświadczenie"),
-            Gloss(de: "die Akte", pl: "akta")
+            LineGloss(de: "dringend", pl: "pilny"),
+            LineGloss(de: "die Bescheinigung", pl: "zaświadczenie"),
+            LineGloss(de: "die Akte", pl: "akta")
             ],
             phrases: ["einen dringenden Grund", "Original zur Akte"],
             note: "Sonst ruht die Stelle: stanowisko jest wstrzymane. Ruht nie znaczy, że praca zniknęła na zawsze.",
@@ -2737,9 +2737,9 @@ enum MiniBook {
             SayLine(id: "s111-4", who: "Ty", de: "Danke. Die Quittung brauche ich.", pl: "Dzięki. Potwierdzenie mi potrzebne.")
             ],
             words: [
-            Gloss(de: "einzahlen", pl: "wpłacić"),
-            Gloss(de: "die Quittung", pl: "potwierdzenie"),
-            Gloss(de: "der Schein", pl: "banknot")
+            LineGloss(de: "einzahlen", pl: "wpłacić"),
+            LineGloss(de: "die Quittung", pl: "potwierdzenie"),
+            LineGloss(de: "der Schein", pl: "banknot")
             ],
             phrases: ["auf mein Konto einzahlen", "die Quittung"],
             note: "Einzahlen to wpłata na konto. Auszahlen byłoby wypłata.",
@@ -2764,9 +2764,9 @@ enum MiniBook {
             SayLine(id: "s112-5", who: "Doradca", de: "Genau so machen wir es. Die Freigabe ist zwanzig Minuten gültig.", pl: "Tak właśnie zrobimy. Zatwierdzenie jest ważne dwadzieścia minut.")
             ],
             words: [
-            Gloss(de: "das Tageslimit", pl: "limit dzienny"),
-            Gloss(de: "anheben", pl: "podnieść"),
-            Gloss(de: "die Freigabe", pl: "zatwierdzenie")
+            LineGloss(de: "das Tageslimit", pl: "limit dzienny"),
+            LineGloss(de: "anheben", pl: "podnieść"),
+            LineGloss(de: "die Freigabe", pl: "zatwierdzenie")
             ],
             phrases: ["wird abgelehnt", "nicht dauerhaft"],
             note: "Danach setzen wir es wieder runter: es to limit. Runtersetzen to obniżyć, przeciwieństwo anheben.",
@@ -2790,9 +2790,9 @@ enum MiniBook {
             SayLine(id: "s113-4", who: "Ty", de: "Hier. Die Adresse steht schon drauf.", pl: "Proszę. Adres już jest na wierzchu.")
             ],
             words: [
-            Gloss(de: "das Einschreiben", pl: "list polecony"),
-            Gloss(de: "der Rückschein", pl: "potwierdzenie odbioru"),
-            Gloss(de: "wiegen", pl: "zważyć")
+            LineGloss(de: "das Einschreiben", pl: "list polecony"),
+            LineGloss(de: "der Rückschein", pl: "potwierdzenie odbioru"),
+            LineGloss(de: "wiegen", pl: "zważyć")
             ],
             phrases: ["als Einschreiben", "mit Rückschein"],
             note: "Einschreiben to sam list polecony. Rückschein to dodatkowy dowód, że adresat odebrał.",
@@ -2816,9 +2816,9 @@ enum MiniBook {
             SayLine(id: "s114-4", who: "Ty", de: "Gut. Eine Kopie brauche ich für die Firma.", pl: "Dobrze. Kopię potrzebuję dla firmy.")
             ],
             words: [
-            Gloss(de: "die Sendung", pl: "przesyłka"),
-            Gloss(de: "aufgerissen", pl: "rozerwany"),
-            Gloss(de: "der Schaden", pl: "szkoda")
+            LineGloss(de: "die Sendung", pl: "przesyłka"),
+            LineGloss(de: "aufgerissen", pl: "rozerwany"),
+            LineGloss(de: "der Schaden", pl: "szkoda")
             ],
             phrases: ["nicht annehmen", "Schaden vermerken"],
             note: "Annehmen przy paczce to odebrać i uznać, że jest w porządku. Deshalb mówisz so nicht.",
@@ -2842,9 +2842,9 @@ enum MiniBook {
             SayLine(id: "s115-4", who: "Ty", de: "Okay. Ich überlege bis morgen.", pl: "Dobrze. Pomyślę do jutra.")
             ],
             words: [
-            Gloss(de: "einziehen", pl: "wprowadzić się"),
-            Gloss(de: "die Kaution", pl: "kaucja"),
-            Gloss(de: "die Waschmaschine", pl: "pralka")
+            LineGloss(de: "einziehen", pl: "wprowadzić się"),
+            LineGloss(de: "die Kaution", pl: "kaucja"),
+            LineGloss(de: "die Waschmaschine", pl: "pralka")
             ],
             phrases: ["Ab wann kann ich einziehen?", "Internet zahlen Sie selbst."],
             note: "Mit drin ist potoczne: wliczone. W ogłoszeniu i przy oglądaniu słyszysz to ciągle.",
@@ -2869,9 +2869,9 @@ enum MiniBook {
             SayLine(id: "s116-5", who: "Wynajmujący", de: "Steht so im Vertrag. Sie bekommen eine Kopie jetzt.", pl: "Tak jest w umowie. Kopię dostaje pan teraz.")
             ],
             words: [
-            Gloss(de: "die Übergabe", pl: "zdanie mieszkania"),
-            Gloss(de: "spachteln", pl: "szpachlować"),
-            Gloss(de: "der Briefkasten", pl: "skrzynka na listy")
+            LineGloss(de: "die Übergabe", pl: "zdanie mieszkania"),
+            LineGloss(de: "spachteln", pl: "szpachlować"),
+            LineGloss(de: "der Briefkasten", pl: "skrzynka na listy")
             ],
             phrases: ["Punkt für Punkt", "innerhalb der Frist"],
             note: "Irgendwann jest wymijające: kiedyś tam. Dlatego dopinasz termin z umowy, a nie obietnicę słowną.",
@@ -2895,9 +2895,9 @@ enum MiniBook {
             SayLine(id: "s117-4", who: "Sąsiadka", de: "Schon gut. Danke, dass Sie aufmachen.", pl: "Już dobrze. Dziękuję, że pan otwiera.")
             ],
             words: [
-            Gloss(de: "die Bohrmaschine", pl: "wiertarka"),
-            Gloss(de: "sofort", pl: "natychmiast"),
-            Gloss(de: "der Rest", pl: "reszta")
+            LineGloss(de: "die Bohrmaschine", pl: "wiertarka"),
+            LineGloss(de: "sofort", pl: "natychmiast"),
+            LineGloss(de: "der Rest", pl: "reszta")
             ],
             phrases: ["Ich höre sofort auf.", "Montag ab acht"],
             note: "Sie haben recht mówisz, kiedy przyznajesz rację. Krótsze stimmt jest możliwe, ale tu lepiej pełne zdanie.",
@@ -2921,9 +2921,9 @@ enum MiniBook {
             SayLine(id: "s118-4", who: "Sąsiad", de: "Genau. Sonst wird die Tonne nicht geleert.", pl: "Dokładnie. Inaczej pojemnika nie opróżnią.")
             ],
             words: [
-            Gloss(de: "der Restmüll", pl: "odpady zmieszane"),
-            Gloss(de: "die Tonne", pl: "pojemnik"),
-            Gloss(de: "falten", pl: "składać")
+            LineGloss(de: "der Restmüll", pl: "odpady zmieszane"),
+            LineGloss(de: "die Tonne", pl: "pojemnik"),
+            LineGloss(de: "falten", pl: "składać")
             ],
             phrases: ["nicht in den Restmüll", "die blaue Tonne"],
             note: "Gehört nicht in to nie należy do. Przy śmieciach Niemcy poprawiają tak wprost i to nie jest kłótnia.",
@@ -2947,9 +2947,9 @@ enum MiniBook {
             SayLine(id: "s119-4", who: "Brat", de: "Perfekt. Ich bringe Brot mit.", pl: "Świetnie. Przyniosę chleb.")
             ],
             words: [
-            Gloss(de: "die Schicht", pl: "zmiana"),
-            Gloss(de: "platt sein", pl: "być padniętym"),
-            Gloss(de: "einfach", pl: "prosty")
+            LineGloss(de: "die Schicht", pl: "zmiana"),
+            LineGloss(de: "platt sein", pl: "być padniętym"),
+            LineGloss(de: "einfach", pl: "prosty")
             ],
             phrases: ["erst nach der Schicht", "ich bin platt"],
             note: "Platt sein to potoczne: wykończony, nie płaski. Gegen sieben to około siódmej, niekoniecznie co do minuty.",
@@ -2974,9 +2974,9 @@ enum MiniBook {
             SayLine(id: "s120-5", who: "Ty", de: "Dienstagabend. Da habe ich früh Schluss.", pl: "Wtorek wieczór. Wtedy wcześnie kończę.")
             ],
             words: [
-            Gloss(de: "die Abnahme", pl: "odbiór"),
-            Gloss(de: "lieb", pl: "miłe"),
-            Gloss(de: "früh Schluss haben", pl: "wcześnie kończyć")
+            LineGloss(de: "die Abnahme", pl: "odbiór"),
+            LineGloss(de: "lieb", pl: "miłe"),
+            LineGloss(de: "früh Schluss haben", pl: "wcześnie kończyć")
             ],
             phrases: ["Sonntag bin ich auf der Abnahme.", "Dienstagabend"],
             note: "Könnte to ostrożna propozycja. Odmawiasz konkretnym powodem, nie samym nein.",
@@ -3000,9 +3000,9 @@ enum MiniBook {
             SayLine(id: "s121-4", who: "Ty", de: "Danke.", pl: "Dziękuję.")
             ],
             words: [
-            Gloss(de: "der Anschluss", pl: "numer, linia"),
-            Gloss(de: "erreichbar", pl: "osiągalny"),
-            Gloss(de: "zurückrufen", pl: "oddzwonić")
+            LineGloss(de: "der Anschluss", pl: "numer, linia"),
+            LineGloss(de: "erreichbar", pl: "osiągalny"),
+            LineGloss(de: "zurückrufen", pl: "oddzwonić")
             ],
             phrases: ["nach dem Ton", "sonst schicke ich ihn zur Rampe zwei"],
             note: "Na poczcie głosowej mówisz kto, gdzie, co i do kiedy. Inaczej oddzwonienie nic nie daje.",
@@ -3026,9 +3026,9 @@ enum MiniBook {
             SayLine(id: "s122-4", who: "Kolega", de: "Alles klar. Bis nachher.", pl: "Jasne. Do później.")
             ],
             words: [
-            Gloss(de: "nachher", pl: "później dziś"),
-            Gloss(de: "sich verspäten", pl: "spóźnić się"),
-            Gloss(de: "die Ecke", pl: "róg")
+            LineGloss(de: "nachher", pl: "później dziś"),
+            LineGloss(de: "sich verspäten", pl: "spóźnić się"),
+            LineGloss(de: "die Ecke", pl: "róg")
             ],
             phrases: ["nicht lange", "Bis nachher."],
             note: "Halb sieben to 18:30. Bis nachher żegnasz się, kiedy widzicie się tego samego dnia.",
@@ -3053,9 +3053,9 @@ enum MiniBook {
             SayLine(id: "s123-5", who: "Kierownik", de: "Ist gelöscht. Sie bekommen nur noch den neuen.", pl: "Skasowany. Dostanie pan już tylko nowy.")
             ],
             words: [
-            Gloss(de: "schieben", pl: "przesunąć potocznie"),
-            Gloss(de: "verschieben", pl: "przesunąć"),
-            Gloss(de: "löschen", pl: "usunąć")
+            LineGloss(de: "schieben", pl: "przesunąć potocznie"),
+            LineGloss(de: "verschieben", pl: "przesunąć"),
+            LineGloss(de: "löschen", pl: "usunąć")
             ],
             phrases: ["den Termin schieben", "den alten Termin löschen"],
             note: "Schieben przy terminie jest potoczne i normalne w biurze budowy. Officjalnie verschieben.",
@@ -3079,9 +3079,9 @@ enum MiniBook {
             SayLine(id: "s124-4", who: "Ty", de: "Gut. Die Münze habe ich.", pl: "Dobrze. Monetę mam.")
             ],
             words: [
-            Gloss(de: "schwimmen", pl: "pływać"),
-            Gloss(de: "der Spind", pl: "szafka"),
-            Gloss(de: "das Pfand", pl: "zastaw")
+            LineGloss(de: "schwimmen", pl: "pływać"),
+            LineGloss(de: "der Spind", pl: "szafka"),
+            LineGloss(de: "das Pfand", pl: "zastaw")
             ],
             phrases: ["bis zweiundzwanzig Uhr", "eine Münze als Pfand"],
             note: "Pfand to zastaw, tak samo przy wózku i butelce. Tu zostawiasz monetę, żeby dostać klucz.",
@@ -3105,9 +3105,9 @@ enum MiniBook {
             SayLine(id: "s125-4", who: "Kolega", de: "Okay, dann treffen wir uns um vier am Brunnen und gehen um neun.", pl: "Dobra, to spotykamy się o czwartej przy fontannie i idziemy o dziewiątej.")
             ],
             words: [
-            Gloss(de: "der Markt", pl: "jarmark"),
-            Gloss(de: "die Altstadt", pl: "starówka"),
-            Gloss(de: "die Bahn kriegen", pl: "złapać kolejkę")
+            LineGloss(de: "der Markt", pl: "jarmark"),
+            LineGloss(de: "die Altstadt", pl: "starówka"),
+            LineGloss(de: "die Bahn kriegen", pl: "złapać kolejkę")
             ],
             phrases: ["vor zehn zu Hause", "die Bahn noch kriegen"],
             note: "Kriegen jest potoczne zamiast bekommen. Die Bahn kriegen to zdążyć na nią.",
@@ -3131,9 +3131,9 @@ enum MiniBook {
             SayLine(id: "s126-4", who: "Kolega", de: "Gut. Um achtzehn Uhr an der Halle, nicht auf dem Rasen.", pl: "Dobrze. O osiemnastej przy hali, nie na trawie.")
             ],
             words: [
-            Gloss(de: "fehlen", pl: "brakować"),
-            Gloss(de: "die Halle", pl: "hala"),
-            Gloss(de: "der Rasen", pl: "trawa, boisko")
+            LineGloss(de: "fehlen", pl: "brakować"),
+            LineGloss(de: "die Halle", pl: "hala"),
+            LineGloss(de: "der Rasen", pl: "trawa, boisko")
             ],
             phrases: ["Uns fehlt einer.", "nicht auf dem Rasen"],
             note: "Fehlen działa odwrotnie niż po polsku: uns fehlt einer, dosłownie nam brakuje jednego.",
@@ -3157,9 +3157,9 @@ enum MiniBook {
             SayLine(id: "s127-4", who: "Ty", de: "Dann nehme ich den Monatsvertrag. Jahresbindung will ich nicht.", pl: "To biorę umowę miesięczną. Rocznego wiązania nie chcę.")
             ],
             words: [
-            Gloss(de: "monatlich", pl: "miesięcznie"),
-            Gloss(de: "kündigen", pl: "wypowiedzieć"),
-            Gloss(de: "die Jahresbindung", pl: "wiązanie na rok")
+            LineGloss(de: "monatlich", pl: "miesięcznie"),
+            LineGloss(de: "kündigen", pl: "wypowiedzieć"),
+            LineGloss(de: "die Jahresbindung", pl: "wiązanie na rok")
             ],
             phrases: ["nur monatlich", "bis zum Dritten kündigen"],
             note: "Sonst verlängert er sich: sam się przedłuży. Dlatego data wypowiedzenia jest ważniejsza niż sam karnet.",
@@ -3183,9 +3183,9 @@ enum MiniBook {
             SayLine(id: "s128-4", who: "Ty", de: "Okay. Den Helm lasse ich auf.", pl: "Dobrze. Kasku nie zdejmuję.")
             ],
             words: [
-            Gloss(de: "zu heiß", pl: "za gorąco"),
-            Gloss(de: "der Schatten", pl: "cień"),
-            Gloss(de: "die Flasche", pl: "butelka")
+            LineGloss(de: "zu heiß", pl: "za gorąco"),
+            LineGloss(de: "der Schatten", pl: "cień"),
+            LineGloss(de: "die Flasche", pl: "butelka")
             ],
             phrases: ["Es ist zu heiß.", "Trink erst, dann weiter."],
             note: "Erst, dann to najpierw, potem. Prosty szyk, którego na budowie słyszysz cały dzień.",
@@ -3209,9 +3209,9 @@ enum MiniBook {
             SayLine(id: "s129-4", who: "Szef", de: "Fertig. Ab in den Container, bis das durch ist.", pl: "Gotowe. Do kontenera, aż to przejdzie.")
             ],
             words: [
-            Gloss(de: "die Plane", pl: "plandeka"),
-            Gloss(de: "sichern", pl: "zabezpieczyć"),
-            Gloss(de: "der Wind", pl: "wiatr")
+            LineGloss(de: "die Plane", pl: "plandeka"),
+            LineGloss(de: "sichern", pl: "zabezpieczyć"),
+            LineGloss(de: "der Wind", pl: "wiatr")
             ],
             phrases: ["nicht mehr hoch", "Ab in den Container."],
             note: "Ab in den Container to potoczne: jazda do kontenera. Nie budujesz tu pełnego zdania i tak mówią.",
@@ -3235,9 +3235,9 @@ enum MiniBook {
             SayLine(id: "s130-4", who: "Ty", de: "Danke. Passt jetzt.", pl: "Dzięki. Teraz się zgadza.")
             ],
             words: [
-            Gloss(de: "die Rückgabe", pl: "reszta, zwrot pieniędzy"),
-            Gloss(de: "stimmen", pl: "zgadzać się"),
-            Gloss(de: "fehlen", pl: "brakować")
+            LineGloss(de: "die Rückgabe", pl: "reszta, zwrot pieniędzy"),
+            LineGloss(de: "stimmen", pl: "zgadzać się"),
+            LineGloss(de: "fehlen", pl: "brakować")
             ],
             phrases: ["Die Rückgabe stimmt nicht.", "Passt jetzt."],
             note: "Stimmt nicht mówisz, kiedy kwota albo rachunek się nie zgadza. Krócej niż das ist falsch.",
@@ -3262,9 +3262,9 @@ enum MiniBook {
             SayLine(id: "s131-5", who: "Zarządca", de: "Sie bekommen heute die Mail mit Uhrzeit.", pl: "Dostanie pan dziś maila z godziną.")
             ],
             words: [
-            Gloss(de: "die Warmmiete", pl: "czynsz z opłatami"),
-            Gloss(de: "der Abschlag", pl: "zaliczka"),
-            Gloss(de: "kürzen", pl: "obniżyć, uciąć")
+            LineGloss(de: "die Warmmiete", pl: "czynsz z opłatami"),
+            LineGloss(de: "der Abschlag", pl: "zaliczka"),
+            LineGloss(de: "kürzen", pl: "obniżyć, uciąć")
             ],
             phrases: ["nur kaltes Wasser", "schriftlich, nicht nur mündlich"],
             note: "Nicht mehr po czasowniku wzmacnia: już nie. Mündlich reicht nicht mehr to koniec obietnic słownych.",
@@ -3288,9 +3288,9 @@ enum MiniBook {
             SayLine(id: "s132-4", who: "Ty", de: "Mache ich nicht. Danke, dass du wartest.", pl: "Nie dotykam. Dzięki, że czekasz.")
             ],
             words: [
-            Gloss(de: "stockdunkel", pl: "ciemno choć oko wykol"),
-            Gloss(de: "die Taschenlampe", pl: "latarka"),
-            Gloss(de: "die Leitung", pl: "przewód")
+            LineGloss(de: "stockdunkel", pl: "ciemno choć oko wykol"),
+            LineGloss(de: "die Taschenlampe", pl: "latarka"),
+            LineGloss(de: "die Leitung", pl: "przewód")
             ],
             phrases: ["Fass nicht an die Leitung.", "stockdunkel"],
             note: "Spinnt to potoczne: wariuje, nie działa jak trzeba. Przy rzeczy, nie przy człowieku, jest zwykłe.",
@@ -3315,9 +3315,9 @@ enum MiniBook {
             SayLine(id: "s133-5", who: "Sąsiad", de: "Okay. Ich klopfe noch bei Müller und dann sind wir draußen.", pl: "Dobrze. Zapukam jeszcze do Müllera i jesteśmy na zewnątrz.")
             ],
             words: [
-            Gloss(de: "der Gasgeruch", pl: "zapach gazu"),
-            Gloss(de: "der Schalter", pl: "włącznik"),
-            Gloss(de: "die Feuerwehr", pl: "straż pożarna")
+            LineGloss(de: "der Gasgeruch", pl: "zapach gazu"),
+            LineGloss(de: "der Schalter", pl: "włącznik"),
+            LineGloss(de: "die Feuerwehr", pl: "straż pożarna")
             ],
             phrases: ["Kein Licht einschalten.", "112"],
             note: "Nach Gas riechen: czuć gaz. Przy podejrzeniu nie sprawdzasz zapalniczką i nie gapisz się przy włączniku.",
@@ -3341,9 +3341,9 @@ enum MiniBook {
             SayLine(id: "s134-4", who: "Ty", de: "Danke. Dann laufe ich.", pl: "Dzięki. To biegnę.")
             ],
             words: [
-            Gloss(de: "umsteigen", pl: "przesiąść się"),
-            Gloss(de: "das Gleis", pl: "tor"),
-            Gloss(de: "der Aufzug", pl: "winda")
+            LineGloss(de: "umsteigen", pl: "przesiąść się"),
+            LineGloss(de: "das Gleis", pl: "tor"),
+            LineGloss(de: "der Aufzug", pl: "winda")
             ],
             phrases: ["Wo ist Gleis neun?", "nicht den Aufzug"],
             note: "Schaffen to zdążyć, dać radę. Pytanie schaffen Sie das jest bardzo codzienne.",
@@ -3368,9 +3368,9 @@ enum MiniBook {
             SayLine(id: "s135-5", who: "Obsługa", de: "Ich ändere das. Die Nummer zum Nachfragen steht auf dem Beleg.", pl: "Zmieniam. Numer do dopytania jest na potwierdzeniu.")
             ],
             words: [
-            Gloss(de: "das Messgerät", pl: "sprzęt pomiarowy"),
-            Gloss(de: "der Beleg", pl: "potwierdzenie"),
-            Gloss(de: "nachfragen", pl: "dopytać")
+            LineGloss(de: "das Messgerät", pl: "sprzęt pomiarowy"),
+            LineGloss(de: "der Beleg", pl: "potwierdzenie"),
+            LineGloss(de: "nachfragen", pl: "dopytać")
             ],
             phrases: ["nicht auf dem Band", "an die Baustellenadresse"],
             note: "Woran man ihn erkennt wysyła czasownik na koniec. To pytanie zależne, nie woran erkennt man ihn w środku zdania.",
@@ -3394,9 +3394,9 @@ enum MiniBook {
             SayLine(id: "s136-4", who: "Sąsiad", de: "Alles gut. Nach drei stört es niemanden.", pl: "W porządku. Po trzeciej nikomu to nie przeszkadza.")
             ],
             words: [
-            Gloss(de: "die Mittagsruhe", pl: "cisza południowa"),
-            Gloss(de: "die Säge", pl: "piła"),
-            Gloss(de: "gelten", pl: "obowiązywać")
+            LineGloss(de: "die Mittagsruhe", pl: "cisza południowa"),
+            LineGloss(de: "die Säge", pl: "piła"),
+            LineGloss(de: "gelten", pl: "obowiązywać")
             ],
             phrases: ["zwischen dreizehn und fünfzehn Uhr", "bis drei warten"],
             note: "Mittagsruhe nie jest prawem całego kraju w jednym brzmieniu, ale w wielu domach i landach tak się żyje. Pytasz, zamiast się kłócić.",
@@ -3421,9 +3421,9 @@ enum MiniBook {
             SayLine(id: "s137-5", who: "Koleżanka", de: "Genau. Heb den Brief auf, nicht nur das Foto.", pl: "Dokładnie. Zachowaj list, nie tylko zdjęcie.")
             ],
             words: [
-            Gloss(de: "das Schreiben", pl: "pismo"),
-            Gloss(de: "die Frist", pl: "termin ustawowy"),
-            Gloss(de: "die Verlegung", pl: "przeniesienie terminu")
+            LineGloss(de: "das Schreiben", pl: "pismo"),
+            LineGloss(de: "die Frist", pl: "termin ustawowy"),
+            LineGloss(de: "die Verlegung", pl: "przeniesienie terminu")
             ],
             phrases: ["nicht ignorieren", "schriftlich um Verlegung bitten"],
             note: "Trotzdem znaczy mimo to. Frist läuft trotzdem: nawet na wyjeździe czas się nie zatrzymuje.",

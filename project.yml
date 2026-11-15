@@ -27,7 +27,7 @@ targets:
         INFOPLIST_KEY_NSCameraUsageDescription: "Aparat skanuje niemieckie listy, instrukcje i tabliczki."
         INFOPLIST_KEY_NSPhotoLibraryUsageDescription: "Zdjęcie z galerii można przetłumaczyć i dodać do powtórek."
         MARKETING_VERSION: "11.0"
-        CURRENT_PROJECT_VERSION: "95"
+        CURRENT_PROJECT_VERSION: "96"
         SWIFT_VERSION: "5.0"
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_FILE: DeutschLernen/Info.plist
@@ -47,7 +47,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.DeutschLernen.widget
         GENERATE_INFOPLIST_FILE: NO
         MARKETING_VERSION: "11.0"
-        CURRENT_PROJECT_VERSION: "95"
+        CURRENT_PROJECT_VERSION: "96"
         SWIFT_VERSION: "5.0"
         SKIP_INSTALL: YES
         TARGETED_DEVICE_FAMILY: "1"

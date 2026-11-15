@@ -7,8 +7,8 @@ struct GLesson: Identifiable, Hashable {
     let title: String
     let explain: String
     let pattern: String
-    let examples: [Gloss]
-    let work: [Gloss]
+    let examples: [LineGloss]
+    let work: [LineGloss]
     let ask: String
     let options: [String]
     let answer: Int
@@ -68,11 +68,11 @@ enum GrammarBook {
 
     static var lessons: [GLesson] { stored + GrammarExtra.all }
 
-    static func g(_ id: String, _ topic: String, _ level: String, _ title: String, _ explain: String, _ pattern: String, _ examples: [Gloss], _ work: [Gloss], _ ask: String, _ options: [String], _ answer: Int, _ order: [String], _ extra: String, _ cloze: String, _ clozeOptions: [String], _ clozeAnswer: Int, _ replyPL: String, _ replyDE: String, _ must: [String]) -> GLesson {
+    static func g(_ id: String, _ topic: String, _ level: String, _ title: String, _ explain: String, _ pattern: String, _ examples: [LineGloss], _ work: [LineGloss], _ ask: String, _ options: [String], _ answer: Int, _ order: [String], _ extra: String, _ cloze: String, _ clozeOptions: [String], _ clozeAnswer: Int, _ replyPL: String, _ replyDE: String, _ must: [String]) -> GLesson {
         GLesson(id: id, topic: topic, level: level, title: title, explain: explain, pattern: pattern, examples: examples, work: work, ask: ask, options: options, answer: answer, order: order, extra: extra, cloze: cloze, clozeOptions: clozeOptions, clozeAnswer: clozeAnswer, replyPL: replyPL, replyDE: replyDE, must: must)
     }
 
-    static func gl(_ de: String, _ pl: String) -> Gloss { Gloss(de: de, pl: pl) }
+    static func gl(_ de: String, _ pl: String) -> LineGloss { LineGloss(de: de, pl: pl) }
 
     static func doneIDs() -> Set<String> { Set(UserDefaults.standard.stringArray(forKey: "grammarDone") ?? []) }
 

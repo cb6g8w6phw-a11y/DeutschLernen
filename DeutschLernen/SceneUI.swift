@@ -7,7 +7,7 @@ struct SayLine: Hashable, Identifiable {
     let pl: String
 }
 
-struct Gloss: Hashable, Identifiable {
+struct LineGloss: Hashable, Identifiable {
     var id: String { de }
     let de: String
     let pl: String
@@ -20,7 +20,7 @@ struct MiniScene: Identifiable, Hashable {
     let level: String
     let situation: String
     let lines: [SayLine]
-    let words: [Gloss]
+    let words: [LineGloss]
     let phrases: [String]
     let note: String
     let question: String
@@ -220,7 +220,7 @@ struct SceneStudyView: View {
             ForEach(scene.lines) { line in
                 VStack(alignment: .leading, spacing: 4) {
                     Text(line.who).font(.caption.weight(.bold)).foregroundStyle(Theme.ok)
-                    FlowWords(text: line.de) { token in gloss = meaning(token) }
+                    LineWords(text: line.de) { token in gloss = meaning(token) }
                     if showPL { Text(line.pl).foregroundStyle(Theme.text2) }
                     Button { Talk.de(line.de, rate: Speaker.savedPace()) } label: {
                         Image(systemName: "speaker.wave.1")
@@ -301,7 +301,7 @@ struct SceneStudyView: View {
     }
 }
 
-struct FlowWords: View {
+struct LineWords: View {
     let text: String
     let tap: (String) -> Void
 
