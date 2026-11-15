@@ -311,68 +311,11 @@ struct TextStudyView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                HStack {
-                    Text(text.level).font(.caption.weight(.bold)).foregroundStyle(Theme.ok)
-                    Text(text.category).font(.caption).foregroundStyle(Theme.text2)
-                }
-                Text(text.title).font(.title2.bold())
-                Text("Cały tekst jest po niemiecku. Stuknij jedno zdanie, żeby zobaczyć tylko jego tłumaczenie. Drugie stuknięcie je chowa.")
-                    .font(.footnote)
-                    .foregroundStyle(Theme.text2)
-                Button {
-                    GermanVoice.shared.speak(text: text.german)
-                } label: {
-                    Label("Odtwórz całą historię", systemImage: "speaker.wave.2.fill")
-                        .frame(maxWidth: .infinity, minHeight: 48)
-                }
-                .buttonStyle(MatteGlassButton())
-                LocalPlayBar()
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(text.sentences) { sentence in
-                        sentenceRow(sentence)
-                    }
-                }
-                .padding(16)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Theme.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                if !savedHere.isEmpty {
-                    Text("Z twojego słownika w tym tekście").font(.headline)
-                    ForEach(savedHere, id: \.de) { card in
-                        Text("\(card.de) — \(card.pl)").font(.subheadline)
-                    }
-                }
-                Text("Słówka").font(.headline)
-                ForEach(text.words) { word in
-                    HStack(alignment: .center) {
-                        Text("\(word.de) — \(word.pl)")
-                            .font(.subheadline)
-                        Spacer()
-                        SaveWordButton(de: word.de, pl: word.pl, ex: example(word.de), exPl: word.pl, topic: text.category, level: text.level) {
-                            savedNow += 1
-                        }
-                    }
-                }
-                Text(text.question).font(.title3.bold())
-                ForEach(text.options.indices, id: \.self) { index in
-                    Button(text.options[index]) {
-                        guard picked == nil else { return }
-                        picked = index
-                        qOK = index == text.answer
-                        store.noteListen(ok: index == text.answer)
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
-                    .padding(.horizontal, 12)
-                    .foregroundStyle(.white)
-                    .background(picked == nil ? Color.white.opacity(0.08) : (index == text.answer ? Theme.ok.opacity(0.85) : (picked == index ? Theme.bad.opacity(0.85) : Color.white.opacity(0.08))), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                }
-                Text("Napisz po niemiecku:").font(.headline)
-                Text(text.replyPL)
-                TextField("Po niemiecku", text: $typed)
-                    .textFieldStyle(.roundedBorder)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                Button("Sprawdź") { check() }.primaryButton().disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
-                if !verdict.isEmpty { Text(verdict).foregroundStyle(Theme.text2) }
+                header
+                page
+                savedBlock
+                wordList
+                quiz
             }
             .padding(16)
             .padding(.bottom, 24)
@@ -383,6 +326,105 @@ struct TextStudyView: View {
         .sheet(item: $report) { row in
             LessonDoneView(result: row).environmentObject(store)
         }
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(text.level).font(.caption.weight(.bold)).foregroundStyle(Theme.ok)
+                Text(text.category).font(.caption).foregroundStyle(Theme.text2)
+            }
+            Text(text.title).font(.title2.bold())
+            Text("Cały tekst jest po niemiecku. Stuknij jedno zdanie, żeby zobaczyć tylko jego tłumaczenie. Drugie stuknięcie je chowa.")
+                .font(.footnote)
+                .foregroundStyle(Theme.text2)
+            Button {
+                GermanVoice.shared.speak(text: text.german)
+            } label: {
+                Label("Odtwórz całą historię", systemImage: "speaker.wave.2.fill")
+                    .frame(maxWidth: .infinity, minHeight: 48)
+            }
+            .buttonStyle(MatteGlassButton())
+            LocalPlayBar()
+        }
+    }
+
+    private var page: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(text.sentences) { sentence in
+                sentenceRow(sentence)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private var savedBlock: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if !savedHere.isEmpty {
+                Text("Z twojego słownika w tym tekście").font(.headline)
+                ForEach(savedHere, id: \.de) { card in
+                    Text("\(card.de) — \(card.pl)").font(.subheadline)
+                }
+            }
+        }
+    }
+
+    private var wordList: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Słówka").font(.headline)
+            ForEach(text.words) { word in
+                HStack {
+                    Text("\(word.de) — \(word.pl)").font(.subheadline)
+                    Spacer()
+                    SaveWordButton(de: word.de, pl: word.pl, ex: example(word.de), exPl: word.pl, topic: text.category, level: text.level) {
+                        savedNow += 1
+                    }
+                }
+            }
+        }
+    }
+
+    private var quiz: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(text.question).font(.title3.bold())
+            ForEach(text.options.indices, id: \.self) { index in
+                choice(index)
+            }
+            Text("Napisz po niemiecku:").font(.headline)
+            Text(text.replyPL)
+            TextField("Po niemiecku", text: $typed)
+                .textFieldStyle(.roundedBorder)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+            Button("Sprawdź") { check() }
+                .primaryButton()
+                .disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
+            if !verdict.isEmpty {
+                Text(verdict).foregroundStyle(Theme.text2)
+            }
+        }
+    }
+
+    private func choice(_ index: Int) -> some View {
+        let fill: Color = {
+            guard picked != nil else { return Color.white.opacity(0.08) }
+            if index == text.answer { return Theme.ok.opacity(0.85) }
+            if picked == index { return Theme.bad.opacity(0.85) }
+            return Color.white.opacity(0.08)
+        }()
+        return Button(text.options[index]) {
+            guard picked == nil else { return }
+            picked = index
+            let ok = index == text.answer
+            qOK = ok
+            store.noteListen(ok: ok)
+        }
+        .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+        .padding(.horizontal, 12)
+        .foregroundStyle(.white)
+        .background(fill, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private var savedHere: [Vocab] {
