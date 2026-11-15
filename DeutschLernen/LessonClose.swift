@@ -1,3 +1,4 @@
+import AudioToolbox
 import SwiftUI
 
 struct LessonResult: Codable, Identifiable, Equatable {
@@ -20,11 +21,87 @@ struct LessonResult: Codable, Identifiable, Equatable {
     var nextTab: Int
     var nextID: String
     var sourceID: String
+    var area: String
 
     var percent: Int {
         let total = correct + wrong
         guard total > 0 else { return 0 }
         return Int((Double(correct) / Double(total) * 100).rounded())
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, at, day, kind, title, level, correct, wrong, seconds, seenWords, remembered, misses, xp, badge, nextTitle, nextBlurb, nextTab, nextID, sourceID, area
+    }
+
+    init(id: String, at: Date, day: String, kind: String, title: String, level: String, correct: Int, wrong: Int, seconds: Int, seenWords: Int, remembered: Int, misses: [String], xp: Int, badge: String, nextTitle: String, nextBlurb: String, nextTab: Int, nextID: String, sourceID: String, area: String) {
+        self.id = id
+        self.at = at
+        self.day = day
+        self.kind = kind
+        self.title = title
+        self.level = level
+        self.correct = correct
+        self.wrong = wrong
+        self.seconds = seconds
+        self.seenWords = seenWords
+        self.remembered = remembered
+        self.misses = misses
+        self.xp = xp
+        self.badge = badge
+        self.nextTitle = nextTitle
+        self.nextBlurb = nextBlurb
+        self.nextTab = nextTab
+        self.nextID = nextID
+        self.sourceID = sourceID
+        self.area = area
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        at = try c.decode(Date.self, forKey: .at)
+        day = try c.decode(String.self, forKey: .day)
+        kind = try c.decode(String.self, forKey: .kind)
+        title = try c.decode(String.self, forKey: .title)
+        level = try c.decode(String.self, forKey: .level)
+        correct = try c.decode(Int.self, forKey: .correct)
+        wrong = try c.decode(Int.self, forKey: .wrong)
+        seconds = try c.decode(Int.self, forKey: .seconds)
+        seenWords = try c.decode(Int.self, forKey: .seenWords)
+        remembered = try c.decode(Int.self, forKey: .remembered)
+        misses = try c.decode([String].self, forKey: .misses)
+        xp = try c.decode(Int.self, forKey: .xp)
+        badge = try c.decode(String.self, forKey: .badge)
+        nextTitle = try c.decode(String.self, forKey: .nextTitle)
+        nextBlurb = try c.decode(String.self, forKey: .nextBlurb)
+        nextTab = try c.decode(Int.self, forKey: .nextTab)
+        nextID = try c.decode(String.self, forKey: .nextID)
+        sourceID = try c.decode(String.self, forKey: .sourceID)
+        area = try c.decodeIfPresent(String.self, forKey: .area) ?? ""
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(at, forKey: .at)
+        try c.encode(day, forKey: .day)
+        try c.encode(kind, forKey: .kind)
+        try c.encode(title, forKey: .title)
+        try c.encode(level, forKey: .level)
+        try c.encode(correct, forKey: .correct)
+        try c.encode(wrong, forKey: .wrong)
+        try c.encode(seconds, forKey: .seconds)
+        try c.encode(seenWords, forKey: .seenWords)
+        try c.encode(remembered, forKey: .remembered)
+        try c.encode(misses, forKey: .misses)
+        try c.encode(xp, forKey: .xp)
+        try c.encode(badge, forKey: .badge)
+        try c.encode(nextTitle, forKey: .nextTitle)
+        try c.encode(nextBlurb, forKey: .nextBlurb)
+        try c.encode(nextTab, forKey: .nextTab)
+        try c.encode(nextID, forKey: .nextID)
+        try c.encode(sourceID, forKey: .sourceID)
+        try c.encode(area, forKey: .area)
     }
 }
 
@@ -48,8 +125,13 @@ enum ProgressBook {
 
     static func xp() -> Int { all().reduce(0) { $0 + $1.xp } }
 
+    static func dayStamp(_ date: Date = Date()) -> String {
+        let parts = Calendar.current.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
+    }
+
     static func todayCount() -> Int {
-        let day = LearningStore.dayKey()
+        let day = Self.dayStamp()
         return all().filter { $0.day == day }.count
     }
 
@@ -67,7 +149,7 @@ enum ProgressBook {
         return all().filter { $0.at >= prev && $0.at < start }.count
     }
 
-    static func make(kind: String, title: String, level: String, sourceID: String, correct: Int, wrong: Int, seconds: Int, seenWords: Int, remembered: Int, misses: [String], streak: Int) -> LessonResult {
+    static func make(kind: String, title: String, level: String, sourceID: String, area: String, correct: Int, wrong: Int, seconds: Int, seenWords: Int, remembered: Int, misses: [String], streak: Int) -> LessonResult {
         var cleanMiss: [String] = []
         for miss in misses where !cleanMiss.contains(miss) { cleanMiss.append(miss) }
         let xp = correct * 4 + (wrong == 0 && correct > 0 ? 6 : 0) + remembered
@@ -79,7 +161,7 @@ enum ProgressBook {
         return LessonResult(
             id: UUID().uuidString,
             at: Date(),
-            day: LearningStore.dayKey(),
+            day: Self.dayStamp(),
             kind: kind,
             title: title,
             level: level,
@@ -95,22 +177,25 @@ enum ProgressBook {
             nextBlurb: next.blurb,
             nextTab: next.tab,
             nextID: next.id,
-            sourceID: sourceID
+            sourceID: sourceID,
+            area: area
         )
     }
 
     static func strengths(_ row: LessonResult) -> [String] {
         var lines: [String] = []
-        if row.percent >= 80, row.correct > 0 {
+        if row.percent >= 80, row.correct >= 2 {
             if row.kind == "dialog" { lines.append("Dobrze rozumiesz prostą rozmowę.") }
             else if row.kind == "grammar" { lines.append("Ten wzorzec już łapiesz.") }
             else { lines.append("Większość odpowiedzi w tej lekcji była dobra.") }
         }
-        if row.kind == "dialog", !row.misses.contains("Pytanie o całą historię"), row.correct > 0 {
-            lines.append("Rozumiesz proste pytanie o historię.")
+        if row.kind == "dialog", row.correct + row.wrong >= 3, !row.misses.contains("Pytanie o całą historię") {
+            lines.append("Rozumienie prostych pytań")
         }
-        if row.remembered > 0 {
-            lines.append("Zapamiętane słówka z tej lekcji: \(row.remembered).")
+        if row.remembered > 0, isWork(row.area) {
+            lines.append("Zwroty z pracy zapisane w słowniku: \(row.remembered).")
+        } else if row.remembered > 0 {
+            lines.append("Słownictwo z tej lekcji: \(row.remembered) w słowniku.")
         }
         if row.misses.isEmpty, row.correct > 0 {
             lines.append("W tej lekcji nie było błędu do wskazania.")
@@ -145,8 +230,8 @@ enum ProgressBook {
         }
         let scenes = MiniBook.all.filter { !MiniProgress.doneIDs().contains($0.id) && $0.title != title }
         if kind == "dialog", let next = scenes.first {
-            let tone = misses.isEmpty ? "Ta rozmowa usiadła." : "W tej rozmowie zostało: \(misses.joined(separator: ", "))."
-            return (next.title, "\(tone) Dalej weź inną scenkę: \(next.title), poziom \(next.level).", 5, next.id)
+            let tone = misses.isEmpty ? "Dobrze radzisz sobie z tą rozmową." : "Tu zostało: \(misses.joined(separator: ", "))."
+            return (next.title, "\(tone) Teraz: \(next.title), \(next.category), poziom \(next.level).", 5, next.id)
         }
         if let next = grammarLeft.first {
             return (next.title, "Wzorzec z tej lekcji jest zapisany. Kolejny, którego jeszcze nie było: \(next.title).", 6, next.id)
@@ -157,6 +242,15 @@ enum ProgressBook {
         return ("Powtórka", "Na dziś nie ma nowej lekcji z tej półki. Wróć do błędów.", 0, "")
     }
 
+    static func isWork(_ area: String) -> Bool {
+        switch area {
+        case "W pracy", "Na budowie", "Rozmowy z szefem", "Rozmowy ze współpracownikami":
+            return true
+        default:
+            return false
+        }
+    }
+
     static func skill(_ kind: String, _ title: String) -> String {
         let rows = all().filter { $0.kind == kind }
         guard !rows.isEmpty else { return "\(title): jeszcze nie było takiej lekcji." }
@@ -165,6 +259,22 @@ enum ProgressBook {
         let total = ok + bad
         let pct = total == 0 ? 0 : ok * 100 / total
         return "\(title): \(pct)% z \(rows.count) lekcji."
+    }
+
+    static func workLine() -> String {
+        let rows = all().filter { isWork($0.area) }
+        guard !rows.isEmpty else { return "Niemiecki w pracy: jeszcze nie było takiej lekcji." }
+        let ok = rows.reduce(0) { $0 + $1.correct }
+        let bad = rows.reduce(0) { $0 + $1.wrong }
+        let total = ok + bad
+        let pct = total == 0 ? 0 : ok * 100 / total
+        return "Niemiecki w pracy: \(pct)% z \(rows.count) lekcji."
+    }
+
+    static func counterLine(_ title: String, ok: Int, bad: Int) -> String {
+        let total = ok + bad
+        guard total > 0 else { return "\(title): jeszcze nie było takiej lekcji." }
+        return "\(title): \(ok * 100 / total)% z \(total) odpowiedzi."
     }
 }
 
@@ -185,28 +295,32 @@ struct LessonDoneView: View {
     @EnvironmentObject var store: LearningStore
     let result: LessonResult
     @AppStorage("lessonMotion") private var motion = true
+    @AppStorage("dailyGoal") private var dailyGoal = 20
     @State private var showScore = 0
     @State private var burst = false
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 18) {
                 ZStack {
                     if motion { burstLayer }
                     VStack(spacing: 8) {
-                        Text("Lekcja ukończona")
+                        Text("Lekcja ukończona!")
                             .font(.caption.weight(.bold))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
-                            .background(Theme.ok.opacity(0.2), in: Capsule())
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 5)
+                            .background(Theme.ok.opacity(0.18), in: Capsule())
                             .foregroundStyle(Theme.ok)
-                        Text(result.percent >= 80 ? "Świetna robota" : "Lekcja zapisana")
-                            .font(.largeTitle.bold())
+                        Text(result.percent >= 80 ? "Świetna robota!" : "Lekcja zapisana")
+                            .font(.system(size: 34, weight: .bold, design: .rounded))
                             .foregroundStyle(Theme.ok)
                         Text("\(showScore)%")
-                            .font(.system(size: 56, weight: .bold, design: .rounded))
+                            .font(.system(size: 64, weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                            .contentTransition(.numericText())
                         Text("Poprawne odpowiedzi")
                             .foregroundStyle(Theme.text2)
+                        progressBar
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -215,21 +329,26 @@ struct LessonDoneView: View {
                     stat(timeText, "Czas nauki")
                     stat("\(result.seenWords)", "Nowe słowa")
                 }
-                Text("Zapamiętane w słowniku: \(result.remembered). Błędne odpowiedzi: \(result.wrong).")
+                Text("Zapamiętane słówka: \(result.remembered). Błędne odpowiedzi: \(result.wrong).")
                     .font(.footnote)
                     .foregroundStyle(Theme.text2)
                 if !result.badge.isEmpty {
                     Label(result.badge, systemImage: "seal.fill")
                         .font(.headline)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Theme.ok.opacity(0.16), in: Capsule())
                         .foregroundStyle(Theme.ok)
                 }
-                block("Co idzie dobrze?", ProgressBook.strengths(result), "checkmark.circle.fill", Theme.ok)
+                Divider().overlay(Color.white.opacity(0.12))
+                block("Co idzie Ci dobrze?", ProgressBook.strengths(result))
                 if !result.misses.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 10) {
                         Text("Nad czym warto popracować?").font(.headline)
                         ForEach(result.misses, id: \.self) { miss in
                             VStack(alignment: .leading, spacing: 2) {
                                 Label(miss, systemImage: "target")
+                                    .foregroundStyle(Theme.sign)
                                 Text(ProgressBook.drills(miss))
                                     .font(.footnote)
                                     .foregroundStyle(Theme.text2)
@@ -237,15 +356,29 @@ struct LessonDoneView: View {
                         }
                     }
                 }
-                VStack(alignment: .leading, spacing: 6) {
+                Divider().overlay(Color.white.opacity(0.12))
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Twoja następna lekcja").font(.headline)
-                    Text("Polecana").font(.caption.weight(.bold)).foregroundStyle(Theme.ok)
+                    Text("Polecana")
+                        .font(.caption.weight(.bold))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Theme.ok.opacity(0.18), in: Capsule())
+                        .foregroundStyle(Theme.ok)
                     Text(result.nextTitle).font(.title3.bold())
                     Text(result.nextBlurb).foregroundStyle(Theme.text2)
                 }
-                VStack(spacing: 8) {
-                    Text("+\(result.xp) XP").font(.title2.bold()).foregroundStyle(Theme.ok)
-                    Text("Razem \(ProgressBook.xp()) XP · seria \(store.streak) · dziś lekcji \(ProgressBook.todayCount())")
+                VStack(spacing: 6) {
+                    Text("+ \(result.xp) XP")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundStyle(Theme.ok)
+                    Text("Punkty doświadczenia")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.text2)
+                    Text("Razem \(ProgressBook.xp()) XP · seria \(store.streak) \(store.streak == 1 ? "dzień" : "dni")")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.text2)
+                    Text("Cel dzienny: \(min(store.reviewsToday, dailyGoal))/\(dailyGoal) słówek")
                         .font(.footnote)
                         .foregroundStyle(Theme.text2)
                     Text(weekLine).font(.footnote).foregroundStyle(Theme.text2)
@@ -253,26 +386,32 @@ struct LessonDoneView: View {
                 .frame(maxWidth: .infinity)
                 .padding(16)
                 .background(Theme.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                Button("Rozpocznij polecaną lekcję") { open(result.nextTab) }.primaryButton()
+                Button("Rozpocznij polecaną lekcję") { open(result.nextTab) }
+                    .buttonStyle(DoneButton())
                 Button("Powtórz błędy") {
                     if result.kind == "grammar" { Go.tab(6, grammar: result.sourceID) }
                     else { Go.tab(5, scene: result.sourceID) }
                     dismiss()
                 }
-                    .buttonStyle(.glass)
+                .buttonStyle(.glass)
                 Button("Przećwicz nowe słówka") { Go.tab(1); dismiss() }.buttonStyle(.glass)
                 Button("Wróć do strony głównej") { Go.tab(0); dismiss() }.buttonStyle(.glass)
                 WeekSkills()
             }
             .padding(16)
-            .padding(.bottom, 24)
+            .padding(.bottom, 28)
         }
         .background(NightGlow())
         .onAppear {
             guard motion else { showScore = result.percent; return }
-            withAnimation(.easeOut(duration: 0.8)) { burst = true }
+            if result.percent >= 80 {
+                Haptic.good()
+                AudioServicesPlaySystemSound(1057)
+            }
+            withAnimation(.easeOut(duration: 0.85)) { burst = true }
             let target = result.percent
             Task { @MainActor in
+                if target == 0 { showScore = 0; return }
                 for step in stride(from: 0, through: target, by: max(1, target / 12)) {
                     showScore = step
                     try? await Task.sleep(nanoseconds: 40_000_000)
@@ -282,9 +421,21 @@ struct LessonDoneView: View {
         }
     }
 
+    private var progressBar: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.white.opacity(0.12))
+                Capsule().fill(Theme.ok)
+                    .frame(width: geo.size.width * CGFloat(showScore) / 100)
+            }
+        }
+        .frame(height: 6)
+        .padding(.horizontal, 36)
+    }
+
     private var timeText: String {
-        let m = max(1, (result.seconds + 59) / 60)
-        return "\(m) min"
+        if result.seconds < 60 { return "\(result.seconds) s" }
+        return "\(result.seconds / 60) min"
     }
 
     private var weekLine: String {
@@ -299,18 +450,18 @@ struct LessonDoneView: View {
             Text(value).font(.headline)
             Text(caption).font(.caption).foregroundStyle(Theme.text2).multilineTextAlignment(.center)
         }
-        .frame(maxWidth: .infinity, minHeight: 72)
+        .frame(maxWidth: .infinity, minHeight: 74)
         .background(Theme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
-    private func block(_ title: String, _ lines: [String], _ icon: String, _ color: Color) -> some View {
+    private func block(_ title: String, _ lines: [String]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title).font(.headline)
             if lines.isEmpty {
-                Text("Za mało odpowiedzi, żeby chwalić.").foregroundStyle(Theme.text2)
+                Text("Za mało dobrych odpowiedzi, żeby to chwalić.").foregroundStyle(Theme.text2)
             }
             ForEach(lines, id: \.self) { line in
-                Label(line, systemImage: icon).foregroundStyle(color)
+                Label(line, systemImage: "checkmark.circle.fill").foregroundStyle(Theme.ok)
             }
         }
     }
@@ -328,30 +479,44 @@ struct LessonDoneView: View {
 
     private var burstLayer: some View {
         ZStack {
-            ForEach(0..<14, id: \.self) { i in
-                Circle()
-                    .fill(i.isMultiple(of: 2) ? Theme.ok : Color.white)
-                    .frame(width: 7, height: 7)
-                    .offset(x: burst ? CGFloat((i * 29 % 160) - 80) : 0, y: burst ? CGFloat(30 + (i * 17 % 90)) : -20)
-                    .opacity(burst ? 0 : 0.9)
+            ForEach(0..<12, id: \.self) { i in
+                Image(systemName: i.isMultiple(of: 3) ? "star.fill" : "circle.fill")
+                    .font(.system(size: i.isMultiple(of: 3) ? 13 : 6))
+                    .foregroundStyle(i.isMultiple(of: 2) ? Theme.ok : Theme.sign)
+                    .offset(x: burst ? CGFloat((i * 37 % 220) - 110) : 0, y: burst ? CGFloat(-16 - (i * 11 % 64)) : 18)
+                    .opacity(burst ? 0 : 0.95)
             }
         }
-        .frame(height: 20)
+        .frame(height: 10)
         .allowsHitTesting(false)
     }
 }
 
+private struct DoneButton: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 17, weight: .bold, design: .rounded))
+            .foregroundStyle(Theme.ink)
+            .frame(maxWidth: .infinity)
+            .frame(height: 54)
+            .background(Theme.ok, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .opacity(configuration.isPressed ? 0.7 : 1)
+    }
+}
+
 struct WeekSkills: View {
+    @EnvironmentObject var store: LearningStore
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Postęp z zapisanych lekcji").font(.headline)
             Text(ProgressBook.skill("dialog", "Mini dialogi"))
             Text(ProgressBook.skill("grammar", "Gramatyka"))
-            Text(ProgressBook.skill("vocab", "Słownictwo"))
-            Text(ProgressBook.skill("listen", "Słuchanie"))
-            Text(ProgressBook.skill("speak", "Rozmowa"))
-            Text(ProgressBook.skill("work", "Niemiecki w pracy"))
-            Text("Półka bez lekcji nie dostaje procentu. Liczy się tylko to, co zostało dokończone.")
+            Text(ProgressBook.workLine())
+            Text(ProgressBook.counterLine("Słownictwo", ok: store.journal.skillVocabOK, bad: store.journal.skillVocabBad))
+            Text(ProgressBook.counterLine("Słuchanie", ok: store.journal.skillListenOK, bad: store.journal.skillListenBad))
+            Text(ProgressBook.counterLine("Rozmowa", ok: store.journal.skillSpeakOK, bad: store.journal.skillSpeakBad))
+            Text("Procent jest z prawdziwych odpowiedzi. Pusta półka nie dostaje liczby.")
                 .font(.footnote)
                 .foregroundStyle(Theme.text2)
         }

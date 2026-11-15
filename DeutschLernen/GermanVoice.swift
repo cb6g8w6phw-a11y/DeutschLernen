@@ -65,11 +65,15 @@ final class GermanVoice: NSObject, ObservableObject, AVSpeechSynthesizerDelegate
         }
     }
 
-    static func usable() -> [AVSpeechSynthesisVoice] {
+    static func qualityPool() -> [AVSpeechSynthesisVoice] {
         let all = installed()
         let quality = UserDefaults.standard.string(forKey: "deQuality") ?? "all"
-        var list = quality == "all" ? all : all.filter { qualityKey($0) == quality }
-        if list.isEmpty { list = all }
+        let list = quality == "all" ? all : all.filter { qualityKey($0) == quality }
+        return list.isEmpty ? all : list
+    }
+
+    static func usable() -> [AVSpeechSynthesisVoice] {
+        var list = qualityPool()
         let sex = UserDefaults.standard.string(forKey: "deGender") ?? "all"
         if sex == "m" || sex == "f" {
             let narrowed = list.filter { genderKey($0) == sex }
@@ -79,7 +83,7 @@ final class GermanVoice: NSObject, ObservableObject, AVSpeechSynthesizerDelegate
     }
 
     static func gendersAvailable() -> [String] {
-        let keys = Set(usable().map(genderKey).filter { $0 == "m" || $0 == "f" })
+        let keys = Set(qualityPool().map(genderKey).filter { $0 == "m" || $0 == "f" })
         guard keys.count > 1 else { return [] }
         return ["all"] + ["m", "f"].filter { keys.contains($0) }
     }
@@ -173,15 +177,18 @@ final class GermanVoice: NSObject, ObservableObject, AVSpeechSynthesizerDelegate
         return extras[index % extras.count]
     }
 
-    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        let speaking = synthesizer.isSpeaking
         Task { @MainActor in
-            if !synthesizer.isSpeaking { self.phase = .idle }
+            if !speaking { self.phase = .idle }
         }
     }
 
-    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        let speaking = synthesizer.isSpeaking
+        let paused = synthesizer.isPaused
         Task { @MainActor in
-            if !synthesizer.isSpeaking, !synthesizer.isPaused { self.phase = .idle }
+            if !speaking, !paused { self.phase = .idle }
         }
     }
 }
@@ -190,18 +197,26 @@ struct LocalPlayBar: View {
     @ObservedObject private var voice = GermanVoice.shared
 
     var body: some View {
-        HStack(spacing: 18) {
-            Button {
-                if voice.phase == .playing { voice.pause() } else { voice.resume() }
-            } label: {
-                Image(systemName: voice.phase == .playing ? "pause.fill" : "play.fill")
-                    .frame(width: 44, height: 44)
+        VStack(spacing: 8) {
+            HStack(spacing: 18) {
+                Button {
+                    if voice.phase == .playing { voice.pause() } else { voice.resume() }
+                } label: {
+                    Image(systemName: voice.phase == .playing ? "pause.fill" : "play.fill")
+                        .frame(width: 44, height: 44)
+                }
+                Button { voice.stop() } label: {
+                    Image(systemName: "stop.fill").frame(width: 44, height: 44)
+                }
+                Button { voice.replay() } label: {
+                    Image(systemName: "arrow.counterclockwise").frame(width: 44, height: 44)
+                }
             }
-            Button { voice.stop() } label: {
-                Image(systemName: "stop.fill").frame(width: 44, height: 44)
-            }
-            Button { voice.replay() } label: {
-                Image(systemName: "arrow.counterclockwise").frame(width: 44, height: 44)
+            if !voice.note.isEmpty {
+                Text(voice.note)
+                    .font(.caption)
+                    .foregroundStyle(Theme.text2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .buttonStyle(.plain)
@@ -211,7 +226,6 @@ struct LocalPlayBar: View {
 }
 
 struct GermanVoicesView: View {
-    @ObservedObject private var voice = GermanVoice.shared
     @AppStorage("deQuality") private var quality = "all"
     @AppStorage("deGender") private var gender = "all"
     @AppStorage("deRate") private var rate = "1"
@@ -223,7 +237,7 @@ struct GermanVoicesView: View {
     private let rates = ["0.75", "1", "1.25", "1.5"]
 
     var body: some View {
-        let shown = GermanVoice.usable()
+        let shown = GermanVoice.installed()
         let sexes = GermanVoice.gendersAvailable()
         Form {
             Section {
@@ -235,9 +249,6 @@ struct GermanVoicesView: View {
                         .foregroundStyle(.secondary)
                     Button("Odsłuchaj próbkę") { GermanVoice.shared.speak(text: GermanVoice.sample) }
                     LocalPlayBar()
-                    if !voice.note.isEmpty {
-                        Text(voice.note).font(.footnote)
-                    }
                 }
             } header: {
                 Text("Głos z iPhone’a")

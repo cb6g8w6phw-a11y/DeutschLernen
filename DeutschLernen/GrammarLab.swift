@@ -342,6 +342,7 @@ struct GrammarLessonView: View {
             title: lesson.title,
             level: lesson.level,
             sourceID: lesson.id,
+            area: lesson.topic,
             correct: okCount,
             wrong: badCount,
             seconds: Int(Date().timeIntervalSince(started)),

@@ -455,6 +455,7 @@ struct SceneStudyView: View {
             title: scene.title,
             level: scene.level,
             sourceID: scene.id,
+            area: scene.category,
             correct: correct,
             wrong: wrong,
             seconds: Int(Date().timeIntervalSince(started)),
@@ -509,7 +510,7 @@ struct LineWords: View {
                         .foregroundStyle(Theme.text)
                         .fixedSize(horizontal: false, vertical: true)
                     Button {
-                        Talk.de(String(open.filter { $0.isLetter || "äöüÄÖÜß ".contains($0) }), rate: 0.4)
+                        GermanVoice.shared.speak(text: String(open.filter { $0.isLetter || "äöüÄÖÜß ".contains($0) }))
                     } label: {
                         Label("Posłuchaj tego słowa", systemImage: "speaker.wave.2.fill")
                             .font(.caption.weight(.semibold))
