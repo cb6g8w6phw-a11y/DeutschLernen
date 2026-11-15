@@ -22,10 +22,11 @@ struct RootView: View {
     @State private var askNotify = false
     @State private var tab = 0
     @State private var dockHidden = false
+    @State private var dockHeight: CGFloat = 320
     @AppStorage("notifyExplained") private var notifyExplained = false
 
     var body: some View {
-        VStack(spacing: 0) {
+        ZStack(alignment: .bottom) {
             Group {
                 switch tab {
                 case 1: NavigationStack { WortHome() }
@@ -43,17 +44,25 @@ struct RootView: View {
                 default: TodayView()
                 }
             }
+            .padding(.bottom, dockHidden ? 0 : dockHeight)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .clipped()
             AppDock(tab: $tab)
                 .padding(.bottom, 6)
-                .frame(height: dockHidden ? 0 : nil, alignment: .top)
-                .clipped()
+                .background {
+                    GeometryReader { geo in
+                        Color.clear.preference(key: DockHeightKey.self, value: geo.size.height)
+                    }
+                }
+                .offset(y: dockHidden ? dockHeight + 24 : 0)
                 .opacity(dockHidden ? 0 : 1)
                 .allowsHitTesting(!dockHidden)
+                .animation(.easeOut(duration: 0.2), value: dockHidden)
         }
         .background(NightGlow())
         .background(DockPanBridge(hidden: $dockHidden))
+        .onPreferenceChange(DockHeightKey.self) { height in
+            if height > 40 { dockHeight = height }
+        }
         .onChange(of: tab) { _, _ in
             var snap = Transaction()
             snap.disablesAnimations = true
@@ -182,6 +191,13 @@ struct AppDock: View {
     }
 }
 
+private struct DockHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
 private struct DockPanBridge: UIViewRepresentable {
     @Binding var hidden: Bool
 
@@ -212,19 +228,24 @@ private struct DockPanBridge: UIViewRepresentable {
     final class Coordinator: NSObject, UIGestureRecognizerDelegate {
         var hidden: Binding<Bool>
         private var installed = false
-        private var lock = Date.distantPast
+        private weak var watching: UIScrollView?
+        private var observed: NSKeyValueObservation?
+        private var hold = Date.distantPast
 
         init(hidden: Binding<Bool>) { self.hidden = hidden }
 
         func install(on view: UIView) {
-            guard !installed, let window = view.window else { return }
-            let pan = UIPanGestureRecognizer(target: self, action: #selector(panned(_:)))
-            pan.delegate = self
-            pan.cancelsTouchesInView = false
-            pan.delaysTouchesBegan = false
-            pan.delaysTouchesEnded = false
-            window.addGestureRecognizer(pan)
-            installed = true
+            guard let window = view.window else { return }
+            if !installed {
+                let pan = UIPanGestureRecognizer(target: self, action: #selector(panned(_:)))
+                pan.delegate = self
+                pan.cancelsTouchesInView = false
+                pan.delaysTouchesBegan = false
+                pan.delaysTouchesEnded = false
+                window.addGestureRecognizer(pan)
+                installed = true
+            }
+            if let scroll = liveScroll(in: window) { watch(scroll) }
         }
 
         func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
@@ -232,27 +253,61 @@ private struct DockPanBridge: UIViewRepresentable {
         }
 
         @objc func panned(_ gesture: UIPanGestureRecognizer) {
-            // Tylko po puszczeniu palca. Zmiana wysokości docka w trakcie
-            // przeciągnięcia zmienia ramkę listy i przerywa przewijanie.
-            guard gesture.state == .ended else { return }
-            let velocity = gesture.velocity(in: gesture.view)
-            let move = gesture.translation(in: gesture.view)
-            if abs(velocity.x) > abs(velocity.y) + 40, abs(move.x) > abs(move.y) { return }
-            if velocity.y < -220 || move.y < -64 {
-                apply(true)
-            } else if velocity.y > 180 || move.y > 48 {
-                apply(false)
+            guard let window = gesture.view as? UIWindow ?? gesture.view?.window else { return }
+            guard let scroll = liveScroll(in: window) else { return }
+            watch(scroll)
+            evaluate(scroll)
+        }
+
+        private func watch(_ scroll: UIScrollView) {
+            guard scroll !== watching else { return }
+            observed?.invalidate()
+            watching = scroll
+            observed = scroll.observe(\.contentOffset, options: [.new]) { [weak self] scroll, _ in
+                if Thread.isMainThread {
+                    self?.evaluate(scroll)
+                } else {
+                    DispatchQueue.main.async { self?.evaluate(scroll) }
+                }
             }
         }
 
-        func apply(_ hide: Bool) {
-            guard Date() > lock, hidden.wrappedValue != hide else { return }
-            lock = Date().addingTimeInterval(0.45)
+        private func evaluate(_ scroll: UIScrollView) {
+            guard scroll.window != nil else { return }
+            let fromTop = scroll.contentOffset.y + scroll.adjustedContentInset.top
+            let short = scroll.contentSize.height <= scroll.bounds.height + 24
+            let hide = !short && fromTop > 20
+            let show = short || fromTop <= 1
+            if hide { apply(true) }
+            else if show { apply(false) }
+        }
+
+        private func apply(_ hide: Bool) {
+            guard hidden.wrappedValue != hide else { return }
+            if Date() < hold { return }
+            hold = Date().addingTimeInterval(0.35)
             DispatchQueue.main.async {
-                var snap = Transaction()
-                snap.disablesAnimations = true
-                withTransaction(snap) { self.hidden.wrappedValue = hide }
+                guard self.hidden.wrappedValue != hide else { return }
+                self.hidden.wrappedValue = hide
             }
+        }
+
+        private func liveScroll(in view: UIView) -> UIScrollView? {
+            var all: [UIScrollView] = []
+            collect(view, into: &all)
+            if let hot = all.last(where: { $0.isTracking || $0.isDragging || $0.isDecelerating }) {
+                return hot
+            }
+            return all.last
+        }
+
+        private func collect(_ view: UIView, into list: inout [UIScrollView]) {
+            if let scroll = view as? UIScrollView,
+               scroll.bounds.height > 180, scroll.bounds.width > 200,
+               !scroll.isHidden, scroll.alpha > 0.01, scroll.window != nil {
+                list.append(scroll)
+            }
+            for sub in view.subviews { collect(sub, into: &list) }
         }
     }
 }

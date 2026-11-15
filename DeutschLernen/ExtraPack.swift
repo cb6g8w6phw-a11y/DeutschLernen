@@ -186,6 +186,7 @@ struct RepairView: View {
     @State private var typed = ""
     @State private var note = ""
     @State private var cleared: [String: Int] = [:]
+    @State private var options: [String] = []
     @FocusState private var writing: Bool
 
     private var item: RepairItem? { index < round.count ? round[index] : nil }
@@ -211,6 +212,12 @@ struct RepairView: View {
                         .font(.headline)
                     Text(item.prompt)
                         .font(.title2.bold())
+                    if !options.isEmpty {
+                        Text("Nie znasz pisowni? Wybierz jedną.")
+                            .font(.footnote)
+                            .foregroundStyle(Theme.text2)
+                        chips(item)
+                    }
                     TextField("Po niemiecku", text: $typed)
                         .textFieldStyle(.roundedBorder)
                         .textInputAutocapitalization(.never)
@@ -259,6 +266,7 @@ struct RepairView: View {
         index = 0
         typed = ""
         note = ""
+        options = round.isEmpty ? [] : mix(for: round[0])
     }
 
     private func loadClear() -> [String: Int] {
@@ -337,6 +345,72 @@ struct RepairView: View {
         }
         typed = ""
         note = ""
+        options = index < round.count ? mix(for: round[index]) : []
+    }
+
+    private func chips(_ item: RepairItem) -> some View {
+        let wide = options.contains { $0.count > 18 }
+        return Group {
+            if wide {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(options, id: \.self) { option in
+                        chip(option, item: item, wide: true)
+                    }
+                }
+            } else {
+                WordFlow(spacing: 8) {
+                    ForEach(options, id: \.self) { option in
+                        chip(option, item: item, wide: false)
+                    }
+                }
+            }
+        }
+    }
+
+    private func chip(_ option: String, item: RepairItem, wide: Bool) -> some View {
+        let picked = Normalizer.same(typed, option)
+        let revealed = !note.isEmpty
+        let correct = Normalizer.same(option, item.right)
+        let on = picked || (revealed && correct)
+        return Button {
+            guard note.isEmpty else { return }
+            typed = option
+            writing = false
+        } label: {
+            Text(option)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(on ? Theme.ink : Theme.text)
+                .multilineTextAlignment(.leading)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .frame(maxWidth: wide ? .infinity : nil, alignment: .leading)
+                .background(revealed && correct ? Theme.ok : (revealed && picked ? Theme.bad : (picked ? Theme.ok : Color.white.opacity(0.08))), in: Capsule())
+                .overlay(Capsule().stroke(Color.white.opacity(0.22), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func mix(for item: RepairItem) -> [String] {
+        let right = item.right.trimmingCharacters(in: .whitespacesAndNewlines)
+        let sentence = right.contains(" ")
+        var pool = round.map(\.right)
+        pool += store.journal.mistakes.map(\.fix)
+        pool += store.words.flatMap { [$0.de, $0.ex] }
+        pool += VocabBook.built.flatMap { [$0.de, $0.ex] }
+        pool += FreqBank.all.prefix(500).map(\.de)
+        var seen = Set<String>()
+        var wrong: [String] = []
+        for raw in pool.shuffled() {
+            let text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            if text.isEmpty || text == "—" || text.count < 3 { continue }
+            if sentence != text.contains(" ") { continue }
+            let key = Normalizer.clean(text)
+            if key.isEmpty || key == Normalizer.clean(right) || !seen.insert(key).inserted { continue }
+            wrong.append(text)
+        }
+        let near = wrong.filter { abs($0.count - right.count) <= max(4, right.count / 2) }
+        let three = Array((near.count >= 3 ? near : wrong).prefix(3))
+        return (three + [right]).shuffled()
     }
 }
 
