@@ -125,11 +125,13 @@ struct PhraseView: View {
     private let packs: [VerbPack] = [
         VerbPack(verb: "machen", why: "Samego „machen” nie użyjesz. Uczysz się całego pytania i całej odpowiedzi.", lines: [
             ("Co mam zrobić?", "Was muss ich machen?"),
-            ("Zrobię to później.", "Ich mache das später.")
+            ("Zrobię to później.", "Ich mache das später."),
+            ("Robię to teraz.", "Ich mache das jetzt.")
         ]),
         VerbPack(verb: "brauchen", why: "„brauchen” bez rzeczy nic nie znaczy w pracy. Mów, czego potrzebujesz.", lines: [
             ("Potrzebuję zwolnienia.", "Ich brauche eine Krankschreibung."),
-            ("Czego do tego potrzebujesz?", "Was brauchst du dafür?")
+            ("Czego do tego potrzebujesz?", "Was brauchst du dafür?"),
+            ("Potrzebuję materiału.", "Ich brauche Material.")
         ]),
         VerbPack(verb: "kommen", why: "Nie „kommen”. Mów, o której przychodzisz albo czy jesteś na zmianie.", lines: [
             ("Przyjdę o dziewiątej.", "Ich komme um neun."),
@@ -160,6 +162,9 @@ struct PhraseView: View {
                 if show {
                     Text(current.pl).font(.headline)
                     Text(current.de).font(.title2.bold())
+                    Text(gloss(current.de))
+                        .font(.footnote)
+                        .foregroundStyle(Theme.text2)
                     Button { Talk.de(current.de, rate: 0.42) } label: { Label("Posłuchaj zwrotu", systemImage: "speaker.wave.2") }
                         .buttonStyle(.glass)
                     Button("Schowaj i ułóż zwrot") {
@@ -244,6 +249,25 @@ struct PhraseView: View {
             store.noteSkill("sentence", ok: false)
             Haptic.bad()
         }
+    }
+
+    private func gloss(_ de: String) -> String {
+        let map = [
+            "was": "co", "muss": "muszę", "ich": "ja", "machen": "robić", "mache": "robię",
+            "das": "to", "später": "później", "jetzt": "teraz", "brauche": "potrzebuję",
+            "eine": "pewien/pewna", "brauchst": "potrzebujesz", "du": "ty", "dafür": "do tego",
+            "material": "materiał", "komme": "przyjdę", "um": "o", "neun": "dziewiątej",
+            "kommst": "przychodzisz", "heute": "dziś", "zur": "na", "sag": "powiedz",
+            "bescheid": "znać", "wenn": "kiedy", "fertig": "gotowy", "bist": "jesteś",
+            "sage": "powiem", "dem": "temu", "chef": "szefowi", "zum": "do", "arzt": "lekarza",
+            "gehen": "iść", "gehe": "idę", "nach": "do", "hause": "domu"
+        ]
+        let parts = de.split(separator: " ").map { String($0).trimmingCharacters(in: .punctuationCharacters) }
+        let bits = parts.compactMap { word -> String? in
+            guard let pl = map[word.lowercased()] else { return nil }
+            return "\(word) = \(pl)"
+        }
+        return bits.isEmpty ? "Cały zwrot, nie pojedyncze słowo." : bits.joined(separator: " · ")
     }
 
     private func reset() {

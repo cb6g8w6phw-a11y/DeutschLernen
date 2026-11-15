@@ -313,11 +313,12 @@ struct TodayView: View {
                         .multilineTextAlignment(.center)
                 }
                 .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .padding(.bottom, 120)
+                .padding(.top, 20)
+                .padding(.bottom, 160)
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
+            .safeAreaPadding(.top, 8)
             .containerBackground(for: .navigation) { Color.black }
         }
     }
@@ -341,7 +342,7 @@ struct TodayView: View {
                     .foregroundStyle(Color.white.opacity(0.55))
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(maxWidth: .infinity, minHeight: 148, alignment: .topLeading)
+            .frame(maxWidth: .infinity, minHeight: 108, alignment: .topLeading)
             .padding(14)
             .background(Color(white: 0.11), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Color.white.opacity(0.08), lineWidth: 1))

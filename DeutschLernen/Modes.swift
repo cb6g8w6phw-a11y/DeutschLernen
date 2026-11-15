@@ -135,11 +135,19 @@ struct FlowChips: View {
     let tap: (String) -> Void
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 88), spacing: 8)], spacing: 8) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
             ForEach(words.indices, id: \.self) { i in
                 Button(words[i]) { tap(words[i]) }
-                    .buttonStyle(.glass)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Color.white.opacity(0.08), in: Capsule())
+                    .overlay(Capsule().stroke(Color.white.opacity(0.2), lineWidth: 1))
             }
+            .buttonStyle(.plain)
         }
     }
 }
@@ -149,6 +157,7 @@ struct PictureTalk: View {
     @StateObject private var mic = Mic()
     @State private var index = 0
     @State private var typed = ""
+    @State private var built = ""
     @State private var note = ""
     @State private var fix = ""
     @State private var busy = false
@@ -156,9 +165,9 @@ struct PictureTalk: View {
     @FocusState private var writing: Bool
 
     private let scenes: [(title: String, see: String, order: [String], extra: String, sample: String, symbol: String, side: String, third: String)] = [
-        ("Budowa", "Kask i łopata. Ułóż, co leży.", ["Eine", "Schaufel", "liegt"], "Helm", "Eine Schaufel liegt.", "helmet", "hammer", "shippingbox"),
-        ("Sklep", "Chleb w sklepie. Ułóż, co jest.", ["Es", "gibt", "Brot"], "Kasse", "Es gibt Brot.", "cart", "birthday.cake", "creditcard"),
-        ("Ulica", "Autobus i auto. Ułóż, co jedzie.", ["Ein", "Bus", "fährt"], "Auto", "Ein Bus fährt.", "bus", "car", "road.lanes")
+        ("Budowa", "Kask i łopata. Ułóż oba.", ["Der", "Helm", "und", "die", "Schaufel"], "Bus", "Der Helm und die Schaufel.", "helmet", "hammer", "shippingbox"),
+        ("Sklep", "Chleb przy kasie. Ułóż, gdzie jest.", ["Brot", "an", "der", "Kasse"], "Bus", "Brot an der Kasse.", "cart", "birthday.cake", "creditcard"),
+        ("Ulica", "Autobus i auto. Ułóż oba.", ["Der", "Bus", "und", "das", "Auto"], "Wurst", "Der Bus und das Auto.", "bus", "car", "road.lanes")
     ]
 
     private var scene: (title: String, see: String, order: [String], extra: String, sample: String, symbol: String, side: String, third: String) { scenes[index % scenes.count] }
@@ -178,7 +187,7 @@ struct PictureTalk: View {
                 .padding(.vertical, 18)
                 .themedCard(radius: 18)
                 Text(scene.see).foregroundStyle(.white)
-                Text("Ułóż zdanie z podanych słów. Stuknięcie wstawia słowo. Możesz też napisać albo powiedzieć.")
+                Text("Stuknij kafelki w kolejności. Pole niżej jest tylko, gdy chcesz napisać sam.")
                     .font(.footnote)
                     .foregroundStyle(Theme.text2)
                 answerLine
@@ -196,12 +205,13 @@ struct PictureTalk: View {
                 if mic.listening { Text(mic.text.isEmpty ? "Słucham…" : mic.text) }
                 Button("Sprawdź") { Task { await check() } }
                     .primaryButton()
-                    .disabled(busy || typed.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(busy || (typed.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && built.isEmpty))
                 if !note.isEmpty { Text(note).font(.headline) }
                 if !fix.isEmpty { Text(fix).foregroundStyle(Theme.text2) }
                 Button(index + 1 >= scenes.count ? "Od początku" : "Następny obrazek") {
                     index = index + 1 >= scenes.count ? 0 : index + 1
                     typed = ""
+                    built = ""
                     note = ""
                     fix = ""
                     deal()
@@ -226,7 +236,8 @@ struct PictureTalk: View {
         writing = false
         busy = true
         defer { busy = false }
-        let said = typed.trimmingCharacters(in: .whitespacesAndNewlines)
+        let written = typed.trimmingCharacters(in: .whitespacesAndNewlines)
+        let said = written.isEmpty ? built.trimmingCharacters(in: .whitespacesAndNewlines) : written
         let right = exact(said, scene.order)
         if right {
             note = "Tak. \(scene.sample)"
@@ -252,11 +263,11 @@ struct PictureTalk: View {
 
     private var answerLine: some View {
         HStack {
-            Text(typed.isEmpty ? "Tu ułoży się zdanie" : typed)
+            Text(built.isEmpty ? "Tu ułoży się zdanie" : built)
                 .font(.title3.bold())
-                .foregroundStyle(typed.isEmpty ? Theme.text2 : .white)
+                .foregroundStyle(built.isEmpty ? Theme.text2 : .white)
             Spacer()
-            if !typed.isEmpty {
+            if !built.isEmpty {
                 Button("Cofnij") { undo() }
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.white)
@@ -268,7 +279,7 @@ struct PictureTalk: View {
     }
 
     private var chipRow: some View {
-        HStack(spacing: 8) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 64), spacing: 8)], spacing: 8) {
             ForEach(bank, id: \.self) { word in
                 Button(word) { place(word) }
                     .font(.headline)
@@ -289,13 +300,13 @@ struct PictureTalk: View {
     private func place(_ word: String) {
         guard let at = bank.firstIndex(of: word) else { return }
         bank.remove(at: at)
-        typed = (typed + " " + word).trimmingCharacters(in: .whitespaces)
+        built = (built + " " + word).trimmingCharacters(in: .whitespaces)
     }
 
     private func undo() {
-        let parts = typed.split(separator: " ").map(String.init)
+        let parts = built.split(separator: " ").map(String.init)
         guard let last = parts.last else { return }
-        typed = parts.dropLast().joined(separator: " ")
+        built = parts.dropLast().joined(separator: " ")
         if !bank.contains(last) { bank.append(last) }
     }
 

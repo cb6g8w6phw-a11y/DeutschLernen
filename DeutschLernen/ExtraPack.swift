@@ -200,10 +200,11 @@ struct RepairView: View {
                         .foregroundStyle(Theme.text2)
                     Text(item.why)
                         .foregroundStyle(Theme.text2)
-                    if item.wrong != "—" {
+                    if item.wrong != "—" && item.wrong != item.right {
                         Text("Tak napisałeś: \(item.wrong)").foregroundStyle(Theme.bad)
                     }
-                    Text("Napisz to po niemiecku").font(.headline)
+                    Text("To napisz po niemiecku")
+                        .font(.headline)
                     Text(item.prompt)
                         .font(.title2.bold())
                     TextField("Po niemiecku", text: $typed)
@@ -232,6 +233,9 @@ struct RepairView: View {
         .navigationTitle("Trener błędów")
         .containerBackground(for: .navigation) { NightGlow() }
         .onAppear { if round.isEmpty { reload() } }
+        .onChange(of: typed) { old, new in
+            if old != new, !note.isEmpty { note = "" }
+        }
     }
 
     private func reload() {
@@ -291,15 +295,15 @@ struct RepairView: View {
     }
 
     private func why(_ de: String, _ stat: WordStat) -> String {
+        _ = stat
         let low = de.lowercased()
-        let count = "Błędne odpowiedzi: \(stat.wrong). Dobre: \(stat.correct)."
         if low.hasPrefix("der ") || low.hasPrefix("die ") || low.hasPrefix("das ") {
-            return "Rodzajnik. Słowo liczy się z der, die albo das. \(count)"
+            return "Rodzajnik. Słowo liczy się z der, die albo das."
         }
         if low.contains("muss") || low.contains("kann") {
-            return "Szyk. muss albo kann jest drugi, zwykły czasownik na końcu. \(count)"
+            return "Szyk. muss albo kann jest drugi, zwykły czasownik na końcu."
         }
-        return "To słowo mylisz częściej, niż trafiasz. \(count)"
+        return "To słowo mylisz częściej, niż trafiasz."
     }
 
     private func check(_ item: RepairItem) {

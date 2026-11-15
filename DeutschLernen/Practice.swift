@@ -97,7 +97,7 @@ struct PracticeView: View {
                             .font(.largeTitle.bold())
                         Spacer()
                         Button { arranging = true } label: {
-                            Text("Ułóż")
+                            Text("Kafelki")
                                 .font(.subheadline.weight(.semibold))
                                 .padding(.horizontal, 14)
                                 .frame(minHeight: 36)
