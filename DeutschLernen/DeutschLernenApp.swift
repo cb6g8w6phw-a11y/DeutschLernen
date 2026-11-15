@@ -21,6 +21,7 @@ struct RootView: View {
     @EnvironmentObject var store: LearningStore
     @State private var askNotify = false
     @State private var tab = 0
+    @State private var dockHidden = false
     @AppStorage("notifyExplained") private var notifyExplained = false
 
     var body: some View {
@@ -32,14 +33,30 @@ struct RootView: View {
             case 4: NavigationStack { MoreTools() }
             case 5: NavigationStack { SceneLibraryView() }
             case 6: NavigationStack { GrammarLibraryView() }
+            case 7: NavigationStack { PronounceView() }
+            case 8: NavigationStack { PlacementView() }
+            case 9: NavigationStack { WordsView() }
+            case 10: PracticeView()
+            case 11: ProfileView()
             default: TodayView()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .safeAreaBar(edge: .bottom, spacing: 8) {
-            AppDock(tab: $tab)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if !dockHidden {
+                AppDock(tab: $tab)
+                    .padding(.bottom, 6)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
-        .background { NightGlow() }
+        .background {
+            NightGlow()
+            DockScrollBridge(hidden: $dockHidden)
+        }
+        .animation(.spring(response: 0.34, dampingFraction: 0.9), value: dockHidden)
+        .onChange(of: tab) { _, _ in
+            withAnimation(.spring(response: 0.34, dampingFraction: 0.9)) { dockHidden = false }
+        }
         .tint(Theme.ok)
         .preferredColorScheme(.dark)
         .fontDesign(.rounded)
@@ -89,6 +106,13 @@ struct AppDock: View {
                 icon(3, "mic.fill", "Mów")
                 icon(4, "ellipsis", "Więcej")
             }
+            HStack(spacing: 0) {
+                icon(7, "waveform", "Wymowa")
+                icon(8, "checkmark.circle", "Test")
+                icon(9, "text.book.closed", "Słownik")
+                icon(10, "figure.run", "Ćwicz")
+                icon(11, "person", "Profil")
+            }
         }
         .padding(10)
         .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
@@ -135,6 +159,98 @@ struct AppDock: View {
             .foregroundStyle(tab == value ? Theme.ok : Theme.text2)
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct DockScrollBridge: UIViewRepresentable {
+    @Binding var hidden: Bool
+
+    func makeCoordinator() -> Coordinator { Coordinator(hidden: $hidden) }
+
+    func makeUIView(context: Context) -> Probe {
+        let view = Probe()
+        view.isUserInteractionEnabled = false
+        view.backgroundColor = .clear
+        view.coordinator = context.coordinator
+        return view
+    }
+
+    func updateUIView(_ uiView: Probe, context: Context) {
+        uiView.coordinator = context.coordinator
+        context.coordinator.hidden = $hidden
+        context.coordinator.scan(from: uiView)
+    }
+
+    final class Probe: UIView {
+        weak var coordinator: Coordinator?
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            coordinator?.scan(from: self)
+        }
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            coordinator?.scan(from: self)
+        }
+    }
+
+    final class Coordinator: NSObject {
+        var hidden: Binding<Bool>
+        private var watches: [ObjectIdentifier: NSKeyValueObservation] = [:]
+        private var lastY: [ObjectIdentifier: CGFloat] = [:]
+        private var lock = Date.distantPast
+
+        init(hidden: Binding<Bool>) { self.hidden = hidden }
+
+        func scan(from view: UIView) {
+            guard let window = view.window else { return }
+            var found: [UIScrollView] = []
+            window.collectScrolls(into: &found)
+            let live = Set(found.map { ObjectIdentifier($0) })
+            let stale = watches.keys.filter { !live.contains($0) }
+            for key in stale {
+                watches[key] = nil
+                lastY[key] = nil
+            }
+            for scroll in found where watches[ObjectIdentifier(scroll)] == nil && scroll.bounds.height > 160 {
+                let key = ObjectIdentifier(scroll)
+                lastY[key] = scroll.contentOffset.y
+                watches[key] = scroll.observe(\.contentOffset, options: [.new]) { [weak self] scroll, _ in
+                    self?.moved(scroll)
+                }
+            }
+        }
+
+        func moved(_ scroll: UIScrollView) {
+            let key = ObjectIdentifier(scroll)
+            let y = scroll.contentOffset.y
+            let previous = lastY[key] ?? y
+            lastY[key] = y
+            let delta = y - previous
+            if abs(delta) < 1 { return }
+            if y <= 12 {
+                apply(false)
+                return
+            }
+            if delta > 10 { apply(true) }
+            else if delta < -10 { apply(false) }
+        }
+
+        func apply(_ hide: Bool) {
+            guard Date() > lock, hidden.wrappedValue != hide else { return }
+            lock = Date().addingTimeInterval(0.45)
+            DispatchQueue.main.async {
+                withAnimation(.spring(response: 0.34, dampingFraction: 0.9)) {
+                    self.hidden.wrappedValue = hide
+                }
+            }
+        }
+    }
+}
+
+private extension UIView {
+    func collectScrolls(into list: inout [UIScrollView]) {
+        if let scroll = self as? UIScrollView { list.append(scroll) }
+        for child in subviews { child.collectScrolls(into: &list) }
     }
 }
 

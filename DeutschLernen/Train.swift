@@ -316,15 +316,6 @@ struct TodayView: View {
                     .padding(16)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    HStack(spacing: 14) {
-                        NavigationLink("Wymowa") { PronounceView() }
-                        NavigationLink("Test") { PlacementView() }
-                        NavigationLink("Słownik") { WordsView() }
-                        NavigationLink("Ćwicz") { PracticeView() }
-                        NavigationLink("Profil") { ProfileView() }
-                    }
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(Theme.text2)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)

@@ -328,26 +328,29 @@ struct LineWords: View {
     @State private var open: String?
 
     var body: some View {
-        WordFlow(spacing: 5) {
-            ForEach(Array(text.split(separator: " ").enumerated()), id: \.offset) { _, part in
-                let raw = String(part)
-                Button {
-                    open = raw
-                } label: {
-                    Text(raw)
-                        .font(.body)
-                        .foregroundStyle(.white)
-                        .underline(open == raw, color: Theme.ok)
+        VStack(alignment: .leading, spacing: 8) {
+            WordFlow(spacing: 4) {
+                ForEach(Array(text.split(separator: " ").enumerated()), id: \.offset) { _, part in
+                    let raw = String(part)
+                    Button {
+                        open = open == raw ? nil : raw
+                    } label: {
+                        Text(raw)
+                            .font(.body)
+                            .foregroundStyle(.white)
+                            .underline(open == raw, color: Theme.ok)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
-                .popover(isPresented: Binding(get: { open == raw }, set: { if !$0 { open = nil } })) {
-                    Text(meaning(raw))
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(Theme.text)
-                        .padding(16)
-                        .frame(maxWidth: 260)
-                        .presentationCompactAdaptation(.popover)
-                }
+            }
+            if let open {
+                Text(meaning(open))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.text)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Theme.ok.opacity(0.55), lineWidth: 1))
             }
         }
     }
