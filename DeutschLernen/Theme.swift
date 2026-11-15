@@ -1,24 +1,25 @@
 import SwiftUI
 
 enum Theme {
-    static let bg = Color.black
-    static let card = Color(white: 0.11)
-    static let card2 = Color(white: 0.16)
-    static let track = Color.white.opacity(0.12)
-    static let text = Color.white
-    static let text2 = Color.white.opacity(0.55)
-    static let accent = Color.white
-    static let orange = Color.white.opacity(0.72)
-    static let ok = Color(hex: "3DDC84")
-    static let bad = Color(hex: "FF453A")
-    static let ink = Color.black
+    static let bg = Color(hex: "0E1726")
+    static let card = Color(hex: "16233A")
+    static let card2 = Color(hex: "1C2C48")
+    static let track = Color.white.opacity(0.16)
+    static let text = Color(hex: "EAF0FA")
+    static let text2 = Color(hex: "9AA9BF")
+    static let accent = Color(hex: "1F5FBF")
+    static let sign = Color(hex: "FFC400")
+    static let orange = Color(hex: "FFC400")
+    static let ok = Color(hex: "6FD3A1")
+    static let bad = Color(hex: "FF9A90")
+    static let ink = Color(hex: "13243D")
 
     static var gradient: LinearGradient {
-        LinearGradient(colors: [.white, .white], startPoint: .leading, endPoint: .trailing)
+        LinearGradient(colors: [accent, Color(hex: "0B4EA2")], startPoint: .topLeading, endPoint: .bottomTrailing)
     }
 
     static var background: some View {
-        Color.black
+        Color(hex: "0E1726")
     }
 
     static func dni(_ n: Int) -> String {
@@ -39,11 +40,11 @@ extension View {
     }
 
     func primaryButton() -> some View {
-        font(.system(size: 17, weight: .semibold, design: .rounded))
-            .foregroundStyle(.black)
+        font(.system(size: 17, weight: .bold, design: .rounded))
+            .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .frame(height: 54)
-            .background(.white, in: Capsule())
+            .background(Theme.accent, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     func ghostButton() -> some View {

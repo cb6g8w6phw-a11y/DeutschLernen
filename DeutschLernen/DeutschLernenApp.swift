@@ -32,7 +32,7 @@ struct RootView: View {
             .tabItem { Label("Słownik", systemImage: "text.book.closed") }
             ProfileView().tabItem { Label("Profil", systemImage: "person.crop.circle") }
         }
-        .tint(.white)
+        .tint(Color(hex: "1F5FBF"))
         .preferredColorScheme(.dark)
         .fontDesign(.rounded)
         .onAppear {

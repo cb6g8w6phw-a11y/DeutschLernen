@@ -223,104 +223,76 @@ struct TodayView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    HStack(alignment: .center) {
-                        Text("Deutsch Lernen")
-                            .font(.title3.weight(.semibold))
-                            .foregroundStyle(.white)
+                VStack(alignment: .leading, spacing: 18) {
+                    HStack(alignment: .top) {
+                        Text("Deutsch\nna budowie")
+                            .font(.system(size: 34, weight: .bold))
+                            .foregroundStyle(Theme.text)
                         Spacer()
-                        Text("Dzisiejsza nauka")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(Color(hex: "16301C"))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Color(hex: "3DDC84"), in: Capsule())
-                    }
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Cześć! Zaczynamy? 👋")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundStyle(.white)
-                        Text("Dzisiaj poćwiczysz rozumienie poleceń w pracy i odpowiadanie szefowi.")
-                            .font(.body)
-                            .foregroundStyle(Color.white.opacity(0.72))
-                            .fixedSize(horizontal: false, vertical: true)
-                        HStack {
-                            Text("Plan na dziś")
-                                .foregroundStyle(Color.white.opacity(0.55))
-                            Spacer()
-                            Text("10 minut")
-                                .font(.title3.weight(.semibold))
-                                .foregroundStyle(.white)
+                        HStack(spacing: 6) {
+                            Text("🔥")
+                            Text("Seria \(store.streak)")
+                                .font(.subheadline.weight(.bold))
                         }
-                        ProgressView(value: planProgress)
-                            .tint(Color.white.opacity(0.85))
-                            .background(Color.white.opacity(0.12), in: Capsule())
+                        .foregroundStyle(Theme.text)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(.ultraThinMaterial, in: Capsule())
+                        .overlay(Capsule().stroke(Color.white.opacity(0.16), lineWidth: 1))
+                    }
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Dziś: polecenia szefa")
+                            .font(.system(size: 28, weight: .bold))
+                        Text("Zrozumiesz, co mówi szef, i odpowiesz po niemiecku.")
+                            .font(.body)
+                            .foregroundStyle(Color.white.opacity(0.9))
+                            .fixedSize(horizontal: false, vertical: true)
+                        ProgressView(value: Double(todayScore), total: 10)
+                            .tint(Theme.sign)
+                        Text("\(todayScore) z 10 poprawnych odpowiedzi")
+                            .font(.subheadline)
+                            .foregroundStyle(Color.white.opacity(0.85))
                         NavigationLink { DailyRunView() } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "play.fill")
-                                    .font(.caption.weight(.bold))
-                                Text("Rozpocznij dzisiejszą lekcję")
-                                    .font(.body.weight(.semibold))
-                            }
-                            .foregroundStyle(.black)
-                            .frame(maxWidth: .infinity, minHeight: 52)
-                            .background(.white, in: Capsule())
+                            Text("Zacznij lekcję")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundStyle(Theme.ink)
+                                .frame(maxWidth: .infinity, minHeight: 52)
+                                .background(Theme.sign, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                         }
                         .buttonStyle(.plain)
                     }
-                    .padding(16)
-                    .background(Color(white: 0.11), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .padding(18)
+                    .background(Theme.gradient, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Color.white.opacity(0.9), lineWidth: 3).padding(6))
+                    .shadow(color: Color.black.opacity(0.25), radius: 16, y: 8)
                     Text("Szybki trening")
+                        .font(.title2.bold())
+                        .foregroundStyle(Theme.text)
+                    moreRow("Myślenie po niemiecku", "Ułóż odpowiedź z kafelków", "brain") { ThinkView() }
+                    moreRow("Trener błędów", "Wracają zdania, które Ci nie wyszły", "target") { RepairView() }
+                    Text("Reszta")
                         .font(.title3.weight(.semibold))
-                        .foregroundStyle(.white)
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                        quick("Mówienie", "Rozmawiaj z AI po niemiecku", "bubble.left.and.bubble.right") { TutorView() }
-                        quick("Słuchanie", "Rozumiej naturalny niemiecki", "headphones") { ListenView() }
-                        quick("Niemiecki w pracy", "Szef, budowa, współpracownicy", "helmet") { WorkHubView() }
-                        quick("Zwroty i zdania", "Gotowe zdania do użycia", "book") { PhraseView() }
-                    }
-                    NavigationLink { RepairView() } label: {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "brain.head.profile")
-                                    .font(.title3)
-                                Text("Trener błędów")
-                                    .font(.headline)
-                            }
-                            .foregroundStyle(.white)
-                            Text("Powtarzaj słowa, zdania i gramatykę, które sprawiają Ci trudność.")
-                                .font(.subheadline)
-                                .foregroundStyle(Color.white.opacity(0.55))
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(16)
-                        .background(Color(white: 0.11), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Color.white.opacity(0.08), lineWidth: 1))
-                    }
-                    .buttonStyle(.plain)
-                    Text("Jeszcze")
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(.white)
-                    moreRow("Myślenie po niemiecku", "Sytuacja bez polskiego", "brain") { ThinkView() }
-                    moreRow("Shadowing", "Powtórz za zdaniem", "ear") { ShadowView() }
-                    moreRow("Całe zwroty", "Nie samo machen", "text.bubble") { PhraseView() }
+                        .foregroundStyle(Theme.text2)
+                    moreRow("Mówienie", "Rozmowa z AI", "bubble.left.and.bubble.right") { TutorView() }
+                    moreRow("Słuchanie", "Naturalny niemiecki", "headphones") { ListenView() }
+                    moreRow("Niemiecki w pracy", "Szef i budowa", "helmet") { WorkHubView() }
+                    moreRow("Zwroty", "Całe zdania", "book") { PhraseView() }
                     moreRow("Opisz obrazek", "Budowa, sklep, ulica", "photo") { PictureTalk() }
-                    Text("Postępy, ustawienia i tryb offline → Profil")
-                        .font(.footnote)
-                        .foregroundStyle(Color.white.opacity(0.45))
-                        .frame(maxWidth: .infinity)
-                        .multilineTextAlignment(.center)
+                    moreRow("Shadowing", "Powtórz za zdaniem", "ear") { ShadowView() }
                 }
                 .padding(.horizontal, 16)
-                .padding(.top, 20)
-                .padding(.bottom, 160)
+                .padding(.top, 12)
+                .padding(.bottom, 120)
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
             .safeAreaPadding(.top, 8)
-            .containerBackground(for: .navigation) { Color.black }
+            .containerBackground(for: .navigation) { Theme.background }
         }
+    }
+
+    private var todayScore: Int {
+        store.journal.day == LearningStore.dayKey() ? store.journal.todayOK : 0
     }
 
     private var planProgress: Double {
@@ -354,18 +326,19 @@ struct TodayView: View {
         NavigationLink { dest() } label: {
             HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .frame(width: 28)
-                    .foregroundStyle(.white)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Theme.text)
+                    .frame(width: 42, height: 42)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.headline).foregroundStyle(.white)
-                    Text(text).font(.caption).foregroundStyle(Color.white.opacity(0.55))
+                    Text(title).font(.headline).foregroundStyle(Theme.text)
+                    Text(text).font(.subheadline).foregroundStyle(Theme.text2)
                 }
                 Spacer()
-                Image(systemName: "chevron.right").foregroundStyle(Color.white.opacity(0.35))
             }
-            .padding(14)
-            .background(Color(white: 0.11), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color.white.opacity(0.08), lineWidth: 1))
+            .padding(12)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color.white.opacity(0.12), lineWidth: 1))
         }
         .buttonStyle(.plain)
     }
