@@ -12,416 +12,211 @@ struct SiteLine: Identifiable {
 
 enum SiteTalk {
     static let lines: [SiteLine] = [
-        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte die Schaufel und bring sie zur Rampe.
-Du: Alles klar. Ich bringe sie zur Rampe.", pl: "Szef każe przynieść łopatę na rampę.", question: "Co masz przynieść?", options: ["Kawę dla szefa", "Łopatę", "Nowy autobus"], answer: 1),
-        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte den Hammer und bring ihn nach hinten.
-Du: Alles klar. Ich bringe ihn nach hinten.", pl: "Szef każe przynieść młotek do tyłu.", question: "Co masz przynieść?", options: ["Nowy autobus", "Kawę dla szefa", "Młotek"], answer: 2),
-        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte die Leiter und bring sie in den Keller.
-Du: Alles klar. Ich bringe sie in den Keller.", pl: "Szef każe przynieść drabinę do piwnicy.", question: "Co masz przynieść?", options: ["Kawę dla szefa", "Drabinę", "Nowy autobus"], answer: 1),
-        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte den Helm und bring ihn aufs Dach.
-Du: Alles klar. Ich bringe ihn aufs Dach.", pl: "Szef każe przynieść kask na dach.", question: "Co masz przynieść?", options: ["Kawę dla szefa", "Kask", "Nowy autobus"], answer: 1),
-        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte die Bohrmaschine und bring sie zum Gerüst.
-Du: Alles klar. Ich bringe sie zum Gerüst.", pl: "Szef każe przynieść wiertarkę na rusztowanie.", question: "Co masz przynieść?", options: ["Kawę dla szefa", "Wiertarkę", "Nowy autobus"], answer: 1),
-        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte den Zollstock und bring ihn in die Halle.
-Du: Alles klar. Ich bringe ihn in die Halle.", pl: "Szef każe przynieść metrówkę na halę.", question: "Co masz przynieść?", options: ["Nowy autobus", "Kawę dla szefa", "Metrówkę"], answer: 2),
-        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte die Wasserwaage und bring sie zum Container.
-Du: Alles klar. Ich bringe sie zum Container.", pl: "Szef każe przynieść poziomicę do kontenera.", question: "Co masz przynieść?", options: ["Kawę dla szefa", "Poziomicę", "Nowy autobus"], answer: 1),
-        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte den Eimer und bring es zur Grube.
-Du: Alles klar. Ich bringe es zur Grube.", pl: "Szef każe przynieść wiadro do wykopu.", question: "Co masz przynieść?", options: ["Kawę dla szefa", "Wiadro", "Nowy autobus"], answer: 1),
-        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte die Kelle und bring sie zur Rampe.
-Du: Alles klar. Ich bringe sie zur Rampe.", pl: "Szef każe przynieść kielnię na rampę.", question: "Co masz przynieść?", options: ["Nowy autobus", "Kawę dla szefa", "Kielnię"], answer: 2),
-        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte den Akkuschrauber und bring ihn nach hinten.
-Du: Alles klar. Ich bringe ihn nach hinten.", pl: "Szef każe przynieść wkrętarkę do tyłu.", question: "Co masz przynieść?", options: ["Wkrętarkę", "Nowy autobus", "Kawę dla szefa"], answer: 0),
-        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte die Flex und bring sie in den Keller.
-Du: Alles klar. Ich bringe sie in den Keller.", pl: "Szef każe przynieść szlifierkę do piwnicy.", question: "Co masz przynieść?", options: ["Szlifierkę", "Nowy autobus", "Kawę dla szefa"], answer: 0),
-        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte die Schubkarre und bring sie aufs Dach.
-Du: Alles klar. Ich bringe sie aufs Dach.", pl: "Szef każe przynieść taczkę na dach.", question: "Co masz przynieść?", options: ["Nowy autobus", "Kawę dla szefa", "Taczkę"], answer: 2),
-        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte den Besen und bring ihn zum Gerüst.
-Du: Alles klar. Ich bringe ihn zum Gerüst.", pl: "Szef każe przynieść miotłę na rusztowanie.", question: "Co masz przynieść?", options: ["Miotłę", "Nowy autobus", "Kawę dla szefa"], answer: 0),
-        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte die Säge und bring sie in die Halle.
-Du: Alles klar. Ich bringe sie in die Halle.", pl: "Szef każe przynieść piłę na halę.", question: "Co masz przynieść?", options: ["Nowy autobus", "Kawę dla szefa", "Piłę"], answer: 2),
-        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte den Meißel und bring ihn zum Container.
-Du: Alles klar. Ich bringe ihn zum Container.", pl: "Szef każe przynieść dłuto do kontenera.", question: "Co masz przynieść?", options: ["Kawę dla szefa", "Dłuto", "Nowy autobus"], answer: 1),
-        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte die Lampe und bring sie zur Grube.
-Du: Alles klar. Ich bringe sie zur Grube.", pl: "Szef każe przynieść lampę do wykopu.", question: "Co masz przynieść?", options: ["Nowy autobus", "Kawę dla szefa", "Lampę"], answer: 2),
-        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch zehn Sack Zement, nicht die Hälfte.
-Du: Okay, ich hole zehn Sack Zement.", pl: "Potrzebujecie jeszcze: dziesięć worków cementu.", question: "Ile masz przynieść?", options: ["Tylko jeden kawałek", "Dziesięć worków cementu", "Nic, magazyn jest pełny"], answer: 1),
-        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch fünf Paletten Steine, nicht die Hälfte.
-Du: Okay, ich hole fünf Paletten Steine.", pl: "Potrzebujecie jeszcze: pięć palet cegieł.", question: "Ile masz przynieść?", options: ["Pięć palet cegieł", "Nic, magazyn jest pełny", "Tylko jeden kawałek"], answer: 0),
-        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch zwanzig Meter Kabel, nicht die Hälfte.
-Du: Okay, ich hole zwanzig Meter Kabel.", pl: "Potrzebujecie jeszcze: dwadzieścia metrów kabla.", question: "Ile masz przynieść?", options: ["Nic, magazyn jest pełny", "Tylko jeden kawałek", "Dwadzieścia metrów kabla"], answer: 2),
-        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch acht Schrauben, nicht die Hälfte.
-Du: Okay, ich hole acht Schrauben.", pl: "Potrzebujecie jeszcze: osiem śrub.", question: "Ile masz przynieść?", options: ["Nic, magazyn jest pełny", "Tylko jeden kawałek", "Osiem śrub"], answer: 2),
-        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch drei Eimer Farbe, nicht die Hälfte.
-Du: Okay, ich hole drei Eimer Farbe.", pl: "Potrzebujecie jeszcze: trzy wiadra farby.", question: "Ile masz przynieść?", options: ["Tylko jeden kawałek", "Trzy wiadra farby", "Nic, magazyn jest pełny"], answer: 1),
-        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch vier Rollen Dichtung, nicht die Hälfte.
-Du: Okay, ich hole vier Rollen Dichtung.", pl: "Potrzebujecie jeszcze: cztery rolki uszczelki.", question: "Ile masz przynieść?", options: ["Cztery rolki uszczelki", "Nic, magazyn jest pełny", "Tylko jeden kawałek"], answer: 0),
-        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch sechs Platten Gips, nicht die Hälfte.
-Du: Okay, ich hole sechs Platten Gips.", pl: "Potrzebujecie jeszcze: sześć płyt gipsu.", question: "Ile masz przynieść?", options: ["Tylko jeden kawałek", "Sześć płyt gipsu", "Nic, magazyn jest pełny"], answer: 1),
-        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch zwei Kanister Öl, nicht die Hälfte.
-Du: Okay, ich hole zwei Kanister Öl.", pl: "Potrzebujecie jeszcze: dwa kanistry oleju.", question: "Ile masz przynieść?", options: ["Tylko jeden kawałek", "Dwa kanistry oleju", "Nic, magazyn jest pełny"], answer: 1),
-        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch fünfzehn Dübel, nicht die Hälfte.
-Du: Okay, ich hole fünfzehn Dübel.", pl: "Potrzebujecie jeszcze: piętnaście kołków.", question: "Ile masz przynieść?", options: ["Nic, magazyn jest pełny", "Tylko jeden kawałek", "Piętnaście kołków"], answer: 2),
-        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch sieben Latten, nicht die Hälfte.
-Du: Okay, ich hole sieben Latten.", pl: "Potrzebujecie jeszcze: siedem łat.", question: "Ile masz przynieść?", options: ["Tylko jeden kawałek", "Siedem łat", "Nic, magazyn jest pełny"], answer: 1),
-        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch neun Säcke Sand, nicht die Hälfte.
-Du: Okay, ich hole neun Säcke Sand.", pl: "Potrzebujecie jeszcze: dziewięć worków piasku.", question: "Ile masz przynieść?", options: ["Dziewięć worków piasku", "Nic, magazyn jest pełny", "Tylko jeden kawałek"], answer: 0),
-        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch zwölf Fliesen, nicht die Hälfte.
-Du: Okay, ich hole zwölf Fliesen.", pl: "Potrzebujecie jeszcze: dwanaście płytek.", question: "Ile masz przynieść?", options: ["Tylko jeden kawałek", "Dwanaście płytek", "Nic, magazyn jest pełny"], answer: 1),
-        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 40 Zentimeter tief, nicht flacher.
-Du: Verstanden, 40 Zentimeter.", pl: "Dół ma mieć 40 centymetrów głębokości.", question: "Jak głęboko?", options: ["60 cm", "40 cm", "Na równo z ziemią"], answer: 1),
-        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 60 Zentimeter tief, nicht flacher.
-Du: Verstanden, 60 Zentimeter.", pl: "Dół ma mieć 60 centymetrów głębokości.", question: "Jak głęboko?", options: ["80 cm", "60 cm", "Na równo z ziemią"], answer: 1),
-        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 80 Zentimeter tief, nicht flacher.
-Du: Verstanden, 80 Zentimeter.", pl: "Dół ma mieć 80 centymetrów głębokości.", question: "Jak głęboko?", options: ["100 cm", "80 cm", "Na równo z ziemią"], answer: 1),
-        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 100 Zentimeter tief, nicht flacher.
-Du: Verstanden, 100 Zentimeter.", pl: "Dół ma mieć 100 centymetrów głębokości.", question: "Jak głęboko?", options: ["Na równo z ziemią", "120 cm", "100 cm"], answer: 2),
-        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 120 Zentimeter tief, nicht flacher.
-Du: Verstanden, 120 Zentimeter.", pl: "Dół ma mieć 120 centymetrów głębokości.", question: "Jak głęboko?", options: ["Na równo z ziemią", "140 cm", "120 cm"], answer: 2),
-        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 150 Zentimeter tief, nicht flacher.
-Du: Verstanden, 150 Zentimeter.", pl: "Dół ma mieć 150 centymetrów głębokości.", question: "Jak głęboko?", options: ["Na równo z ziemią", "170 cm", "150 cm"], answer: 2),
-        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 30 Zentimeter tief, nicht flacher.
-Du: Verstanden, 30 Zentimeter.", pl: "Dół ma mieć 30 centymetrów głębokości.", question: "Jak głęboko?", options: ["50 cm", "30 cm", "Na równo z ziemią"], answer: 1),
-        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 50 Zentimeter tief, nicht flacher.
-Du: Verstanden, 50 Zentimeter.", pl: "Dół ma mieć 50 centymetrów głębokości.", question: "Jak głęboko?", options: ["70 cm", "50 cm", "Na równo z ziemią"], answer: 1),
-        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 70 Zentimeter tief, nicht flacher.
-Du: Verstanden, 70 Zentimeter.", pl: "Dół ma mieć 70 centymetrów głębokości.", question: "Jak głęboko?", options: ["90 cm", "70 cm", "Na równo z ziemią"], answer: 1),
-        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 90 Zentimeter tief, nicht flacher.
-Du: Verstanden, 90 Zentimeter.", pl: "Dół ma mieć 90 centymetrów głębokości.", question: "Jak głęboko?", options: ["110 cm", "90 cm", "Na równo z ziemią"], answer: 1),
-        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 200 Zentimeter tief, nicht flacher.
-Du: Verstanden, 200 Zentimeter.", pl: "Dół ma mieć 200 centymetrów głębokości.", question: "Jak głęboko?", options: ["Na równo z ziemią", "220 cm", "200 cm"], answer: 2),
-        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 25 Zentimeter tief, nicht flacher.
-Du: Verstanden, 25 Zentimeter.", pl: "Dół ma mieć 25 centymetrów głębokości.", question: "Jak głęboko?", options: ["45 cm", "25 cm", "Na równo z ziemią"], answer: 1),
-        SiteLine(topic: "Godziny", de: "Chef: Die Frühschicht ist um sechs. Komm pünktlich.
-Du: Alles klar, um sechs.", pl: "Frühschicht jest o szóstej.", question: "O której?", options: ["Nie ma dziś zmiany", "O północy", "O szóstej"], answer: 2),
-        SiteLine(topic: "Godziny", de: "Chef: Die Frühschicht ist um sieben. Komm pünktlich.
-Du: Alles klar, um sieben.", pl: "Frühschicht jest o siódmej.", question: "O której?", options: ["O siódmej", "Nie ma dziś zmiany", "O północy"], answer: 0),
-        SiteLine(topic: "Godziny", de: "Chef: Die Spätschicht ist um acht. Komm pünktlich.
-Du: Alles klar, um acht.", pl: "Spätschicht jest o ósmej.", question: "O której?", options: ["O północy", "O ósmej", "Nie ma dziś zmiany"], answer: 1),
-        SiteLine(topic: "Godziny", de: "Chef: Die Spätschicht ist um vierzehn. Komm pünktlich.
-Du: Alles klar, um vierzehn.", pl: "Spätschicht jest o czternastej.", question: "O której?", options: ["O czternastej", "Nie ma dziś zmiany", "O północy"], answer: 0),
-        SiteLine(topic: "Godziny", de: "Chef: Die Nachtschicht ist um fünfzehn. Komm pünktlich.
-Du: Alles klar, um fünfzehn.", pl: "Nachtschicht jest o piętnastej.", question: "O której?", options: ["O piętnastej", "Nie ma dziś zmiany", "O północy"], answer: 0),
-        SiteLine(topic: "Godziny", de: "Chef: Die Feierabend ist um sechzehn. Komm pünktlich.
-Du: Alles klar, um sechzehn.", pl: "Feierabend jest o szesnastej.", question: "O której?", options: ["Nie ma dziś zmiany", "O północy", "O szesnastej"], answer: 2),
-        SiteLine(topic: "Godziny", de: "Chef: Die Pause ist um neun. Komm pünktlich.
-Du: Alles klar, um neun.", pl: "Pause jest o dziewiątej.", question: "O której?", options: ["O dziewiątej", "Nie ma dziś zmiany", "O północy"], answer: 0),
-        SiteLine(topic: "Godziny", de: "Chef: Die Pause ist um zwölf. Komm pünktlich.
-Du: Alles klar, um zwölf.", pl: "Pause jest o dwunastej.", question: "O której?", options: ["O północy", "O dwunastej", "Nie ma dziś zmiany"], answer: 1),
-        SiteLine(topic: "Godziny", de: "Chef: Die Schicht ist um dreizehn. Komm pünktlich.
-Du: Alles klar, um dreizehn.", pl: "Schicht jest o trzynastej.", question: "O której?", options: ["O trzynastej", "Nie ma dziś zmiany", "O północy"], answer: 0),
-        SiteLine(topic: "Godziny", de: "Chef: Die Feierabend ist um siebzehn. Komm pünktlich.
-Du: Alles klar, um siebzehn.", pl: "Feierabend jest o siedemnastej.", question: "O której?", options: ["Nie ma dziś zmiany", "O północy", "O siedemnastej"], answer: 2),
-        SiteLine(topic: "Godziny", de: "Chef: Die Nachtschicht ist um achtzehn. Komm pünktlich.
-Du: Alles klar, um achtzehn.", pl: "Nachtschicht jest o osiemnastej.", question: "O której?", options: ["O osiemnastej", "Nie ma dziś zmiany", "O północy"], answer: 0),
-        SiteLine(topic: "Godziny", de: "Chef: Die Frühschicht ist um fünf. Komm pünktlich.
-Du: Alles klar, um fünf.", pl: "Frühschicht jest o piątej.", question: "O której?", options: ["O północy", "O piątej", "Nie ma dziś zmiany"], answer: 1),
-        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Ohne Helm darfst du nicht aufs Gerüst.
-Du: Verstanden.", pl: "Bez kasku nie wolno na rusztowanie.", question: "Czego nie wolno albo na co uważasz?", options: ["Iść wcześniej do domu", "Iść na rusztowanie bez kasku", "Zamówić pizzę"], answer: 1),
-        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Zieh die Sicherheitsschuhe an, bevor du in die Grube gehst.
-Du: Verstanden.", pl: "Załóż buty ochronne, zanim wejdziesz do wykopu.", question: "Czego nie wolno albo na co uważasz?", options: ["Iść wcześniej do domu", "Wejść do wykopu bez butów", "Zamówić pizzę"], answer: 1),
-        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Pass auf, hier ist ein offenes Kabel.
-Du: Verstanden.", pl: "Uważaj, tu jest odsłonięty kabel.", question: "Czego nie wolno albo na co uważasz?", options: ["Dotykać kabla", "Zamówić pizzę", "Iść wcześniej do domu"], answer: 0),
-        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Der Boden ist nass. Da kann man ausrutschen.
-Du: Verstanden.", pl: "Podłoga jest mokra. Można się poślizgnąć.", question: "Czego nie wolno albo na co uważasz?", options: ["Iść wcześniej do domu", "Biec po mokrej podłodze", "Zamówić pizzę"], answer: 1),
-        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Fahr nicht mit dem Stapler, wenn die Batterie rot ist.
-Du: Verstanden.", pl: "Nie jedź wózkiem, gdy bateria jest czerwona.", question: "Czego nie wolno albo na co uważasz?", options: ["Iść wcześniej do domu", "Jeździć na czerwonej baterii", "Zamówić pizzę"], answer: 1),
-        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Ohne Brille keine Flex.
-Du: Verstanden.", pl: "Bez okularów nie ma szlifierki.", question: "Czego nie wolno albo na co uważasz?", options: ["Iść wcześniej do domu", "Szlifować bez okularów", "Zamówić pizzę"], answer: 1),
-        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Halt Abstand zur Maschine, solange sie läuft.
-Du: Verstanden.", pl: "Trzymaj odstęp od maszyny, dopóki pracuje.", question: "Czego nie wolno albo na co uważasz?", options: ["Zamówić pizzę", "Iść wcześniej do domu", "Wkładać rękę w maszynę"], answer: 2),
-        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Die Grube ist nicht gesichert. Geh da nicht ran.
-Du: Verstanden.", pl: "Wykop nie jest zabezpieczony. Nie podchodź.", question: "Czego nie wolno albo na co uważasz?", options: ["Iść wcześniej do domu", "Stać na krawędzi wykopu", "Zamówić pizzę"], answer: 1),
-        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Handschuhe an, das Blech ist scharf.
-Du: Verstanden.", pl: "Rękawice, blacha jest ostra.", question: "Czego nie wolno albo na co uważasz?", options: ["Chwytać blachę gołą ręką", "Zamówić pizzę", "Iść wcześniej do domu"], answer: 0),
-        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Nicht unter die schwebende Last gehen.
-Du: Verstanden.", pl: "Nie wchodzić pod wiszący ładunek.", question: "Czego nie wolno albo na co uważasz?", options: ["Iść wcześniej do domu", "Iść pod ładunkiem", "Zamówić pizzę"], answer: 1),
-        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Der Feuerlöscher hängt neben der Tür.
-Du: Verstanden.", pl: "Gaśnica wisi obok drzwi.", question: "Czego nie wolno albo na co uważasz?", options: ["Szukać gaśnicy w aucie", "Zamówić pizzę", "Iść wcześniej do domu"], answer: 0),
-        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Heute kein Feuer, der Wind ist zu stark.
-Du: Verstanden.", pl: "Dziś bez ognia, wiatr jest za mocny.", question: "Czego nie wolno albo na co uważasz?", options: ["Zamówić pizzę", "Iść wcześniej do domu", "Palić na placu"], answer: 2),
-        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Die Absperrung bleibt stehen.
-Du: Verstanden.", pl: "Wygrodzenie zostaje.", question: "Czego nie wolno albo na co uważasz?", options: ["Iść wcześniej do domu", "Zdejmować taśmę", "Zamówić pizzę"], answer: 1),
-        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Melde jeden Schnitt sofort dem Chef.
-Du: Verstanden.", pl: "Każde skaleczenie od razu zgłoś szefowi.", question: "Czego nie wolno albo na co uważasz?", options: ["Ukrywać skaleczenie", "Zamówić pizzę", "Iść wcześniej do domu"], answer: 0),
-        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Trinkwasser ist im Container, nicht aus dem Schlauch.
-Du: Verstanden.", pl: "Woda do picia jest w kontenerze, nie z węża.", question: "Czego nie wolno albo na co uważasz?", options: ["Iść wcześniej do domu", "Pić z węża", "Zamówić pizzę"], answer: 1),
-        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Bei Gewitter runter vom Gerüst.
-Du: Verstanden.", pl: "Przy burzy schodzimy z rusztowania.", question: "Czego nie wolno albo na co uważasz?", options: ["Zostać na rusztowaniu w burzy", "Zamówić pizzę", "Iść wcześniej do domu"], answer: 0),
-        SiteLine(topic: "Problemy", de: "Du: Chef, Die Bohrmaschine läuft nicht. Der Akku ist leer.
-Chef: Sag Bescheid, ich komme.", pl: "Wiertarka nie działa. Akumulator jest pusty.", question: "Co jest nie tak?", options: ["Wszystko jest gotowe", "Akumulator jest pusty", "Szef jest na urlopie"], answer: 1),
-        SiteLine(topic: "Problemy", de: "Du: Chef, Der Kompressor baut keinen Druck auf.
-Chef: Sag Bescheid, ich komme.", pl: "Kompresor nie nabija ciśnienia.", question: "Co jest nie tak?", options: ["Wszystko jest gotowe", "Nie ma ciśnienia", "Szef jest na urlopie"], answer: 1),
-        SiteLine(topic: "Problemy", de: "Du: Chef, Die Säge klemmt im Holz.
-Chef: Sag Bescheid, ich komme.", pl: "Piła zacina się w drewnie.", question: "Co jest nie tak?", options: ["Szef jest na urlopie", "Wszystko jest gotowe", "Piła stoi w drewnie"], answer: 2),
-        SiteLine(topic: "Problemy", de: "Du: Chef, Der Aufzug bleibt zwischen den Etagen stehen.
-Chef: Sag Bescheid, ich komme.", pl: "Winda staje między piętrami.", question: "Co jest nie tak?", options: ["Winda stanęła", "Szef jest na urlopie", "Wszystko jest gotowe"], answer: 0),
-        SiteLine(topic: "Problemy", de: "Du: Chef, Die Pumpe fördert kein Wasser.
-Chef: Sag Bescheid, ich komme.", pl: "Pompa nie podaje wody.", question: "Co jest nie tak?", options: ["Pompa nie daje wody", "Szef jest na urlopie", "Wszystko jest gotowe"], answer: 0),
-        SiteLine(topic: "Problemy", de: "Du: Chef, Das Gerüst wackelt auf der linken Seite.
-Chef: Sag Bescheid, ich komme.", pl: "Rusztowanie kiwa się z lewej.", question: "Co jest nie tak?", options: ["Rusztowanie jest luźne z lewej", "Szef jest na urlopie", "Wszystko jest gotowe"], answer: 0),
-        SiteLine(topic: "Problemy", de: "Du: Chef, Der Beton ist schon zu fest.
-Chef: Sag Bescheid, ich komme.", pl: "Beton jest już za twardy.", question: "Co jest nie tak?", options: ["Wszystko jest gotowe", "Beton związał", "Szef jest na urlopie"], answer: 1),
-        SiteLine(topic: "Problemy", de: "Du: Chef, Die Lieferung ist beschädigt.
-Chef: Sag Bescheid, ich komme.", pl: "Dostawa jest uszkodzona.", question: "Co jest nie tak?", options: ["Szef jest na urlopie", "Wszystko jest gotowe", "Dostawa jest uszkodzona"], answer: 2),
-        SiteLine(topic: "Problemy", de: "Du: Chef, Im Keller steht Wasser.
-Chef: Sag Bescheid, ich komme.", pl: "W piwnicy stoi woda.", question: "Co jest nie tak?", options: ["Wszystko jest gotowe", "W piwnicy jest woda", "Szef jest na urlopie"], answer: 1),
-        SiteLine(topic: "Problemy", de: "Du: Chef, Der Schlüssel für den Container fehlt.
-Chef: Sag Bescheid, ich komme.", pl: "Nie ma klucza do kontenera.", question: "Co jest nie tak?", options: ["Wszystko jest gotowe", "Brakuje klucza", "Szef jest na urlopie"], answer: 1),
-        SiteLine(topic: "Problemy", de: "Du: Chef, Die Sicherung ist raus.
-Chef: Sag Bescheid, ich komme.", pl: "Wybity bezpiecznik.", question: "Co jest nie tak?", options: ["Wszystko jest gotowe", "Nie ma prądu, bezpiecznik", "Szef jest na urlopie"], answer: 1),
-        SiteLine(topic: "Problemy", de: "Du: Chef, Das Maß stimmt nicht. Es ist fünf Zentimeter zu kurz.
-Chef: Sag Bescheid, ich komme.", pl: "Wymiar się nie zgadza. Jest o pięć centymetrów za krótki.", question: "Co jest nie tak?", options: ["Wszystko jest gotowe", "Za krótkie o 5 cm", "Szef jest na urlopie"], answer: 1),
-        SiteLine(topic: "Problemy", de: "Du: Chef, Der Lkw kommt nicht durch das Tor.
-Chef: Sag Bescheid, ich komme.", pl: "Ciężarówka nie mieści się w bramie.", question: "Co jest nie tak?", options: ["Szef jest na urlopie", "Wszystko jest gotowe", "Ciężarówka nie wjeżdża"], answer: 2),
-        SiteLine(topic: "Problemy", de: "Du: Chef, Die Fliesen sind die falsche Farbe.
-Chef: Sag Bescheid, ich komme.", pl: "Płytki są w złym kolorze.", question: "Co jest nie tak?", options: ["Zły kolor płytek", "Szef jest na urlopie", "Wszystko jest gotowe"], answer: 0),
-        SiteLine(topic: "Problemy", de: "Du: Chef, Der Anhänger hat einen platten Reifen.
-Chef: Sag Bescheid, ich komme.", pl: "Przyczepa ma flaka.", question: "Co jest nie tak?", options: ["Wszystko jest gotowe", "Flak w przyczepie", "Szef jest na urlopie"], answer: 1),
-        SiteLine(topic: "Problemy", de: "Du: Chef, Die Heizung auf der Baustelle ist aus.
-Chef: Sag Bescheid, ich komme.", pl: "Ogrzewanie na budowie jest wyłączone.", question: "Co jest nie tak?", options: ["Wszystko jest gotowe", "Nie ma ogrzewania", "Szef jest na urlopie"], answer: 1),
-        SiteLine(topic: "Pomoc", de: "Du: Kannst du mir kurz die Leiter halten?
-Kollege: Ja, ich komme.", pl: "Możesz mi chwilę potrzymać drabinę?", question: "O co prosisz?", options: ["O wypłatę z góry", "Potrzymać drabinę", "O dzień wolny"], answer: 1),
-        SiteLine(topic: "Pomoc", de: "Du: Ich schaffe die Palette nicht alleine.
-Kollege: Ja, ich komme.", pl: "Nie uniosę palety sam.", question: "O co prosisz?", options: ["Pomóc przy palecie", "O dzień wolny", "O wypłatę z góry"], answer: 0),
-        SiteLine(topic: "Pomoc", de: "Du: Kannst du unten sichern, während ich hochgehe?
-Kollege: Ja, ich komme.", pl: "Możesz asekurować na dole, jak wchodzę?", question: "O co prosisz?", options: ["Asekurować na dole", "O dzień wolny", "O wypłatę z góry"], answer: 0),
-        SiteLine(topic: "Pomoc", de: "Du: Hilf mir bitte, die Platte zu drehen.
-Kollege: Ja, ich komme.", pl: "Pomóż obrócić płytę.", question: "O co prosisz?", options: ["Obrócić płytę", "O dzień wolny", "O wypłatę z góry"], answer: 0),
-        SiteLine(topic: "Pomoc", de: "Du: Kannst du den Chef anrufen? Ich bin auf dem Dach.
-Kollege: Ja, ich komme.", pl: "Możesz zadzwonić do szefa? Jestem na dachu.", question: "O co prosisz?", options: ["O dzień wolny", "O wypłatę z góry", "Zadzwonić do szefa"], answer: 2),
-        SiteLine(topic: "Pomoc", de: "Du: Ich brauche jemanden an der Schubkarre.
-Kollege: Ja, ich komme.", pl: "Potrzebuję kogoś przy taczce.", question: "O co prosisz?", options: ["Pomóc przy taczce", "O dzień wolny", "O wypłatę z góry"], answer: 0),
-        SiteLine(topic: "Pomoc", de: "Du: Kannst du die Maße noch einmal prüfen?
-Kollege: Ja, ich komme.", pl: "Możesz jeszcze raz sprawdzić wymiary?", question: "O co prosisz?", options: ["O wypłatę z góry", "Sprawdzić wymiary", "O dzień wolny"], answer: 1),
-        SiteLine(topic: "Pomoc", de: "Du: Halt bitte das Kabel weg von der Säge.
-Kollege: Ja, ich komme.", pl: "Trzymaj kabel z dala od piły.", question: "O co prosisz?", options: ["O wypłatę z góry", "Odsunąć kabel od piły", "O dzień wolny"], answer: 1),
-        SiteLine(topic: "Pomoc", de: "Du: Kannst du mir den Helm vom Container holen?
-Kollege: Ja, ich komme.", pl: "Możesz przynieść mi kask z kontenera?", question: "O co prosisz?", options: ["O wypłatę z góry", "Przynieść kask", "O dzień wolny"], answer: 1),
-        SiteLine(topic: "Pomoc", de: "Du: Ich sehe die Markierung nicht. Zeig sie mir.
-Kollege: Ja, ich komme.", pl: "Nie widzę znacznika. Pokaż mi go.", question: "O co prosisz?", options: ["Pokazać znacznik", "O dzień wolny", "O wypłatę z góry"], answer: 0),
-        SiteLine(topic: "Pomoc", de: "Du: Kannst du die Tür aufhalten?
-Kollege: Ja, ich komme.", pl: "Możesz przytrzymać drzwi?", question: "O co prosisz?", options: ["O wypłatę z góry", "Przytrzymać drzwi", "O dzień wolny"], answer: 1),
-        SiteLine(topic: "Pomoc", de: "Du: Wir müssen zu zweit heben.
-Kollege: Ja, ich komme.", pl: "Musimy podnieść we dwóch.", question: "O co prosisz?", options: ["O dzień wolny", "O wypłatę z góry", "Podnieść we dwóch"], answer: 2),
-        SiteLine(topic: "Nie rozumiem", de: "Du: Können Sie das bitte langsamer sagen?
-Chef: Klar. Ich sage es noch einmal.", pl: "Czy może pan powiedzieć wolniej?", question: "Co mówisz, gdy nie wchodzi?", options: ["Jestem chory.", "Już skończyłem.", "Czy może pan powiedzieć wolniej?"], answer: 2),
-        SiteLine(topic: "Nie rozumiem", de: "Du: Ich habe das nicht verstanden.
-Chef: Klar. Ich sage es noch einmal.", pl: "Nie zrozumiałem tego.", question: "Co mówisz, gdy nie wchodzi?", options: ["Nie zrozumiałem tego.", "Jestem chory.", "Już skończyłem."], answer: 0),
-        SiteLine(topic: "Nie rozumiem", de: "Du: Können Sie das bitte wiederholen?
-Chef: Klar. Ich sage es noch einmal.", pl: "Czy może pan powtórzyć?", question: "Co mówisz, gdy nie wchodzi?", options: ["Czy może pan powtórzyć?", "Jestem chory.", "Już skończyłem."], answer: 0),
-        SiteLine(topic: "Nie rozumiem", de: "Du: Wie heißt das auf Deutsch?
-Chef: Klar. Ich sage es noch einmal.", pl: "Jak to się nazywa po niemiecku?", question: "Co mówisz, gdy nie wchodzi?", options: ["Już skończyłem.", "Jak to się nazywa po niemiecku?", "Jestem chory."], answer: 1),
-        SiteLine(topic: "Nie rozumiem", de: "Du: Können Sie das bitte aufschreiben?
-Chef: Klar. Ich sage es noch einmal.", pl: "Czy może pan to napisać?", question: "Co mówisz, gdy nie wchodzi?", options: ["Czy może pan to napisać?", "Jestem chory.", "Już skończyłem."], answer: 0),
-        SiteLine(topic: "Nie rozumiem", de: "Du: Noch einmal, bitte. Langsamer.
-Chef: Klar. Ich sage es noch einmal.", pl: "Jeszcze raz, wolniej.", question: "Co mówisz, gdy nie wchodzi?", options: ["Już skończyłem.", "Jeszcze raz, wolniej.", "Jestem chory."], answer: 1),
-        SiteLine(topic: "Nie rozumiem", de: "Du: Ich verstehe das Wort nicht.
-Chef: Klar. Ich sage es noch einmal.", pl: "Nie rozumiem tego słowa.", question: "Co mówisz, gdy nie wchodzi?", options: ["Już skończyłem.", "Nie rozumiem tego słowa.", "Jestem chory."], answer: 1),
-        SiteLine(topic: "Nie rozumiem", de: "Du: Meinen Sie die linke oder die rechte Seite?
-Chef: Klar. Ich sage es noch einmal.", pl: "Ma pan na myśli lewą czy prawą stronę?", question: "Co mówisz, gdy nie wchodzi?", options: ["Ma pan na myśli lewą czy prawą stronę?", "Jestem chory.", "Już skończyłem."], answer: 0),
-        SiteLine(topic: "Nie rozumiem", de: "Du: Können Sie mir das zeigen?
-Chef: Klar. Ich sage es noch einmal.", pl: "Czy może pan mi to pokazać?", question: "Co mówisz, gdy nie wchodzi?", options: ["Już skończyłem.", "Czy może pan mi to pokazać?", "Jestem chory."], answer: 1),
-        SiteLine(topic: "Nie rozumiem", de: "Du: Ich bin neu hier. Bitte etwas einfacher.
-Chef: Klar. Ich sage es noch einmal.", pl: "Jestem tu nowy. Proszę trochę prościej.", question: "Co mówisz, gdy nie wchodzi?", options: ["Jestem tu nowy. Proszę trochę prościej.", "Jestem chory.", "Już skończyłem."], answer: 0),
-        SiteLine(topic: "Nie rozumiem", de: "Du: Ist das jetzt oder später?
-Chef: Klar. Ich sage es noch einmal.", pl: "To teraz czy później?", question: "Co mówisz, gdy nie wchodzi?", options: ["Już skończyłem.", "To teraz czy później?", "Jestem chory."], answer: 1),
-        SiteLine(topic: "Nie rozumiem", de: "Du: Welche Tür meinen Sie?
-Chef: Klar. Ich sage es noch einmal.", pl: "Które drzwi ma pan na myśli?", question: "Co mówisz, gdy nie wchodzi?", options: ["Jestem chory.", "Już skończyłem.", "Które drzwi ma pan na myśli?"], answer: 2),
-        SiteLine(topic: "Koniec pracy", de: "Du: Ich bin fertig. Was soll ich jetzt machen?
-Chef: Gut. Dann bis morgen.", pl: "Skończyłem. Co mam teraz zrobić?", question: "Co zgłaszasz?", options: ["Chcę inną pracę", "Co robić dalej", "Nie było mnie dziś"], answer: 1),
-        SiteLine(topic: "Koniec pracy", de: "Du: Die Wand ist fertig.
-Chef: Gut. Dann bis morgen.", pl: "Ściana jest gotowa.", question: "Co zgłaszasz?", options: ["Chcę inną pracę", "Ściana skończona", "Nie było mnie dziś"], answer: 1),
-        SiteLine(topic: "Koniec pracy", de: "Du: Wir sind durch mit der linken Seite.
-Chef: Gut. Dann bis morgen.", pl: "Skończyliśmy lewą stronę.", question: "Co zgłaszasz?", options: ["Chcę inną pracę", "Lewa strona gotowa", "Nie było mnie dziś"], answer: 1),
-        SiteLine(topic: "Koniec pracy", de: "Du: Ich habe das Werkzeug zurückgebracht.
-Chef: Gut. Dann bis morgen.", pl: "Oddałem narzędzia.", question: "Co zgłaszasz?", options: ["Chcę inną pracę", "Narzędzia oddane", "Nie było mnie dziś"], answer: 1),
-        SiteLine(topic: "Koniec pracy", de: "Du: Die Grube ist zu.
-Chef: Gut. Dann bis morgen.", pl: "Wykop jest zasypany.", question: "Co zgłaszasz?", options: ["Nie było mnie dziś", "Chcę inną pracę", "Wykop zasypany"], answer: 2),
-        SiteLine(topic: "Koniec pracy", de: "Du: Der Container ist leer.
-Chef: Gut. Dann bis morgen.", pl: "Kontener jest pusty.", question: "Co zgłaszasz?", options: ["Kontener pusty", "Nie było mnie dziś", "Chcę inną pracę"], answer: 0),
-        SiteLine(topic: "Koniec pracy", de: "Du: Ich mache jetzt Feierabend.
-Chef: Gut. Dann bis morgen.", pl: "Kończę na dziś.", question: "Co zgłaszasz?", options: ["Chcę inną pracę", "Koniec pracy", "Nie było mnie dziś"], answer: 1),
-        SiteLine(topic: "Koniec pracy", de: "Du: Die letzte Palette steht an der Rampe.
-Chef: Gut. Dann bis morgen.", pl: "Ostatnia paleta stoi przy rampie.", question: "Co zgłaszasz?", options: ["Ostatnia paleta przy rampie", "Nie było mnie dziś", "Chcę inną pracę"], answer: 0),
-        SiteLine(topic: "Koniec pracy", de: "Du: Ich habe alles geputzt.
-Chef: Gut. Dann bis morgen.", pl: "Posprzątałem.", question: "Co zgłaszasz?", options: ["Nie było mnie dziś", "Chcę inną pracę", "Posprzątane"], answer: 2),
-        SiteLine(topic: "Koniec pracy", de: "Du: Das Gerüst ist abgebaut.
-Chef: Gut. Dann bis morgen.", pl: "Rusztowanie jest zdjęte.", question: "Co zgłaszasz?", options: ["Chcę inną pracę", "Rusztowanie zdjęte", "Nie było mnie dziś"], answer: 1),
-        SiteLine(topic: "Koniec pracy", de: "Du: Die Rechnung habe ich dem Chef gegeben.
-Chef: Gut. Dann bis morgen.", pl: "Fakturę dałem szefowi.", question: "Co zgłaszasz?", options: ["Faktura u szefa", "Nie było mnie dziś", "Chcę inną pracę"], answer: 0),
-        SiteLine(topic: "Koniec pracy", de: "Du: Morgen machen wir die rechte Seite.
-Chef: Gut. Dann bis morgen.", pl: "Jutro robimy prawą stronę.", question: "Co zgłaszasz?", options: ["Chcę inną pracę", "Jutro prawa strona", "Nie było mnie dziś"], answer: 1),
-        SiteLine(topic: "Urlop i wypłata", de: "Du: Wann kommt das Geld diesen Monat?
-Chef: Ich schaue das heute nach.", pl: "Kiedy w tym miesiącu będzie wypłata?", question: "O co pytasz albo co zgłaszasz?", options: ["Gdzie jest młotek", "Kiedy wypłata", "Która brama"], answer: 1),
-        SiteLine(topic: "Urlop i wypłata", de: "Du: Ich brauche nächste Woche drei Tage frei.
-Chef: Ich schaue das heute nach.", pl: "W przyszłym tygodniu potrzebuję trzech dni wolnego.", question: "O co pytasz albo co zgłaszasz?", options: ["Gdzie jest młotek", "Trzy dni wolnego", "Która brama"], answer: 1),
-        SiteLine(topic: "Urlop i wypłata", de: "Du: Steht der Lohn für die Überstunden drauf?
-Chef: Ich schaue das heute nach.", pl: "Czy nadgodziny są na pasku?", question: "O co pytasz albo co zgłaszasz?", options: ["Która brama", "Gdzie jest młotek", "Czy są nadgodziny"], answer: 2),
-        SiteLine(topic: "Urlop i wypłata", de: "Du: Ich war am Freitag krank. Das ist gemeldet.
-Chef: Ich schaue das heute nach.", pl: "W piątek byłem chory. Jest zgłoszone.", question: "O co pytasz albo co zgłaszasz?", options: ["Która brama", "Gdzie jest młotek", "Choroba w piątek zgłoszona"], answer: 2),
-        SiteLine(topic: "Urlop i wypłata", de: "Du: Können Sie den Urlaub für August eintragen?
-Chef: Ich schaue das heute nach.", pl: "Czy może pan wpisać urlop na sierpień?", question: "O co pytasz albo co zgłaszasz?", options: ["Urlop w sierpniu", "Która brama", "Gdzie jest młotek"], answer: 0),
-        SiteLine(topic: "Urlop i wypłata", de: "Du: Die Spesen fehlen auf der Abrechnung.
-Chef: Ich schaue das heute nach.", pl: "Na rozliczeniu brakuje diet.", question: "O co pytasz albo co zgłaszasz?", options: ["Która brama", "Gdzie jest młotek", "Brakuje diet"], answer: 2),
-        SiteLine(topic: "Urlop i wypłata", de: "Du: Ich habe zwölf Überstunden, nicht acht.
-Chef: Ich schaue das heute nach.", pl: "Mam dwanaście nadgodzin, nie osiem.", question: "O co pytasz albo co zgłaszasz?", options: ["12 nadgodzin", "Która brama", "Gdzie jest młotek"], answer: 0),
-        SiteLine(topic: "Urlop i wypłata", de: "Du: Ab wann gilt der neue Stundenlohn?
-Chef: Ich schaue das heute nach.", pl: "Od kiedy jest nowa stawka?", question: "O co pytasz albo co zgłaszasz?", options: ["Która brama", "Gdzie jest młotek", "Od kiedy nowa stawka"], answer: 2),
-        SiteLine(topic: "Urlop i wypłata", de: "Du: Ich brauche die Lohnabrechnung für die Wohnung.
-Chef: Ich schaue das heute nach.", pl: "Potrzebuję paska płac do mieszkania.", question: "O co pytasz albo co zgłaszasz?", options: ["Gdzie jest młotek", "Pasek płac do mieszkania", "Która brama"], answer: 1),
-        SiteLine(topic: "Urlop i wypłata", de: "Du: Kann ich den Freitag als Urlaub nehmen?
-Chef: Ich schaue das heute nach.", pl: "Czy mogę wziąć piątek jako urlop?", question: "O co pytasz albo co zgłaszasz?", options: ["Gdzie jest młotek", "Piątek jako urlop", "Która brama"], answer: 1),
-        SiteLine(topic: "Urlop i wypłata", de: "Du: Die Fahrt zur Baustelle ist nicht bezahlt.
-Chef: Ich schaue das heute nach.", pl: "Dojazd na budowę nie jest płatny.", question: "O co pytasz albo co zgłaszasz?", options: ["Która brama", "Gdzie jest młotek", "Dojazd nie jest płatny"], answer: 2),
-        SiteLine(topic: "Urlop i wypłata", de: "Du: Bitte überweisen Sie den Rest bis Freitag.
-Chef: Ich schaue das heute nach.", pl: "Proszę przelać resztę do piątku.", question: "O co pytasz albo co zgłaszasz?", options: ["Która brama", "Gdzie jest młotek", "Reszta do piątku"], answer: 2),
-        SiteLine(topic: "Dostawy", de: "Chef: Der Lkw steht an Tor 1. Bitte entladen.
-Du: Tor 1, ich fange an.", pl: "Ciężarówka stoi przy bramie 1. Masz rozładować.", question: "Przy której bramie?", options: ["Brama 4", "Brama 1", "Na parkingu gości"], answer: 1),
-        SiteLine(topic: "Dostawy", de: "Chef: Der Lkw steht an Tor 2. Bitte entladen.
-Du: Tor 2, ich fange an.", pl: "Ciężarówka stoi przy bramie 2. Masz rozładować.", question: "Przy której bramie?", options: ["Brama 5", "Brama 2", "Na parkingu gości"], answer: 1),
-        SiteLine(topic: "Dostawy", de: "Chef: Der Lkw steht an Tor 3. Bitte entladen.
-Du: Tor 3, ich fange an.", pl: "Ciężarówka stoi przy bramie 3. Masz rozładować.", question: "Przy której bramie?", options: ["Brama 6", "Brama 3", "Na parkingu gości"], answer: 1),
-        SiteLine(topic: "Dostawy", de: "Chef: Der Lkw steht an Tor 4. Bitte entladen.
-Du: Tor 4, ich fange an.", pl: "Ciężarówka stoi przy bramie 4. Masz rozładować.", question: "Przy której bramie?", options: ["Brama 7", "Brama 4", "Na parkingu gości"], answer: 1),
-        SiteLine(topic: "Dostawy", de: "Chef: Der Lkw steht an Tor 5. Bitte entladen.
-Du: Tor 5, ich fange an.", pl: "Ciężarówka stoi przy bramie 5. Masz rozładować.", question: "Przy której bramie?", options: ["Brama 8", "Brama 5", "Na parkingu gości"], answer: 1),
-        SiteLine(topic: "Kontakt", de: "Chef: Ruf mich an, wenn du auf dem Hof bist.
-Du: Mache ich.", pl: "Zadzwoń, jak będziesz na placu.", question: "Kiedy masz się odezwać?", options: ["Jak będziesz na placu", "Dopiero za miesiąc", "Wcale"], answer: 0),
-        SiteLine(topic: "Kontakt", de: "Chef: Ruf den Chef an, wenn der Beton da ist.
-Du: Mache ich.", pl: "Zadzwoń do szefa, jak będzie beton.", question: "Kiedy masz się odezwać?", options: ["Wcale", "Jak przyjedzie beton", "Dopiero za miesiąc"], answer: 1),
-        SiteLine(topic: "Kontakt", de: "Chef: Schreib mir, wenn die Lieferung durch ist.
-Du: Mache ich.", pl: "Napisz, jak dostawa przejdzie.", question: "Kiedy masz się odezwać?", options: ["Jak dostawa się skończy", "Dopiero za miesiąc", "Wcale"], answer: 0),
-        SiteLine(topic: "Kontakt", de: "Chef: Melde dich, bevor du das Gerüst verlässt.
-Du: Mache ich.", pl: "Daj znać, zanim zejdziesz z rusztowania.", question: "Kiedy masz się odezwać?", options: ["Dopiero za miesiąc", "Wcale", "Zanim zejdziesz z rusztowania"], answer: 2),
-        SiteLine(topic: "Kontakt", de: "Chef: Ruf an, wenn du den Hausmeister siehst.
-Du: Mache ich.", pl: "Zadzwoń, jak zobaczysz gospodarza.", question: "Kiedy masz się odezwać?", options: ["Wcale", "Jak zobaczysz gospodarza", "Dopiero za miesiąc"], answer: 1),
-        SiteLine(topic: "Kontakt", de: "Chef: Sag Bescheid, bevor du die Maschine einschaltest.
-Du: Mache ich.", pl: "Daj znać, zanim włączysz maszynę.", question: "Kiedy masz się odezwać?", options: ["Wcale", "Zanim włączysz maszynę", "Dopiero za miesiąc"], answer: 1),
-        SiteLine(topic: "Kontakt", de: "Chef: Ruf mich an, wenn du fertig bist.
-Du: Mache ich.", pl: "Zadzwoń, jak skończysz.", question: "Kiedy masz się odezwać?", options: ["Jak skończysz", "Dopiero za miesiąc", "Wcale"], answer: 0),
-        SiteLine(topic: "Kontakt", de: "Chef: Schreib dem Polier, nicht mir.
-Du: Mache ich.", pl: "Napisz do majstra, nie do mnie.", question: "Kiedy masz się odezwać?", options: ["Wcale", "Do majstra", "Dopiero za miesiąc"], answer: 1),
-        SiteLine(topic: "Kierunek", de: "Chef: Wir fangen links an, nicht rechts.
-Du: Okay, zuerst links.", pl: "Zaczynacie z lewej, nie z prawej.", question: "Od której strony?", options: ["Z lewej", "Od środka placu", "Z prawej"], answer: 0),
-        SiteLine(topic: "Kierunek", de: "Chef: Wir fangen rechts an, nicht links.
-Du: Okay, zuerst rechts.", pl: "Zaczynacie z prawej, nie z lewej.", question: "Od której strony?", options: ["Z lewej", "Z prawej", "Od środka placu"], answer: 1),
-        SiteLine(topic: "Kierunek", de: "Chef: Wir fangen oben an, nicht unten.
-Du: Okay, zuerst oben.", pl: "Zaczynacie na górze, nie na dole.", question: "Od której strony?", options: ["Na dole", "Na górze", "Od środka placu"], answer: 1),
-        SiteLine(topic: "Kierunek", de: "Chef: Wir fangen unten an, nicht oben.
-Du: Okay, zuerst unten.", pl: "Zaczynacie na dole, nie na górze.", question: "Od której strony?", options: ["Od środka placu", "Na górze", "Na dole"], answer: 2),
-        SiteLine(topic: "Kierunek", de: "Chef: Wir fangen vorne an, nicht hinten.
-Du: Okay, zuerst vorne.", pl: "Zaczynacie z przodu, nie z tyłu.", question: "Od której strony?", options: ["Z przodu", "Od środka placu", "Z tyłu"], answer: 0),
-        SiteLine(topic: "Kierunek", de: "Chef: Wir fangen hinten an, nicht vorne.
-Du: Okay, zuerst hinten.", pl: "Zaczynacie z tyłu, nie z przodu.", question: "Od której strony?", options: ["Z przodu", "Z tyłu", "Od środka placu"], answer: 1),
-        SiteLine(topic: "Pogoda", de: "Chef: Bei Regen decken wir den Zement ab.
-Du: Verstanden.", pl: "Jak pada, przykrywamy cement.", question: "Co robicie przez pogodę?", options: ["Zamykacie firmę", "Jedziecie na urlop", "Przykryć cement"], answer: 2),
-        SiteLine(topic: "Pogoda", de: "Chef: Ab zehn Grad plus können wir betonieren.
-Du: Verstanden.", pl: "Od plus dziesięciu stopni możemy betonować.", question: "Co robicie przez pogodę?", options: ["Zamykacie firmę", "Jedziecie na urlop", "Beton od +10 stopni"], answer: 2),
-        SiteLine(topic: "Pogoda", de: "Chef: Der Wind ist zu stark fürs Dach.
-Du: Verstanden.", pl: "Wiatr jest za mocny na dach.", question: "Co robicie przez pogodę?", options: ["Nie wchodzić na dach", "Zamykacie firmę", "Jedziecie na urlop"], answer: 0),
-        SiteLine(topic: "Pogoda", de: "Chef: Heute erst ab neun, der Boden ist gefroren.
-Du: Verstanden.", pl: "Dziś dopiero od dziewiątej, grunt jest zmarznięty.", question: "Co robicie przez pogodę?", options: ["Jedziecie na urlop", "Start o dziewiątej, grunt zmarznięty", "Zamykacie firmę"], answer: 1),
-        SiteLine(topic: "Pogoda", de: "Chef: Die Plane muss auf die Steine.
-Du: Verstanden.", pl: "Plama musi iść na cegły.", question: "Co robicie przez pogodę?", options: ["Zamykacie firmę", "Jedziecie na urlop", "Przykryć cegły"], answer: 2),
-        SiteLine(topic: "Pogoda", de: "Chef: Bei Hitze den Beton feucht halten.
-Du: Verstanden.", pl: "W upał beton trzymać wilgotny.", question: "Co robicie przez pogodę?", options: ["Jedziecie na urlop", "Polewać beton", "Zamykacie firmę"], answer: 1),
-        SiteLine(topic: "Pogoda", de: "Chef: Nicht streichen, die Wand ist noch nass.
-Du: Verstanden.", pl: "Nie malować, ściana jest jeszcze mokra.", question: "Co robicie przez pogodę?", options: ["Zamykacie firmę", "Jedziecie na urlop", "Nie malować mokrej ściany"], answer: 2),
-        SiteLine(topic: "Pogoda", de: "Chef: Morgen früh ist Frost. Werkzeug rein.
-Du: Verstanden.", pl: "Jutro rano mróz. Narzędzia do środka.", question: "Co robicie przez pogodę?", options: ["Schować narzędzia", "Zamykacie firmę", "Jedziecie na urlop"], answer: 0),
-        SiteLine(topic: "Roboty", de: "Chef: Stell die Balken im Abstand von 40 Zentimetern.
-Du: Alles klar.", pl: "Ustaw belki co 40 centymetrów.", question: "Co masz zrobić?", options: ["Co 40 cm", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
-        SiteLine(topic: "Roboty", de: "Chef: Die Fuge darf nicht breiter als fünf Millimeter sein.
-Du: Alles klar.", pl: "Fuga nie może być szersza niż pięć milimetrów.", question: "Co masz zrobić?", options: ["Iść na przerwę", "Maksimum 5 mm", "Zadzwonić do lekarza"], answer: 1),
-        SiteLine(topic: "Roboty", de: "Chef: Zwei Lagen, nicht eine.
-Du: Alles klar.", pl: "Dwie warstwy, nie jedna.", question: "Co masz zrobić?", options: ["Iść na przerwę", "Dwie warstwy", "Zadzwonić do lekarza"], answer: 1),
-        SiteLine(topic: "Roboty", de: "Chef: Erst grundieren, dann streichen.
-Du: Alles klar.", pl: "Najpierw grunt, potem malowanie.", question: "Co masz zrobić?", options: ["Najpierw grunt", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
-        SiteLine(topic: "Roboty", de: "Chef: Die Dose sitzt auf 30 Zentimeter Höhe.
-Du: Alles klar.", pl: "Puszka jest na wysokości 30 centymetrów.", question: "Co masz zrobić?", options: ["Iść na przerwę", "Na 30 cm", "Zadzwonić do lekarza"], answer: 1),
-        SiteLine(topic: "Roboty", de: "Chef: Das Gefälle läuft zum Ablauf, nicht zur Wand.
-Du: Alles klar.", pl: "Spadek idzie do odpływu, nie do ściany.", question: "Co masz zrobić?", options: ["Zadzwonić do lekarza", "Iść na przerwę", "Spadek do odpływu"], answer: 2),
-        SiteLine(topic: "Roboty", de: "Chef: Nicht bohren, da liegt ein Rohr.
-Du: Alles klar.", pl: "Nie wierć, tam jest rura.", question: "Co masz zrobić?", options: ["Nie wiercić, jest rura", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
-        SiteLine(topic: "Roboty", de: "Chef: Die Tür muss nach außen aufgehen.
-Du: Alles klar.", pl: "Drzwi muszą otwierać się na zewnątrz.", question: "Co masz zrobić?", options: ["Iść na przerwę", "Drzwi na zewnątrz", "Zadzwonić do lekarza"], answer: 1),
-        SiteLine(topic: "Roboty", de: "Chef: Lass zehn Zentimeter Luft zur Decke.
-Du: Alles klar.", pl: "Zostaw dziesięć centymetrów do sufitu.", question: "Co masz zrobić?", options: ["10 cm do sufitu", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
-        SiteLine(topic: "Roboty", de: "Chef: Der Anker kommt in jede zweite Fuge.
-Du: Alles klar.", pl: "Kotwa co drugą fugę.", question: "Co masz zrobić?", options: ["Kotwa co drugą fugę", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
-        SiteLine(topic: "Roboty", de: "Chef: Heute nur vorbereiten, nicht gießen.
-Du: Alles klar.", pl: "Dziś tylko przygotować, nie lać.", question: "Co masz zrobić?", options: ["Dziś bez lania", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
-        SiteLine(topic: "Roboty", de: "Chef: Die Folie bleibt bis morgen drauf.
-Du: Alles klar.", pl: "Folia zostaje do jutra.", question: "Co masz zrobić?", options: ["Iść na przerwę", "Folia do jutra", "Zadzwonić do lekarza"], answer: 1),
-        SiteLine(topic: "Roboty", de: "Chef: Schneid die Latte auf 180 Zentimeter.
-Du: Alles klar.", pl: "Przytnij łatę na 180 centymetrów.", question: "Co masz zrobić?", options: ["Łata 180 cm", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
-        SiteLine(topic: "Roboty", de: "Chef: Der Schacht ist für die Lüftung, nicht für Kabel.
-Du: Alles klar.", pl: "Szyb jest na wentylację, nie na kable.", question: "Co masz zrobić?", options: ["Iść na przerwę", "Szyb na wentylację", "Zadzwonić do lekarza"], answer: 1),
-        SiteLine(topic: "Roboty", de: "Chef: Prüf die Waage, bevor du die Reihe klebst.
-Du: Alles klar.", pl: "Sprawdź poziomicę, zanim przykleisz rząd.", question: "Co masz zrobić?", options: ["Najpierw poziomica", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
-        SiteLine(topic: "Roboty", de: "Chef: Die alte Farbe muss runter.
-Du: Alles klar.", pl: "Stara farba musi zejść.", question: "Co masz zrobić?", options: ["Zedrzeć starą farbę", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
-        SiteLine(topic: "Roboty", de: "Chef: Nicht mit dem Hammer auf die Fliese.
-Du: Alles klar.", pl: "Nie młotkiem w płytkę.", question: "Co masz zrobić?", options: ["Nie uderzać w płytkę", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
-        SiteLine(topic: "Roboty", de: "Chef: Der Abstand zur Nachbarwand ist 15 Zentimeter.
-Du: Alles klar.", pl: "Odstęp od ściany sąsiada to 15 centymetrów.", question: "Co masz zrobić?", options: ["15 cm od ściany", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
-        SiteLine(topic: "Roboty", de: "Chef: Erst sichern, dann schneiden.
-Du: Alles klar.", pl: "Najpierw zabezpiecz, potem tnij.", question: "Co masz zrobić?", options: ["Iść na przerwę", "Najpierw zabezpieczyć", "Zadzwonić do lekarza"], answer: 1),
-        SiteLine(topic: "Roboty", de: "Chef: Die Nummer vom Polier ist an der Tür.
-Du: Alles klar.", pl: "Numer do majstra jest na drzwiach.", question: "Co masz zrobić?", options: ["Numer jest na drzwiach", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
-        SiteLine(topic: "Ludzie na budowie", de: "Chef: Der neue Kollege heißt Tim. Zeig ihm die Halle.
-Du: Verstanden.", pl: "Nowy kolega ma na imię Tim. Pokaż mu halę.", question: "O co chodzi?", options: ["Pokazać halę Timowi", "Dziś nie ma pracy", "Wszyscy idą do domu"], answer: 0),
-        SiteLine(topic: "Ludzie na budowie", de: "Chef: Der Polier kommt um zehn. Warte an Tor zwei.
-Du: Verstanden.", pl: "Majster będzie o dziesiątej. Czekaj przy bramie dwa.", question: "O co chodzi?", options: ["Wszyscy idą do domu", "Czekać przy bramie 2", "Dziś nie ma pracy"], answer: 1),
-        SiteLine(topic: "Ludzie na budowie", de: "Chef: Der Elektriker arbeitet oben. Geh ihm nicht ins Kabel.
-Du: Verstanden.", pl: "Elektryk pracuje na górze. Nie wchodź mu w kabel.", question: "O co chodzi?", options: ["Wszyscy idą do domu", "Nie ruszać kabla elektryka", "Dziś nie ma pracy"], answer: 1),
-        SiteLine(topic: "Ludzie na budowie", de: "Chef: Der Kranführer sieht dich nicht. Heb die Hand.
-Du: Verstanden.", pl: "Operator dźwigu cię nie widzi. Podnieś rękę.", question: "O co chodzi?", options: ["Podnieść rękę", "Dziś nie ma pracy", "Wszyscy idą do domu"], answer: 0),
-        SiteLine(topic: "Ludzie na budowie", de: "Chef: Die Praktikantin darf nicht an die Flex.
-Du: Verstanden.", pl: "Praktykantka nie może przy szlifierce.", question: "O co chodzi?", options: ["Dziś nie ma pracy", "Wszyscy idą do domu", "Praktykantka bez szlifierki"], answer: 2),
-        SiteLine(topic: "Ludzie na budowie", de: "Chef: Der Maler kommt erst morgen.
-Du: Verstanden.", pl: "Malarz przyjdzie dopiero jutro.", question: "O co chodzi?", options: ["Wszyscy idą do domu", "Malarz jutro", "Dziś nie ma pracy"], answer: 1),
-        SiteLine(topic: "Ludzie na budowie", de: "Chef: Sag dem Fahrer, er soll den Motor ausmachen.
-Du: Verstanden.", pl: "Powiedz kierowcy, żeby zgasił silnik.", question: "O co chodzi?", options: ["Wszyscy idą do domu", "Zgasić silnik", "Dziś nie ma pracy"], answer: 1),
-        SiteLine(topic: "Ludzie na budowie", de: "Chef: Der Gerüstbauer ist krank. Heute bauen wir nicht auf.
-Du: Verstanden.", pl: "Rusztowaniowiec jest chory. Dziś nie stawiamy.", question: "O co chodzi?", options: ["Wszyscy idą do domu", "Dziś bez rusztowania", "Dziś nie ma pracy"], answer: 1),
-        SiteLine(topic: "Ludzie na budowie", de: "Chef: Zwei Mann bleiben im Keller, der Rest kommt hoch.
-Du: Verstanden.", pl: "Dwóch zostaje w piwnicy, reszta na górę.", question: "O co chodzi?", options: ["Wszyscy idą do domu", "Dwóch w piwnicy", "Dziś nie ma pracy"], answer: 1),
-        SiteLine(topic: "Ludzie na budowie", de: "Chef: Der Auftraggeber schaut um elf vorbei.
-Du: Verstanden.", pl: "Zleceniodawca wpadnie o jedenastej.", question: "O co chodzi?", options: ["Wszyscy idą do domu", "Zleceniodawca o 11", "Dziś nie ma pracy"], answer: 1),
-        SiteLine(topic: "Porządek", de: "Chef: Kehr die Rampe, bevor der Lkw kommt.
-Du: Mache ich.", pl: "Zamieć rampę, zanim przyjedzie ciężarówka.", question: "Co masz zrobić?", options: ["Zostawić jak jest", "Nic nie ruszać", "Zamieść rampę"], answer: 2),
-        SiteLine(topic: "Porządek", de: "Chef: Die Kabeltrommel darf nicht im Weg stehen.
-Du: Mache ich.", pl: "Bęben z kablem nie może stać na drodze.", question: "Co masz zrobić?", options: ["Odsunąć bęben", "Zostawić jak jest", "Nic nie ruszać"], answer: 0),
-        SiteLine(topic: "Porządek", de: "Chef: Sortier die Schrauben zurück in die Kisten.
-Du: Mache ich.", pl: "Posegreguj śruby z powrotem do skrzynek.", question: "Co masz zrobić?", options: ["Śruby do skrzynek", "Zostawić jak jest", "Nic nie ruszać"], answer: 0),
-        SiteLine(topic: "Porządek", de: "Chef: Der Müllcontainer ist voll. Drück ihn nicht weiter.
-Du: Mache ich.", pl: "Kontener na śmieci jest pełny. Nie dopychaj.", question: "Co masz zrobić?", options: ["Zostawić jak jest", "Nic nie ruszać", "Nie dopychać śmieci"], answer: 2),
-        SiteLine(topic: "Porządek", de: "Chef: Spül die Kellen aus, bevor der Mörtel hart ist.
-Du: Mache ich.", pl: "Opłucz kielnie, zanim zaprawa stwardnieje.", question: "Co masz zrobić?", options: ["Opłukać kielnie", "Zostawić jak jest", "Nic nie ruszać"], answer: 0),
-        SiteLine(topic: "Porządek", de: "Chef: Die Halle wird um sechzehn abgeschlossen.
-Du: Mache ich.", pl: "Halę zamykają o szesnastej.", question: "Co masz zrobić?", options: ["Zostawić jak jest", "Nic nie ruszać", "Zamknięcie o 16"], answer: 2),
-        SiteLine(topic: "Porządek", de: "Chef: Licht aus, wenn du als Letzter gehst.
-Du: Mache ich.", pl: "Zgaś światło, jak wychodzisz ostatni.", question: "Co masz zrobić?", options: ["Zgasić światło", "Zostawić jak jest", "Nic nie ruszać"], answer: 0),
-        SiteLine(topic: "Porządek", de: "Chef: Die nassen Lappen kommen nicht auf die Heizung.
-Du: Mache ich.", pl: "Mokre szmaty nie kładź na grzejnik.", question: "Co masz zrobić?", options: ["Szmaty nie na grzejnik", "Zostawić jak jest", "Nic nie ruszać"], answer: 0),
-        SiteLine(topic: "Pomiar", de: "Chef: Miss noch einmal nach. Die Wand ist 3 Meter 20, nicht 3 Meter.
-Du: 3 Meter 20, ich messe nach.", pl: "Ściana ma 3 metry 20, nie 3 metry.", question: "Jaka długość?", options: ["3 m", "3 m 20", "4 m"], answer: 1),
-        SiteLine(topic: "Pomiar", de: "Chef: Die Deckenhöhe ist 2 Meter 50.
-Du: 2 Meter 50, notiert.", pl: "Wysokość sufitu to 2 metry 50.", question: "Jaka wysokość?", options: ["3 m", "2 m", "2 m 50"], answer: 2),
-        SiteLine(topic: "Pomiar", de: "Chef: Das Fenster sitzt 90 Zentimeter über dem Boden.
-Du: 90 Zentimeter, okay.", pl: "Okno jest 90 centymetrów nad podłogą.", question: "Na jakiej wysokości?", options: ["90 cm", "Przy suficie", "60 cm"], answer: 0),
-        SiteLine(topic: "Pomiar", de: "Chef: Die Öffnung ist 80 mal 200.
-Du: 80 breit, 200 hoch.", pl: "Otwór ma 80 na 200.", question: "Jaki otwór?", options: ["80 na 200", "Kwadrat 50", "100 na 100"], answer: 0),
-        SiteLine(topic: "Maszyna", de: "Chef: Der Mixer bleibt an, bis der Mörtel glatt ist.
-Du: Ich warte, bis er glatt ist.", pl: "Mieszalnik zostaje włączony, aż zaprawa będzie gładka.", question: "Kiedy go wyłączyć?", options: ["Od razu", "Gdy zaprawa jest gładka", "Po godzinie"], answer: 1),
-        SiteLine(topic: "Maszyna", de: "Chef: Den Rüttler nur kurz, sonst setzt sich das Wasser ab.
-Du: Kurz, verstanden.", pl: "Wibrator tylko krótko, inaczej woda się oddzieli.", question: "Jak długo wibrować?", options: ["Wcale", "Pięć minut bez przerwy", "Krótko"], answer: 2),
-        SiteLine(topic: "Maszyna", de: "Chef: Die Säge erst ausstecken, dann das Blatt wechseln.
-Du: Erst der Stecker, dann das Blatt.", pl: "Najpierw wyciągnij wtyczkę, potem zmień tarczę.", question: "Co najpierw?", options: ["Zmienić tarczę przy włączonej pile", "Wyciągnąć wtyczkę", "Polać wodą"], answer: 1),
-        SiteLine(topic: "Maszyna", de: "Chef: Der Hubwagen bleibt stehen, wenn die Gabel unten ist.
-Du: Gabel unten, dann stehen lassen.", pl: "Wózek paletowy zostawiasz z widłami na dole.", question: "Jak zostawić wózek?", options: ["Na rampie w biegu", "Widły w górze", "Widły na dole"], answer: 2),
+        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte die Schaufel und bring sie zur Rampe.\nDu: Alles klar. Ich bringe sie zur Rampe.", pl: "Szef każe przynieść łopatę na rampę.", question: "Co masz przynieść?", options: ["Kawę dla szefa", "Łopatę", "Nowy autobus"], answer: 1),
+        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte den Hammer und bring ihn nach hinten.\nDu: Alles klar. Ich bringe ihn nach hinten.", pl: "Szef każe przynieść młotek do tyłu.", question: "Co masz przynieść?", options: ["Nowy autobus", "Kawę dla szefa", "Młotek"], answer: 2),
+        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte die Leiter und bring sie in den Keller.\nDu: Alles klar. Ich bringe sie in den Keller.", pl: "Szef każe przynieść drabinę do piwnicy.", question: "Co masz przynieść?", options: ["Kawę dla szefa", "Drabinę", "Nowy autobus"], answer: 1),
+        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte den Helm und bring ihn aufs Dach.\nDu: Alles klar. Ich bringe ihn aufs Dach.", pl: "Szef każe przynieść kask na dach.", question: "Co masz przynieść?", options: ["Kawę dla szefa", "Kask", "Nowy autobus"], answer: 1),
+        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte die Bohrmaschine und bring sie zum Gerüst.\nDu: Alles klar. Ich bringe sie zum Gerüst.", pl: "Szef każe przynieść wiertarkę na rusztowanie.", question: "Co masz przynieść?", options: ["Kawę dla szefa", "Wiertarkę", "Nowy autobus"], answer: 1),
+        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte den Zollstock und bring ihn in die Halle.\nDu: Alles klar. Ich bringe ihn in die Halle.", pl: "Szef każe przynieść metrówkę na halę.", question: "Co masz przynieść?", options: ["Nowy autobus", "Kawę dla szefa", "Metrówkę"], answer: 2),
+        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte die Wasserwaage und bring sie zum Container.\nDu: Alles klar. Ich bringe sie zum Container.", pl: "Szef każe przynieść poziomicę do kontenera.", question: "Co masz przynieść?", options: ["Kawę dla szefa", "Poziomicę", "Nowy autobus"], answer: 1),
+        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte den Eimer und bring es zur Grube.\nDu: Alles klar. Ich bringe es zur Grube.", pl: "Szef każe przynieść wiadro do wykopu.", question: "Co masz przynieść?", options: ["Kawę dla szefa", "Wiadro", "Nowy autobus"], answer: 1),
+        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte die Kelle und bring sie zur Rampe.\nDu: Alles klar. Ich bringe sie zur Rampe.", pl: "Szef każe przynieść kielnię na rampę.", question: "Co masz przynieść?", options: ["Nowy autobus", "Kawę dla szefa", "Kielnię"], answer: 2),
+        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte den Akkuschrauber und bring ihn nach hinten.\nDu: Alles klar. Ich bringe ihn nach hinten.", pl: "Szef każe przynieść wkrętarkę do tyłu.", question: "Co masz przynieść?", options: ["Wkrętarkę", "Nowy autobus", "Kawę dla szefa"], answer: 0),
+        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte die Flex und bring sie in den Keller.\nDu: Alles klar. Ich bringe sie in den Keller.", pl: "Szef każe przynieść szlifierkę do piwnicy.", question: "Co masz przynieść?", options: ["Szlifierkę", "Nowy autobus", "Kawę dla szefa"], answer: 0),
+        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte die Schubkarre und bring sie aufs Dach.\nDu: Alles klar. Ich bringe sie aufs Dach.", pl: "Szef każe przynieść taczkę na dach.", question: "Co masz przynieść?", options: ["Nowy autobus", "Kawę dla szefa", "Taczkę"], answer: 2),
+        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte den Besen und bring ihn zum Gerüst.\nDu: Alles klar. Ich bringe ihn zum Gerüst.", pl: "Szef każe przynieść miotłę na rusztowanie.", question: "Co masz przynieść?", options: ["Miotłę", "Nowy autobus", "Kawę dla szefa"], answer: 0),
+        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte die Säge und bring sie in die Halle.\nDu: Alles klar. Ich bringe sie in die Halle.", pl: "Szef każe przynieść piłę na halę.", question: "Co masz przynieść?", options: ["Nowy autobus", "Kawę dla szefa", "Piłę"], answer: 2),
+        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte den Meißel und bring ihn zum Container.\nDu: Alles klar. Ich bringe ihn zum Container.", pl: "Szef każe przynieść dłuto do kontenera.", question: "Co masz przynieść?", options: ["Kawę dla szefa", "Dłuto", "Nowy autobus"], answer: 1),
+        SiteLine(topic: "Polecenia szefa", de: "Chef: Hol bitte die Lampe und bring sie zur Grube.\nDu: Alles klar. Ich bringe sie zur Grube.", pl: "Szef każe przynieść lampę do wykopu.", question: "Co masz przynieść?", options: ["Nowy autobus", "Kawę dla szefa", "Lampę"], answer: 2),
+        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch zehn Sack Zement, nicht die Hälfte.\nDu: Okay, ich hole zehn Sack Zement.", pl: "Potrzebujecie jeszcze: dziesięć worków cementu.", question: "Ile masz przynieść?", options: ["Tylko jeden kawałek", "Dziesięć worków cementu", "Nic, magazyn jest pełny"], answer: 1),
+        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch fünf Paletten Steine, nicht die Hälfte.\nDu: Okay, ich hole fünf Paletten Steine.", pl: "Potrzebujecie jeszcze: pięć palet cegieł.", question: "Ile masz przynieść?", options: ["Pięć palet cegieł", "Nic, magazyn jest pełny", "Tylko jeden kawałek"], answer: 0),
+        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch zwanzig Meter Kabel, nicht die Hälfte.\nDu: Okay, ich hole zwanzig Meter Kabel.", pl: "Potrzebujecie jeszcze: dwadzieścia metrów kabla.", question: "Ile masz przynieść?", options: ["Nic, magazyn jest pełny", "Tylko jeden kawałek", "Dwadzieścia metrów kabla"], answer: 2),
+        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch acht Schrauben, nicht die Hälfte.\nDu: Okay, ich hole acht Schrauben.", pl: "Potrzebujecie jeszcze: osiem śrub.", question: "Ile masz przynieść?", options: ["Nic, magazyn jest pełny", "Tylko jeden kawałek", "Osiem śrub"], answer: 2),
+        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch drei Eimer Farbe, nicht die Hälfte.\nDu: Okay, ich hole drei Eimer Farbe.", pl: "Potrzebujecie jeszcze: trzy wiadra farby.", question: "Ile masz przynieść?", options: ["Tylko jeden kawałek", "Trzy wiadra farby", "Nic, magazyn jest pełny"], answer: 1),
+        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch vier Rollen Dichtung, nicht die Hälfte.\nDu: Okay, ich hole vier Rollen Dichtung.", pl: "Potrzebujecie jeszcze: cztery rolki uszczelki.", question: "Ile masz przynieść?", options: ["Cztery rolki uszczelki", "Nic, magazyn jest pełny", "Tylko jeden kawałek"], answer: 0),
+        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch sechs Platten Gips, nicht die Hälfte.\nDu: Okay, ich hole sechs Platten Gips.", pl: "Potrzebujecie jeszcze: sześć płyt gipsu.", question: "Ile masz przynieść?", options: ["Tylko jeden kawałek", "Sześć płyt gipsu", "Nic, magazyn jest pełny"], answer: 1),
+        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch zwei Kanister Öl, nicht die Hälfte.\nDu: Okay, ich hole zwei Kanister Öl.", pl: "Potrzebujecie jeszcze: dwa kanistry oleju.", question: "Ile masz przynieść?", options: ["Tylko jeden kawałek", "Dwa kanistry oleju", "Nic, magazyn jest pełny"], answer: 1),
+        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch fünfzehn Dübel, nicht die Hälfte.\nDu: Okay, ich hole fünfzehn Dübel.", pl: "Potrzebujecie jeszcze: piętnaście kołków.", question: "Ile masz przynieść?", options: ["Nic, magazyn jest pełny", "Tylko jeden kawałek", "Piętnaście kołków"], answer: 2),
+        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch sieben Latten, nicht die Hälfte.\nDu: Okay, ich hole sieben Latten.", pl: "Potrzebujecie jeszcze: siedem łat.", question: "Ile masz przynieść?", options: ["Tylko jeden kawałek", "Siedem łat", "Nic, magazyn jest pełny"], answer: 1),
+        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch neun Säcke Sand, nicht die Hälfte.\nDu: Okay, ich hole neun Säcke Sand.", pl: "Potrzebujecie jeszcze: dziewięć worków piasku.", question: "Ile masz przynieść?", options: ["Dziewięć worków piasku", "Nic, magazyn jest pełny", "Tylko jeden kawałek"], answer: 0),
+        SiteLine(topic: "Materiały", de: "Chef: Wir brauchen noch zwölf Fliesen, nicht die Hälfte.\nDu: Okay, ich hole zwölf Fliesen.", pl: "Potrzebujecie jeszcze: dwanaście płytek.", question: "Ile masz przynieść?", options: ["Tylko jeden kawałek", "Dwanaście płytek", "Nic, magazyn jest pełny"], answer: 1),
+        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 40 Zentimeter tief, nicht flacher.\nDu: Verstanden, 40 Zentimeter.", pl: "Dół ma mieć 40 centymetrów głębokości.", question: "Jak głęboko?", options: ["60 cm", "40 cm", "Na równo z ziemią"], answer: 1),
+        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 60 Zentimeter tief, nicht flacher.\nDu: Verstanden, 60 Zentimeter.", pl: "Dół ma mieć 60 centymetrów głębokości.", question: "Jak głęboko?", options: ["80 cm", "60 cm", "Na równo z ziemią"], answer: 1),
+        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 80 Zentimeter tief, nicht flacher.\nDu: Verstanden, 80 Zentimeter.", pl: "Dół ma mieć 80 centymetrów głębokości.", question: "Jak głęboko?", options: ["100 cm", "80 cm", "Na równo z ziemią"], answer: 1),
+        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 100 Zentimeter tief, nicht flacher.\nDu: Verstanden, 100 Zentimeter.", pl: "Dół ma mieć 100 centymetrów głębokości.", question: "Jak głęboko?", options: ["Na równo z ziemią", "120 cm", "100 cm"], answer: 2),
+        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 120 Zentimeter tief, nicht flacher.\nDu: Verstanden, 120 Zentimeter.", pl: "Dół ma mieć 120 centymetrów głębokości.", question: "Jak głęboko?", options: ["Na równo z ziemią", "140 cm", "120 cm"], answer: 2),
+        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 150 Zentimeter tief, nicht flacher.\nDu: Verstanden, 150 Zentimeter.", pl: "Dół ma mieć 150 centymetrów głębokości.", question: "Jak głęboko?", options: ["Na równo z ziemią", "170 cm", "150 cm"], answer: 2),
+        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 30 Zentimeter tief, nicht flacher.\nDu: Verstanden, 30 Zentimeter.", pl: "Dół ma mieć 30 centymetrów głębokości.", question: "Jak głęboko?", options: ["50 cm", "30 cm", "Na równo z ziemią"], answer: 1),
+        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 50 Zentimeter tief, nicht flacher.\nDu: Verstanden, 50 Zentimeter.", pl: "Dół ma mieć 50 centymetrów głębokości.", question: "Jak głęboko?", options: ["70 cm", "50 cm", "Na równo z ziemią"], answer: 1),
+        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 70 Zentimeter tief, nicht flacher.\nDu: Verstanden, 70 Zentimeter.", pl: "Dół ma mieć 70 centymetrów głębokości.", question: "Jak głęboko?", options: ["90 cm", "70 cm", "Na równo z ziemią"], answer: 1),
+        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 90 Zentimeter tief, nicht flacher.\nDu: Verstanden, 90 Zentimeter.", pl: "Dół ma mieć 90 centymetrów głębokości.", question: "Jak głęboko?", options: ["110 cm", "90 cm", "Na równo z ziemią"], answer: 1),
+        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 200 Zentimeter tief, nicht flacher.\nDu: Verstanden, 200 Zentimeter.", pl: "Dół ma mieć 200 centymetrów głębokości.", question: "Jak głęboko?", options: ["Na równo z ziemią", "220 cm", "200 cm"], answer: 2),
+        SiteLine(topic: "Wymiary", de: "Chef: Mach das Loch 25 Zentimeter tief, nicht flacher.\nDu: Verstanden, 25 Zentimeter.", pl: "Dół ma mieć 25 centymetrów głębokości.", question: "Jak głęboko?", options: ["45 cm", "25 cm", "Na równo z ziemią"], answer: 1),
+        SiteLine(topic: "Godziny", de: "Chef: Die Frühschicht ist um sechs. Komm pünktlich.\nDu: Alles klar, um sechs.", pl: "Frühschicht jest o szóstej.", question: "O której?", options: ["Nie ma dziś zmiany", "O północy", "O szóstej"], answer: 2),
+        SiteLine(topic: "Godziny", de: "Chef: Die Frühschicht ist um sieben. Komm pünktlich.\nDu: Alles klar, um sieben.", pl: "Frühschicht jest o siódmej.", question: "O której?", options: ["O siódmej", "Nie ma dziś zmiany", "O północy"], answer: 0),
+        SiteLine(topic: "Godziny", de: "Chef: Die Spätschicht ist um acht. Komm pünktlich.\nDu: Alles klar, um acht.", pl: "Spätschicht jest o ósmej.", question: "O której?", options: ["O północy", "O ósmej", "Nie ma dziś zmiany"], answer: 1),
+        SiteLine(topic: "Godziny", de: "Chef: Die Spätschicht ist um vierzehn. Komm pünktlich.\nDu: Alles klar, um vierzehn.", pl: "Spätschicht jest o czternastej.", question: "O której?", options: ["O czternastej", "Nie ma dziś zmiany", "O północy"], answer: 0),
+        SiteLine(topic: "Godziny", de: "Chef: Die Nachtschicht ist um fünfzehn. Komm pünktlich.\nDu: Alles klar, um fünfzehn.", pl: "Nachtschicht jest o piętnastej.", question: "O której?", options: ["O piętnastej", "Nie ma dziś zmiany", "O północy"], answer: 0),
+        SiteLine(topic: "Godziny", de: "Chef: Die Feierabend ist um sechzehn. Komm pünktlich.\nDu: Alles klar, um sechzehn.", pl: "Feierabend jest o szesnastej.", question: "O której?", options: ["Nie ma dziś zmiany", "O północy", "O szesnastej"], answer: 2),
+        SiteLine(topic: "Godziny", de: "Chef: Die Pause ist um neun. Komm pünktlich.\nDu: Alles klar, um neun.", pl: "Pause jest o dziewiątej.", question: "O której?", options: ["O dziewiątej", "Nie ma dziś zmiany", "O północy"], answer: 0),
+        SiteLine(topic: "Godziny", de: "Chef: Die Pause ist um zwölf. Komm pünktlich.\nDu: Alles klar, um zwölf.", pl: "Pause jest o dwunastej.", question: "O której?", options: ["O północy", "O dwunastej", "Nie ma dziś zmiany"], answer: 1),
+        SiteLine(topic: "Godziny", de: "Chef: Die Schicht ist um dreizehn. Komm pünktlich.\nDu: Alles klar, um dreizehn.", pl: "Schicht jest o trzynastej.", question: "O której?", options: ["O trzynastej", "Nie ma dziś zmiany", "O północy"], answer: 0),
+        SiteLine(topic: "Godziny", de: "Chef: Die Feierabend ist um siebzehn. Komm pünktlich.\nDu: Alles klar, um siebzehn.", pl: "Feierabend jest o siedemnastej.", question: "O której?", options: ["Nie ma dziś zmiany", "O północy", "O siedemnastej"], answer: 2),
+        SiteLine(topic: "Godziny", de: "Chef: Die Nachtschicht ist um achtzehn. Komm pünktlich.\nDu: Alles klar, um achtzehn.", pl: "Nachtschicht jest o osiemnastej.", question: "O której?", options: ["O osiemnastej", "Nie ma dziś zmiany", "O północy"], answer: 0),
+        SiteLine(topic: "Godziny", de: "Chef: Die Frühschicht ist um fünf. Komm pünktlich.\nDu: Alles klar, um fünf.", pl: "Frühschicht jest o piątej.", question: "O której?", options: ["O północy", "O piątej", "Nie ma dziś zmiany"], answer: 1),
+        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Ohne Helm darfst du nicht aufs Gerüst.\nDu: Verstanden.", pl: "Bez kasku nie wolno na rusztowanie.", question: "Czego nie wolno albo na co uważasz?", options: ["Iść wcześniej do domu", "Iść na rusztowanie bez kasku", "Zamówić pizzę"], answer: 1),
+        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Zieh die Sicherheitsschuhe an, bevor du in die Grube gehst.\nDu: Verstanden.", pl: "Załóż buty ochronne, zanim wejdziesz do wykopu.", question: "Czego nie wolno albo na co uważasz?", options: ["Iść wcześniej do domu", "Wejść do wykopu bez butów", "Zamówić pizzę"], answer: 1),
+        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Pass auf, hier ist ein offenes Kabel.\nDu: Verstanden.", pl: "Uważaj, tu jest odsłonięty kabel.", question: "Czego nie wolno albo na co uważasz?", options: ["Dotykać kabla", "Zamówić pizzę", "Iść wcześniej do domu"], answer: 0),
+        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Der Boden ist nass. Da kann man ausrutschen.\nDu: Verstanden.", pl: "Podłoga jest mokra. Można się poślizgnąć.", question: "Czego nie wolno albo na co uważasz?", options: ["Iść wcześniej do domu", "Biec po mokrej podłodze", "Zamówić pizzę"], answer: 1),
+        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Fahr nicht mit dem Stapler, wenn die Batterie rot ist.\nDu: Verstanden.", pl: "Nie jedź wózkiem, gdy bateria jest czerwona.", question: "Czego nie wolno albo na co uważasz?", options: ["Iść wcześniej do domu", "Jeździć na czerwonej baterii", "Zamówić pizzę"], answer: 1),
+        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Ohne Brille keine Flex.\nDu: Verstanden.", pl: "Bez okularów nie ma szlifierki.", question: "Czego nie wolno albo na co uważasz?", options: ["Iść wcześniej do domu", "Szlifować bez okularów", "Zamówić pizzę"], answer: 1),
+        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Halt Abstand zur Maschine, solange sie läuft.\nDu: Verstanden.", pl: "Trzymaj odstęp od maszyny, dopóki pracuje.", question: "Czego nie wolno albo na co uważasz?", options: ["Zamówić pizzę", "Iść wcześniej do domu", "Wkładać rękę w maszynę"], answer: 2),
+        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Die Grube ist nicht gesichert. Geh da nicht ran.\nDu: Verstanden.", pl: "Wykop nie jest zabezpieczony. Nie podchodź.", question: "Czego nie wolno albo na co uważasz?", options: ["Iść wcześniej do domu", "Stać na krawędzi wykopu", "Zamówić pizzę"], answer: 1),
+        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Handschuhe an, das Blech ist scharf.\nDu: Verstanden.", pl: "Rękawice, blacha jest ostra.", question: "Czego nie wolno albo na co uważasz?", options: ["Chwytać blachę gołą ręką", "Zamówić pizzę", "Iść wcześniej do domu"], answer: 0),
+        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Nicht unter die schwebende Last gehen.\nDu: Verstanden.", pl: "Nie wchodzić pod wiszący ładunek.", question: "Czego nie wolno albo na co uważasz?", options: ["Iść wcześniej do domu", "Iść pod ładunkiem", "Zamówić pizzę"], answer: 1),
+        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Der Feuerlöscher hängt neben der Tür.\nDu: Verstanden.", pl: "Gaśnica wisi obok drzwi.", question: "Czego nie wolno albo na co uważasz?", options: ["Szukać gaśnicy w aucie", "Zamówić pizzę", "Iść wcześniej do domu"], answer: 0),
+        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Heute kein Feuer, der Wind ist zu stark.\nDu: Verstanden.", pl: "Dziś bez ognia, wiatr jest za mocny.", question: "Czego nie wolno albo na co uważasz?", options: ["Zamówić pizzę", "Iść wcześniej do domu", "Palić na placu"], answer: 2),
+        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Die Absperrung bleibt stehen.\nDu: Verstanden.", pl: "Wygrodzenie zostaje.", question: "Czego nie wolno albo na co uważasz?", options: ["Iść wcześniej do domu", "Zdejmować taśmę", "Zamówić pizzę"], answer: 1),
+        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Melde jeden Schnitt sofort dem Chef.\nDu: Verstanden.", pl: "Każde skaleczenie od razu zgłoś szefowi.", question: "Czego nie wolno albo na co uważasz?", options: ["Ukrywać skaleczenie", "Zamówić pizzę", "Iść wcześniej do domu"], answer: 0),
+        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Trinkwasser ist im Container, nicht aus dem Schlauch.\nDu: Verstanden.", pl: "Woda do picia jest w kontenerze, nie z węża.", question: "Czego nie wolno albo na co uważasz?", options: ["Iść wcześniej do domu", "Pić z węża", "Zamówić pizzę"], answer: 1),
+        SiteLine(topic: "Bezpieczeństwo", de: "Chef: Bei Gewitter runter vom Gerüst.\nDu: Verstanden.", pl: "Przy burzy schodzimy z rusztowania.", question: "Czego nie wolno albo na co uważasz?", options: ["Zostać na rusztowaniu w burzy", "Zamówić pizzę", "Iść wcześniej do domu"], answer: 0),
+        SiteLine(topic: "Problemy", de: "Du: Chef, Die Bohrmaschine läuft nicht. Der Akku ist leer.\nChef: Sag Bescheid, ich komme.", pl: "Wiertarka nie działa. Akumulator jest pusty.", question: "Co jest nie tak?", options: ["Wszystko jest gotowe", "Akumulator jest pusty", "Szef jest na urlopie"], answer: 1),
+        SiteLine(topic: "Problemy", de: "Du: Chef, Der Kompressor baut keinen Druck auf.\nChef: Sag Bescheid, ich komme.", pl: "Kompresor nie nabija ciśnienia.", question: "Co jest nie tak?", options: ["Wszystko jest gotowe", "Nie ma ciśnienia", "Szef jest na urlopie"], answer: 1),
+        SiteLine(topic: "Problemy", de: "Du: Chef, Die Säge klemmt im Holz.\nChef: Sag Bescheid, ich komme.", pl: "Piła zacina się w drewnie.", question: "Co jest nie tak?", options: ["Szef jest na urlopie", "Wszystko jest gotowe", "Piła stoi w drewnie"], answer: 2),
+        SiteLine(topic: "Problemy", de: "Du: Chef, Der Aufzug bleibt zwischen den Etagen stehen.\nChef: Sag Bescheid, ich komme.", pl: "Winda staje między piętrami.", question: "Co jest nie tak?", options: ["Winda stanęła", "Szef jest na urlopie", "Wszystko jest gotowe"], answer: 0),
+        SiteLine(topic: "Problemy", de: "Du: Chef, Die Pumpe fördert kein Wasser.\nChef: Sag Bescheid, ich komme.", pl: "Pompa nie podaje wody.", question: "Co jest nie tak?", options: ["Pompa nie daje wody", "Szef jest na urlopie", "Wszystko jest gotowe"], answer: 0),
+        SiteLine(topic: "Problemy", de: "Du: Chef, Das Gerüst wackelt auf der linken Seite.\nChef: Sag Bescheid, ich komme.", pl: "Rusztowanie kiwa się z lewej.", question: "Co jest nie tak?", options: ["Rusztowanie jest luźne z lewej", "Szef jest na urlopie", "Wszystko jest gotowe"], answer: 0),
+        SiteLine(topic: "Problemy", de: "Du: Chef, Der Beton ist schon zu fest.\nChef: Sag Bescheid, ich komme.", pl: "Beton jest już za twardy.", question: "Co jest nie tak?", options: ["Wszystko jest gotowe", "Beton związał", "Szef jest na urlopie"], answer: 1),
+        SiteLine(topic: "Problemy", de: "Du: Chef, Die Lieferung ist beschädigt.\nChef: Sag Bescheid, ich komme.", pl: "Dostawa jest uszkodzona.", question: "Co jest nie tak?", options: ["Szef jest na urlopie", "Wszystko jest gotowe", "Dostawa jest uszkodzona"], answer: 2),
+        SiteLine(topic: "Problemy", de: "Du: Chef, Im Keller steht Wasser.\nChef: Sag Bescheid, ich komme.", pl: "W piwnicy stoi woda.", question: "Co jest nie tak?", options: ["Wszystko jest gotowe", "W piwnicy jest woda", "Szef jest na urlopie"], answer: 1),
+        SiteLine(topic: "Problemy", de: "Du: Chef, Der Schlüssel für den Container fehlt.\nChef: Sag Bescheid, ich komme.", pl: "Nie ma klucza do kontenera.", question: "Co jest nie tak?", options: ["Wszystko jest gotowe", "Brakuje klucza", "Szef jest na urlopie"], answer: 1),
+        SiteLine(topic: "Problemy", de: "Du: Chef, Die Sicherung ist raus.\nChef: Sag Bescheid, ich komme.", pl: "Wybity bezpiecznik.", question: "Co jest nie tak?", options: ["Wszystko jest gotowe", "Nie ma prądu, bezpiecznik", "Szef jest na urlopie"], answer: 1),
+        SiteLine(topic: "Problemy", de: "Du: Chef, Das Maß stimmt nicht. Es ist fünf Zentimeter zu kurz.\nChef: Sag Bescheid, ich komme.", pl: "Wymiar się nie zgadza. Jest o pięć centymetrów za krótki.", question: "Co jest nie tak?", options: ["Wszystko jest gotowe", "Za krótkie o 5 cm", "Szef jest na urlopie"], answer: 1),
+        SiteLine(topic: "Problemy", de: "Du: Chef, Der Lkw kommt nicht durch das Tor.\nChef: Sag Bescheid, ich komme.", pl: "Ciężarówka nie mieści się w bramie.", question: "Co jest nie tak?", options: ["Szef jest na urlopie", "Wszystko jest gotowe", "Ciężarówka nie wjeżdża"], answer: 2),
+        SiteLine(topic: "Problemy", de: "Du: Chef, Die Fliesen sind die falsche Farbe.\nChef: Sag Bescheid, ich komme.", pl: "Płytki są w złym kolorze.", question: "Co jest nie tak?", options: ["Zły kolor płytek", "Szef jest na urlopie", "Wszystko jest gotowe"], answer: 0),
+        SiteLine(topic: "Problemy", de: "Du: Chef, Der Anhänger hat einen platten Reifen.\nChef: Sag Bescheid, ich komme.", pl: "Przyczepa ma flaka.", question: "Co jest nie tak?", options: ["Wszystko jest gotowe", "Flak w przyczepie", "Szef jest na urlopie"], answer: 1),
+        SiteLine(topic: "Problemy", de: "Du: Chef, Die Heizung auf der Baustelle ist aus.\nChef: Sag Bescheid, ich komme.", pl: "Ogrzewanie na budowie jest wyłączone.", question: "Co jest nie tak?", options: ["Wszystko jest gotowe", "Nie ma ogrzewania", "Szef jest na urlopie"], answer: 1),
+        SiteLine(topic: "Pomoc", de: "Du: Kannst du mir kurz die Leiter halten?\nKollege: Ja, ich komme.", pl: "Możesz mi chwilę potrzymać drabinę?", question: "O co prosisz?", options: ["O wypłatę z góry", "Potrzymać drabinę", "O dzień wolny"], answer: 1),
+        SiteLine(topic: "Pomoc", de: "Du: Ich schaffe die Palette nicht alleine.\nKollege: Ja, ich komme.", pl: "Nie uniosę palety sam.", question: "O co prosisz?", options: ["Pomóc przy palecie", "O dzień wolny", "O wypłatę z góry"], answer: 0),
+        SiteLine(topic: "Pomoc", de: "Du: Kannst du unten sichern, während ich hochgehe?\nKollege: Ja, ich komme.", pl: "Możesz asekurować na dole, jak wchodzę?", question: "O co prosisz?", options: ["Asekurować na dole", "O dzień wolny", "O wypłatę z góry"], answer: 0),
+        SiteLine(topic: "Pomoc", de: "Du: Hilf mir bitte, die Platte zu drehen.\nKollege: Ja, ich komme.", pl: "Pomóż obrócić płytę.", question: "O co prosisz?", options: ["Obrócić płytę", "O dzień wolny", "O wypłatę z góry"], answer: 0),
+        SiteLine(topic: "Pomoc", de: "Du: Kannst du den Chef anrufen? Ich bin auf dem Dach.\nKollege: Ja, ich komme.", pl: "Możesz zadzwonić do szefa? Jestem na dachu.", question: "O co prosisz?", options: ["O dzień wolny", "O wypłatę z góry", "Zadzwonić do szefa"], answer: 2),
+        SiteLine(topic: "Pomoc", de: "Du: Ich brauche jemanden an der Schubkarre.\nKollege: Ja, ich komme.", pl: "Potrzebuję kogoś przy taczce.", question: "O co prosisz?", options: ["Pomóc przy taczce", "O dzień wolny", "O wypłatę z góry"], answer: 0),
+        SiteLine(topic: "Pomoc", de: "Du: Kannst du die Maße noch einmal prüfen?\nKollege: Ja, ich komme.", pl: "Możesz jeszcze raz sprawdzić wymiary?", question: "O co prosisz?", options: ["O wypłatę z góry", "Sprawdzić wymiary", "O dzień wolny"], answer: 1),
+        SiteLine(topic: "Pomoc", de: "Du: Halt bitte das Kabel weg von der Säge.\nKollege: Ja, ich komme.", pl: "Trzymaj kabel z dala od piły.", question: "O co prosisz?", options: ["O wypłatę z góry", "Odsunąć kabel od piły", "O dzień wolny"], answer: 1),
+        SiteLine(topic: "Pomoc", de: "Du: Kannst du mir den Helm vom Container holen?\nKollege: Ja, ich komme.", pl: "Możesz przynieść mi kask z kontenera?", question: "O co prosisz?", options: ["O wypłatę z góry", "Przynieść kask", "O dzień wolny"], answer: 1),
+        SiteLine(topic: "Pomoc", de: "Du: Ich sehe die Markierung nicht. Zeig sie mir.\nKollege: Ja, ich komme.", pl: "Nie widzę znacznika. Pokaż mi go.", question: "O co prosisz?", options: ["Pokazać znacznik", "O dzień wolny", "O wypłatę z góry"], answer: 0),
+        SiteLine(topic: "Pomoc", de: "Du: Kannst du die Tür aufhalten?\nKollege: Ja, ich komme.", pl: "Możesz przytrzymać drzwi?", question: "O co prosisz?", options: ["O wypłatę z góry", "Przytrzymać drzwi", "O dzień wolny"], answer: 1),
+        SiteLine(topic: "Pomoc", de: "Du: Wir müssen zu zweit heben.\nKollege: Ja, ich komme.", pl: "Musimy podnieść we dwóch.", question: "O co prosisz?", options: ["O dzień wolny", "O wypłatę z góry", "Podnieść we dwóch"], answer: 2),
+        SiteLine(topic: "Nie rozumiem", de: "Du: Können Sie das bitte langsamer sagen?\nChef: Klar. Ich sage es noch einmal.", pl: "Czy może pan powiedzieć wolniej?", question: "Co mówisz, gdy nie wchodzi?", options: ["Jestem chory.", "Już skończyłem.", "Czy może pan powiedzieć wolniej?"], answer: 2),
+        SiteLine(topic: "Nie rozumiem", de: "Du: Ich habe das nicht verstanden.\nChef: Klar. Ich sage es noch einmal.", pl: "Nie zrozumiałem tego.", question: "Co mówisz, gdy nie wchodzi?", options: ["Nie zrozumiałem tego.", "Jestem chory.", "Już skończyłem."], answer: 0),
+        SiteLine(topic: "Nie rozumiem", de: "Du: Können Sie das bitte wiederholen?\nChef: Klar. Ich sage es noch einmal.", pl: "Czy może pan powtórzyć?", question: "Co mówisz, gdy nie wchodzi?", options: ["Czy może pan powtórzyć?", "Jestem chory.", "Już skończyłem."], answer: 0),
+        SiteLine(topic: "Nie rozumiem", de: "Du: Wie heißt das auf Deutsch?\nChef: Klar. Ich sage es noch einmal.", pl: "Jak to się nazywa po niemiecku?", question: "Co mówisz, gdy nie wchodzi?", options: ["Już skończyłem.", "Jak to się nazywa po niemiecku?", "Jestem chory."], answer: 1),
+        SiteLine(topic: "Nie rozumiem", de: "Du: Können Sie das bitte aufschreiben?\nChef: Klar. Ich sage es noch einmal.", pl: "Czy może pan to napisać?", question: "Co mówisz, gdy nie wchodzi?", options: ["Czy może pan to napisać?", "Jestem chory.", "Już skończyłem."], answer: 0),
+        SiteLine(topic: "Nie rozumiem", de: "Du: Noch einmal, bitte. Langsamer.\nChef: Klar. Ich sage es noch einmal.", pl: "Jeszcze raz, wolniej.", question: "Co mówisz, gdy nie wchodzi?", options: ["Już skończyłem.", "Jeszcze raz, wolniej.", "Jestem chory."], answer: 1),
+        SiteLine(topic: "Nie rozumiem", de: "Du: Ich verstehe das Wort nicht.\nChef: Klar. Ich sage es noch einmal.", pl: "Nie rozumiem tego słowa.", question: "Co mówisz, gdy nie wchodzi?", options: ["Już skończyłem.", "Nie rozumiem tego słowa.", "Jestem chory."], answer: 1),
+        SiteLine(topic: "Nie rozumiem", de: "Du: Meinen Sie die linke oder die rechte Seite?\nChef: Klar. Ich sage es noch einmal.", pl: "Ma pan na myśli lewą czy prawą stronę?", question: "Co mówisz, gdy nie wchodzi?", options: ["Ma pan na myśli lewą czy prawą stronę?", "Jestem chory.", "Już skończyłem."], answer: 0),
+        SiteLine(topic: "Nie rozumiem", de: "Du: Können Sie mir das zeigen?\nChef: Klar. Ich sage es noch einmal.", pl: "Czy może pan mi to pokazać?", question: "Co mówisz, gdy nie wchodzi?", options: ["Już skończyłem.", "Czy może pan mi to pokazać?", "Jestem chory."], answer: 1),
+        SiteLine(topic: "Nie rozumiem", de: "Du: Ich bin neu hier. Bitte etwas einfacher.\nChef: Klar. Ich sage es noch einmal.", pl: "Jestem tu nowy. Proszę trochę prościej.", question: "Co mówisz, gdy nie wchodzi?", options: ["Jestem tu nowy. Proszę trochę prościej.", "Jestem chory.", "Już skończyłem."], answer: 0),
+        SiteLine(topic: "Nie rozumiem", de: "Du: Ist das jetzt oder später?\nChef: Klar. Ich sage es noch einmal.", pl: "To teraz czy później?", question: "Co mówisz, gdy nie wchodzi?", options: ["Już skończyłem.", "To teraz czy później?", "Jestem chory."], answer: 1),
+        SiteLine(topic: "Nie rozumiem", de: "Du: Welche Tür meinen Sie?\nChef: Klar. Ich sage es noch einmal.", pl: "Które drzwi ma pan na myśli?", question: "Co mówisz, gdy nie wchodzi?", options: ["Jestem chory.", "Już skończyłem.", "Które drzwi ma pan na myśli?"], answer: 2),
+        SiteLine(topic: "Koniec pracy", de: "Du: Ich bin fertig. Was soll ich jetzt machen?\nChef: Gut. Dann bis morgen.", pl: "Skończyłem. Co mam teraz zrobić?", question: "Co zgłaszasz?", options: ["Chcę inną pracę", "Co robić dalej", "Nie było mnie dziś"], answer: 1),
+        SiteLine(topic: "Koniec pracy", de: "Du: Die Wand ist fertig.\nChef: Gut. Dann bis morgen.", pl: "Ściana jest gotowa.", question: "Co zgłaszasz?", options: ["Chcę inną pracę", "Ściana skończona", "Nie było mnie dziś"], answer: 1),
+        SiteLine(topic: "Koniec pracy", de: "Du: Wir sind durch mit der linken Seite.\nChef: Gut. Dann bis morgen.", pl: "Skończyliśmy lewą stronę.", question: "Co zgłaszasz?", options: ["Chcę inną pracę", "Lewa strona gotowa", "Nie było mnie dziś"], answer: 1),
+        SiteLine(topic: "Koniec pracy", de: "Du: Ich habe das Werkzeug zurückgebracht.\nChef: Gut. Dann bis morgen.", pl: "Oddałem narzędzia.", question: "Co zgłaszasz?", options: ["Chcę inną pracę", "Narzędzia oddane", "Nie było mnie dziś"], answer: 1),
+        SiteLine(topic: "Koniec pracy", de: "Du: Die Grube ist zu.\nChef: Gut. Dann bis morgen.", pl: "Wykop jest zasypany.", question: "Co zgłaszasz?", options: ["Nie było mnie dziś", "Chcę inną pracę", "Wykop zasypany"], answer: 2),
+        SiteLine(topic: "Koniec pracy", de: "Du: Der Container ist leer.\nChef: Gut. Dann bis morgen.", pl: "Kontener jest pusty.", question: "Co zgłaszasz?", options: ["Kontener pusty", "Nie było mnie dziś", "Chcę inną pracę"], answer: 0),
+        SiteLine(topic: "Koniec pracy", de: "Du: Ich mache jetzt Feierabend.\nChef: Gut. Dann bis morgen.", pl: "Kończę na dziś.", question: "Co zgłaszasz?", options: ["Chcę inną pracę", "Koniec pracy", "Nie było mnie dziś"], answer: 1),
+        SiteLine(topic: "Koniec pracy", de: "Du: Die letzte Palette steht an der Rampe.\nChef: Gut. Dann bis morgen.", pl: "Ostatnia paleta stoi przy rampie.", question: "Co zgłaszasz?", options: ["Ostatnia paleta przy rampie", "Nie było mnie dziś", "Chcę inną pracę"], answer: 0),
+        SiteLine(topic: "Koniec pracy", de: "Du: Ich habe alles geputzt.\nChef: Gut. Dann bis morgen.", pl: "Posprzątałem.", question: "Co zgłaszasz?", options: ["Nie było mnie dziś", "Chcę inną pracę", "Posprzątane"], answer: 2),
+        SiteLine(topic: "Koniec pracy", de: "Du: Das Gerüst ist abgebaut.\nChef: Gut. Dann bis morgen.", pl: "Rusztowanie jest zdjęte.", question: "Co zgłaszasz?", options: ["Chcę inną pracę", "Rusztowanie zdjęte", "Nie było mnie dziś"], answer: 1),
+        SiteLine(topic: "Koniec pracy", de: "Du: Die Rechnung habe ich dem Chef gegeben.\nChef: Gut. Dann bis morgen.", pl: "Fakturę dałem szefowi.", question: "Co zgłaszasz?", options: ["Faktura u szefa", "Nie było mnie dziś", "Chcę inną pracę"], answer: 0),
+        SiteLine(topic: "Koniec pracy", de: "Du: Morgen machen wir die rechte Seite.\nChef: Gut. Dann bis morgen.", pl: "Jutro robimy prawą stronę.", question: "Co zgłaszasz?", options: ["Chcę inną pracę", "Jutro prawa strona", "Nie było mnie dziś"], answer: 1),
+        SiteLine(topic: "Urlop i wypłata", de: "Du: Wann kommt das Geld diesen Monat?\nChef: Ich schaue das heute nach.", pl: "Kiedy w tym miesiącu będzie wypłata?", question: "O co pytasz albo co zgłaszasz?", options: ["Gdzie jest młotek", "Kiedy wypłata", "Która brama"], answer: 1),
+        SiteLine(topic: "Urlop i wypłata", de: "Du: Ich brauche nächste Woche drei Tage frei.\nChef: Ich schaue das heute nach.", pl: "W przyszłym tygodniu potrzebuję trzech dni wolnego.", question: "O co pytasz albo co zgłaszasz?", options: ["Gdzie jest młotek", "Trzy dni wolnego", "Która brama"], answer: 1),
+        SiteLine(topic: "Urlop i wypłata", de: "Du: Steht der Lohn für die Überstunden drauf?\nChef: Ich schaue das heute nach.", pl: "Czy nadgodziny są na pasku?", question: "O co pytasz albo co zgłaszasz?", options: ["Która brama", "Gdzie jest młotek", "Czy są nadgodziny"], answer: 2),
+        SiteLine(topic: "Urlop i wypłata", de: "Du: Ich war am Freitag krank. Das ist gemeldet.\nChef: Ich schaue das heute nach.", pl: "W piątek byłem chory. Jest zgłoszone.", question: "O co pytasz albo co zgłaszasz?", options: ["Która brama", "Gdzie jest młotek", "Choroba w piątek zgłoszona"], answer: 2),
+        SiteLine(topic: "Urlop i wypłata", de: "Du: Können Sie den Urlaub für August eintragen?\nChef: Ich schaue das heute nach.", pl: "Czy może pan wpisać urlop na sierpień?", question: "O co pytasz albo co zgłaszasz?", options: ["Urlop w sierpniu", "Która brama", "Gdzie jest młotek"], answer: 0),
+        SiteLine(topic: "Urlop i wypłata", de: "Du: Die Spesen fehlen auf der Abrechnung.\nChef: Ich schaue das heute nach.", pl: "Na rozliczeniu brakuje diet.", question: "O co pytasz albo co zgłaszasz?", options: ["Która brama", "Gdzie jest młotek", "Brakuje diet"], answer: 2),
+        SiteLine(topic: "Urlop i wypłata", de: "Du: Ich habe zwölf Überstunden, nicht acht.\nChef: Ich schaue das heute nach.", pl: "Mam dwanaście nadgodzin, nie osiem.", question: "O co pytasz albo co zgłaszasz?", options: ["12 nadgodzin", "Która brama", "Gdzie jest młotek"], answer: 0),
+        SiteLine(topic: "Urlop i wypłata", de: "Du: Ab wann gilt der neue Stundenlohn?\nChef: Ich schaue das heute nach.", pl: "Od kiedy jest nowa stawka?", question: "O co pytasz albo co zgłaszasz?", options: ["Która brama", "Gdzie jest młotek", "Od kiedy nowa stawka"], answer: 2),
+        SiteLine(topic: "Urlop i wypłata", de: "Du: Ich brauche die Lohnabrechnung für die Wohnung.\nChef: Ich schaue das heute nach.", pl: "Potrzebuję paska płac do mieszkania.", question: "O co pytasz albo co zgłaszasz?", options: ["Gdzie jest młotek", "Pasek płac do mieszkania", "Która brama"], answer: 1),
+        SiteLine(topic: "Urlop i wypłata", de: "Du: Kann ich den Freitag als Urlaub nehmen?\nChef: Ich schaue das heute nach.", pl: "Czy mogę wziąć piątek jako urlop?", question: "O co pytasz albo co zgłaszasz?", options: ["Gdzie jest młotek", "Piątek jako urlop", "Która brama"], answer: 1),
+        SiteLine(topic: "Urlop i wypłata", de: "Du: Die Fahrt zur Baustelle ist nicht bezahlt.\nChef: Ich schaue das heute nach.", pl: "Dojazd na budowę nie jest płatny.", question: "O co pytasz albo co zgłaszasz?", options: ["Która brama", "Gdzie jest młotek", "Dojazd nie jest płatny"], answer: 2),
+        SiteLine(topic: "Urlop i wypłata", de: "Du: Bitte überweisen Sie den Rest bis Freitag.\nChef: Ich schaue das heute nach.", pl: "Proszę przelać resztę do piątku.", question: "O co pytasz albo co zgłaszasz?", options: ["Która brama", "Gdzie jest młotek", "Reszta do piątku"], answer: 2),
+        SiteLine(topic: "Dostawy", de: "Chef: Der Lkw steht an Tor 1. Bitte entladen.\nDu: Tor 1, ich fange an.", pl: "Ciężarówka stoi przy bramie 1. Masz rozładować.", question: "Przy której bramie?", options: ["Brama 4", "Brama 1", "Na parkingu gości"], answer: 1),
+        SiteLine(topic: "Dostawy", de: "Chef: Der Lkw steht an Tor 2. Bitte entladen.\nDu: Tor 2, ich fange an.", pl: "Ciężarówka stoi przy bramie 2. Masz rozładować.", question: "Przy której bramie?", options: ["Brama 5", "Brama 2", "Na parkingu gości"], answer: 1),
+        SiteLine(topic: "Dostawy", de: "Chef: Der Lkw steht an Tor 3. Bitte entladen.\nDu: Tor 3, ich fange an.", pl: "Ciężarówka stoi przy bramie 3. Masz rozładować.", question: "Przy której bramie?", options: ["Brama 6", "Brama 3", "Na parkingu gości"], answer: 1),
+        SiteLine(topic: "Dostawy", de: "Chef: Der Lkw steht an Tor 4. Bitte entladen.\nDu: Tor 4, ich fange an.", pl: "Ciężarówka stoi przy bramie 4. Masz rozładować.", question: "Przy której bramie?", options: ["Brama 7", "Brama 4", "Na parkingu gości"], answer: 1),
+        SiteLine(topic: "Dostawy", de: "Chef: Der Lkw steht an Tor 5. Bitte entladen.\nDu: Tor 5, ich fange an.", pl: "Ciężarówka stoi przy bramie 5. Masz rozładować.", question: "Przy której bramie?", options: ["Brama 8", "Brama 5", "Na parkingu gości"], answer: 1),
+        SiteLine(topic: "Kontakt", de: "Chef: Ruf mich an, wenn du auf dem Hof bist.\nDu: Mache ich.", pl: "Zadzwoń, jak będziesz na placu.", question: "Kiedy masz się odezwać?", options: ["Jak będziesz na placu", "Dopiero za miesiąc", "Wcale"], answer: 0),
+        SiteLine(topic: "Kontakt", de: "Chef: Ruf den Chef an, wenn der Beton da ist.\nDu: Mache ich.", pl: "Zadzwoń do szefa, jak będzie beton.", question: "Kiedy masz się odezwać?", options: ["Wcale", "Jak przyjedzie beton", "Dopiero za miesiąc"], answer: 1),
+        SiteLine(topic: "Kontakt", de: "Chef: Schreib mir, wenn die Lieferung durch ist.\nDu: Mache ich.", pl: "Napisz, jak dostawa przejdzie.", question: "Kiedy masz się odezwać?", options: ["Jak dostawa się skończy", "Dopiero za miesiąc", "Wcale"], answer: 0),
+        SiteLine(topic: "Kontakt", de: "Chef: Melde dich, bevor du das Gerüst verlässt.\nDu: Mache ich.", pl: "Daj znać, zanim zejdziesz z rusztowania.", question: "Kiedy masz się odezwać?", options: ["Dopiero za miesiąc", "Wcale", "Zanim zejdziesz z rusztowania"], answer: 2),
+        SiteLine(topic: "Kontakt", de: "Chef: Ruf an, wenn du den Hausmeister siehst.\nDu: Mache ich.", pl: "Zadzwoń, jak zobaczysz gospodarza.", question: "Kiedy masz się odezwać?", options: ["Wcale", "Jak zobaczysz gospodarza", "Dopiero za miesiąc"], answer: 1),
+        SiteLine(topic: "Kontakt", de: "Chef: Sag Bescheid, bevor du die Maschine einschaltest.\nDu: Mache ich.", pl: "Daj znać, zanim włączysz maszynę.", question: "Kiedy masz się odezwać?", options: ["Wcale", "Zanim włączysz maszynę", "Dopiero za miesiąc"], answer: 1),
+        SiteLine(topic: "Kontakt", de: "Chef: Ruf mich an, wenn du fertig bist.\nDu: Mache ich.", pl: "Zadzwoń, jak skończysz.", question: "Kiedy masz się odezwać?", options: ["Jak skończysz", "Dopiero za miesiąc", "Wcale"], answer: 0),
+        SiteLine(topic: "Kontakt", de: "Chef: Schreib dem Polier, nicht mir.\nDu: Mache ich.", pl: "Napisz do majstra, nie do mnie.", question: "Kiedy masz się odezwać?", options: ["Wcale", "Do majstra", "Dopiero za miesiąc"], answer: 1),
+        SiteLine(topic: "Kierunek", de: "Chef: Wir fangen links an, nicht rechts.\nDu: Okay, zuerst links.", pl: "Zaczynacie z lewej, nie z prawej.", question: "Od której strony?", options: ["Z lewej", "Od środka placu", "Z prawej"], answer: 0),
+        SiteLine(topic: "Kierunek", de: "Chef: Wir fangen rechts an, nicht links.\nDu: Okay, zuerst rechts.", pl: "Zaczynacie z prawej, nie z lewej.", question: "Od której strony?", options: ["Z lewej", "Z prawej", "Od środka placu"], answer: 1),
+        SiteLine(topic: "Kierunek", de: "Chef: Wir fangen oben an, nicht unten.\nDu: Okay, zuerst oben.", pl: "Zaczynacie na górze, nie na dole.", question: "Od której strony?", options: ["Na dole", "Na górze", "Od środka placu"], answer: 1),
+        SiteLine(topic: "Kierunek", de: "Chef: Wir fangen unten an, nicht oben.\nDu: Okay, zuerst unten.", pl: "Zaczynacie na dole, nie na górze.", question: "Od której strony?", options: ["Od środka placu", "Na górze", "Na dole"], answer: 2),
+        SiteLine(topic: "Kierunek", de: "Chef: Wir fangen vorne an, nicht hinten.\nDu: Okay, zuerst vorne.", pl: "Zaczynacie z przodu, nie z tyłu.", question: "Od której strony?", options: ["Z przodu", "Od środka placu", "Z tyłu"], answer: 0),
+        SiteLine(topic: "Kierunek", de: "Chef: Wir fangen hinten an, nicht vorne.\nDu: Okay, zuerst hinten.", pl: "Zaczynacie z tyłu, nie z przodu.", question: "Od której strony?", options: ["Z przodu", "Z tyłu", "Od środka placu"], answer: 1),
+        SiteLine(topic: "Pogoda", de: "Chef: Bei Regen decken wir den Zement ab.\nDu: Verstanden.", pl: "Jak pada, przykrywamy cement.", question: "Co robicie przez pogodę?", options: ["Zamykacie firmę", "Jedziecie na urlop", "Przykryć cement"], answer: 2),
+        SiteLine(topic: "Pogoda", de: "Chef: Ab zehn Grad plus können wir betonieren.\nDu: Verstanden.", pl: "Od plus dziesięciu stopni możemy betonować.", question: "Co robicie przez pogodę?", options: ["Zamykacie firmę", "Jedziecie na urlop", "Beton od +10 stopni"], answer: 2),
+        SiteLine(topic: "Pogoda", de: "Chef: Der Wind ist zu stark fürs Dach.\nDu: Verstanden.", pl: "Wiatr jest za mocny na dach.", question: "Co robicie przez pogodę?", options: ["Nie wchodzić na dach", "Zamykacie firmę", "Jedziecie na urlop"], answer: 0),
+        SiteLine(topic: "Pogoda", de: "Chef: Heute erst ab neun, der Boden ist gefroren.\nDu: Verstanden.", pl: "Dziś dopiero od dziewiątej, grunt jest zmarznięty.", question: "Co robicie przez pogodę?", options: ["Jedziecie na urlop", "Start o dziewiątej, grunt zmarznięty", "Zamykacie firmę"], answer: 1),
+        SiteLine(topic: "Pogoda", de: "Chef: Die Plane muss auf die Steine.\nDu: Verstanden.", pl: "Plama musi iść na cegły.", question: "Co robicie przez pogodę?", options: ["Zamykacie firmę", "Jedziecie na urlop", "Przykryć cegły"], answer: 2),
+        SiteLine(topic: "Pogoda", de: "Chef: Bei Hitze den Beton feucht halten.\nDu: Verstanden.", pl: "W upał beton trzymać wilgotny.", question: "Co robicie przez pogodę?", options: ["Jedziecie na urlop", "Polewać beton", "Zamykacie firmę"], answer: 1),
+        SiteLine(topic: "Pogoda", de: "Chef: Nicht streichen, die Wand ist noch nass.\nDu: Verstanden.", pl: "Nie malować, ściana jest jeszcze mokra.", question: "Co robicie przez pogodę?", options: ["Zamykacie firmę", "Jedziecie na urlop", "Nie malować mokrej ściany"], answer: 2),
+        SiteLine(topic: "Pogoda", de: "Chef: Morgen früh ist Frost. Werkzeug rein.\nDu: Verstanden.", pl: "Jutro rano mróz. Narzędzia do środka.", question: "Co robicie przez pogodę?", options: ["Schować narzędzia", "Zamykacie firmę", "Jedziecie na urlop"], answer: 0),
+        SiteLine(topic: "Roboty", de: "Chef: Stell die Balken im Abstand von 40 Zentimetern.\nDu: Alles klar.", pl: "Ustaw belki co 40 centymetrów.", question: "Co masz zrobić?", options: ["Co 40 cm", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
+        SiteLine(topic: "Roboty", de: "Chef: Die Fuge darf nicht breiter als fünf Millimeter sein.\nDu: Alles klar.", pl: "Fuga nie może być szersza niż pięć milimetrów.", question: "Co masz zrobić?", options: ["Iść na przerwę", "Maksimum 5 mm", "Zadzwonić do lekarza"], answer: 1),
+        SiteLine(topic: "Roboty", de: "Chef: Zwei Lagen, nicht eine.\nDu: Alles klar.", pl: "Dwie warstwy, nie jedna.", question: "Co masz zrobić?", options: ["Iść na przerwę", "Dwie warstwy", "Zadzwonić do lekarza"], answer: 1),
+        SiteLine(topic: "Roboty", de: "Chef: Erst grundieren, dann streichen.\nDu: Alles klar.", pl: "Najpierw grunt, potem malowanie.", question: "Co masz zrobić?", options: ["Najpierw grunt", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
+        SiteLine(topic: "Roboty", de: "Chef: Die Dose sitzt auf 30 Zentimeter Höhe.\nDu: Alles klar.", pl: "Puszka jest na wysokości 30 centymetrów.", question: "Co masz zrobić?", options: ["Iść na przerwę", "Na 30 cm", "Zadzwonić do lekarza"], answer: 1),
+        SiteLine(topic: "Roboty", de: "Chef: Das Gefälle läuft zum Ablauf, nicht zur Wand.\nDu: Alles klar.", pl: "Spadek idzie do odpływu, nie do ściany.", question: "Co masz zrobić?", options: ["Zadzwonić do lekarza", "Iść na przerwę", "Spadek do odpływu"], answer: 2),
+        SiteLine(topic: "Roboty", de: "Chef: Nicht bohren, da liegt ein Rohr.\nDu: Alles klar.", pl: "Nie wierć, tam jest rura.", question: "Co masz zrobić?", options: ["Nie wiercić, jest rura", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
+        SiteLine(topic: "Roboty", de: "Chef: Die Tür muss nach außen aufgehen.\nDu: Alles klar.", pl: "Drzwi muszą otwierać się na zewnątrz.", question: "Co masz zrobić?", options: ["Iść na przerwę", "Drzwi na zewnątrz", "Zadzwonić do lekarza"], answer: 1),
+        SiteLine(topic: "Roboty", de: "Chef: Lass zehn Zentimeter Luft zur Decke.\nDu: Alles klar.", pl: "Zostaw dziesięć centymetrów do sufitu.", question: "Co masz zrobić?", options: ["10 cm do sufitu", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
+        SiteLine(topic: "Roboty", de: "Chef: Der Anker kommt in jede zweite Fuge.\nDu: Alles klar.", pl: "Kotwa co drugą fugę.", question: "Co masz zrobić?", options: ["Kotwa co drugą fugę", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
+        SiteLine(topic: "Roboty", de: "Chef: Heute nur vorbereiten, nicht gießen.\nDu: Alles klar.", pl: "Dziś tylko przygotować, nie lać.", question: "Co masz zrobić?", options: ["Dziś bez lania", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
+        SiteLine(topic: "Roboty", de: "Chef: Die Folie bleibt bis morgen drauf.\nDu: Alles klar.", pl: "Folia zostaje do jutra.", question: "Co masz zrobić?", options: ["Iść na przerwę", "Folia do jutra", "Zadzwonić do lekarza"], answer: 1),
+        SiteLine(topic: "Roboty", de: "Chef: Schneid die Latte auf 180 Zentimeter.\nDu: Alles klar.", pl: "Przytnij łatę na 180 centymetrów.", question: "Co masz zrobić?", options: ["Łata 180 cm", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
+        SiteLine(topic: "Roboty", de: "Chef: Der Schacht ist für die Lüftung, nicht für Kabel.\nDu: Alles klar.", pl: "Szyb jest na wentylację, nie na kable.", question: "Co masz zrobić?", options: ["Iść na przerwę", "Szyb na wentylację", "Zadzwonić do lekarza"], answer: 1),
+        SiteLine(topic: "Roboty", de: "Chef: Prüf die Waage, bevor du die Reihe klebst.\nDu: Alles klar.", pl: "Sprawdź poziomicę, zanim przykleisz rząd.", question: "Co masz zrobić?", options: ["Najpierw poziomica", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
+        SiteLine(topic: "Roboty", de: "Chef: Die alte Farbe muss runter.\nDu: Alles klar.", pl: "Stara farba musi zejść.", question: "Co masz zrobić?", options: ["Zedrzeć starą farbę", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
+        SiteLine(topic: "Roboty", de: "Chef: Nicht mit dem Hammer auf die Fliese.\nDu: Alles klar.", pl: "Nie młotkiem w płytkę.", question: "Co masz zrobić?", options: ["Nie uderzać w płytkę", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
+        SiteLine(topic: "Roboty", de: "Chef: Der Abstand zur Nachbarwand ist 15 Zentimeter.\nDu: Alles klar.", pl: "Odstęp od ściany sąsiada to 15 centymetrów.", question: "Co masz zrobić?", options: ["15 cm od ściany", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
+        SiteLine(topic: "Roboty", de: "Chef: Erst sichern, dann schneiden.\nDu: Alles klar.", pl: "Najpierw zabezpiecz, potem tnij.", question: "Co masz zrobić?", options: ["Iść na przerwę", "Najpierw zabezpieczyć", "Zadzwonić do lekarza"], answer: 1),
+        SiteLine(topic: "Roboty", de: "Chef: Die Nummer vom Polier ist an der Tür.\nDu: Alles klar.", pl: "Numer do majstra jest na drzwiach.", question: "Co masz zrobić?", options: ["Numer jest na drzwiach", "Zadzwonić do lekarza", "Iść na przerwę"], answer: 0),
+        SiteLine(topic: "Ludzie na budowie", de: "Chef: Der neue Kollege heißt Tim. Zeig ihm die Halle.\nDu: Verstanden.", pl: "Nowy kolega ma na imię Tim. Pokaż mu halę.", question: "O co chodzi?", options: ["Pokazać halę Timowi", "Dziś nie ma pracy", "Wszyscy idą do domu"], answer: 0),
+        SiteLine(topic: "Ludzie na budowie", de: "Chef: Der Polier kommt um zehn. Warte an Tor zwei.\nDu: Verstanden.", pl: "Majster będzie o dziesiątej. Czekaj przy bramie dwa.", question: "O co chodzi?", options: ["Wszyscy idą do domu", "Czekać przy bramie 2", "Dziś nie ma pracy"], answer: 1),
+        SiteLine(topic: "Ludzie na budowie", de: "Chef: Der Elektriker arbeitet oben. Geh ihm nicht ins Kabel.\nDu: Verstanden.", pl: "Elektryk pracuje na górze. Nie wchodź mu w kabel.", question: "O co chodzi?", options: ["Wszyscy idą do domu", "Nie ruszać kabla elektryka", "Dziś nie ma pracy"], answer: 1),
+        SiteLine(topic: "Ludzie na budowie", de: "Chef: Der Kranführer sieht dich nicht. Heb die Hand.\nDu: Verstanden.", pl: "Operator dźwigu cię nie widzi. Podnieś rękę.", question: "O co chodzi?", options: ["Podnieść rękę", "Dziś nie ma pracy", "Wszyscy idą do domu"], answer: 0),
+        SiteLine(topic: "Ludzie na budowie", de: "Chef: Die Praktikantin darf nicht an die Flex.\nDu: Verstanden.", pl: "Praktykantka nie może przy szlifierce.", question: "O co chodzi?", options: ["Dziś nie ma pracy", "Wszyscy idą do domu", "Praktykantka bez szlifierki"], answer: 2),
+        SiteLine(topic: "Ludzie na budowie", de: "Chef: Der Maler kommt erst morgen.\nDu: Verstanden.", pl: "Malarz przyjdzie dopiero jutro.", question: "O co chodzi?", options: ["Wszyscy idą do domu", "Malarz jutro", "Dziś nie ma pracy"], answer: 1),
+        SiteLine(topic: "Ludzie na budowie", de: "Chef: Sag dem Fahrer, er soll den Motor ausmachen.\nDu: Verstanden.", pl: "Powiedz kierowcy, żeby zgasił silnik.", question: "O co chodzi?", options: ["Wszyscy idą do domu", "Zgasić silnik", "Dziś nie ma pracy"], answer: 1),
+        SiteLine(topic: "Ludzie na budowie", de: "Chef: Der Gerüstbauer ist krank. Heute bauen wir nicht auf.\nDu: Verstanden.", pl: "Rusztowaniowiec jest chory. Dziś nie stawiamy.", question: "O co chodzi?", options: ["Wszyscy idą do domu", "Dziś bez rusztowania", "Dziś nie ma pracy"], answer: 1),
+        SiteLine(topic: "Ludzie na budowie", de: "Chef: Zwei Mann bleiben im Keller, der Rest kommt hoch.\nDu: Verstanden.", pl: "Dwóch zostaje w piwnicy, reszta na górę.", question: "O co chodzi?", options: ["Wszyscy idą do domu", "Dwóch w piwnicy", "Dziś nie ma pracy"], answer: 1),
+        SiteLine(topic: "Ludzie na budowie", de: "Chef: Der Auftraggeber schaut um elf vorbei.\nDu: Verstanden.", pl: "Zleceniodawca wpadnie o jedenastej.", question: "O co chodzi?", options: ["Wszyscy idą do domu", "Zleceniodawca o 11", "Dziś nie ma pracy"], answer: 1),
+        SiteLine(topic: "Porządek", de: "Chef: Kehr die Rampe, bevor der Lkw kommt.\nDu: Mache ich.", pl: "Zamieć rampę, zanim przyjedzie ciężarówka.", question: "Co masz zrobić?", options: ["Zostawić jak jest", "Nic nie ruszać", "Zamieść rampę"], answer: 2),
+        SiteLine(topic: "Porządek", de: "Chef: Die Kabeltrommel darf nicht im Weg stehen.\nDu: Mache ich.", pl: "Bęben z kablem nie może stać na drodze.", question: "Co masz zrobić?", options: ["Odsunąć bęben", "Zostawić jak jest", "Nic nie ruszać"], answer: 0),
+        SiteLine(topic: "Porządek", de: "Chef: Sortier die Schrauben zurück in die Kisten.\nDu: Mache ich.", pl: "Posegreguj śruby z powrotem do skrzynek.", question: "Co masz zrobić?", options: ["Śruby do skrzynek", "Zostawić jak jest", "Nic nie ruszać"], answer: 0),
+        SiteLine(topic: "Porządek", de: "Chef: Der Müllcontainer ist voll. Drück ihn nicht weiter.\nDu: Mache ich.", pl: "Kontener na śmieci jest pełny. Nie dopychaj.", question: "Co masz zrobić?", options: ["Zostawić jak jest", "Nic nie ruszać", "Nie dopychać śmieci"], answer: 2),
+        SiteLine(topic: "Porządek", de: "Chef: Spül die Kellen aus, bevor der Mörtel hart ist.\nDu: Mache ich.", pl: "Opłucz kielnie, zanim zaprawa stwardnieje.", question: "Co masz zrobić?", options: ["Opłukać kielnie", "Zostawić jak jest", "Nic nie ruszać"], answer: 0),
+        SiteLine(topic: "Porządek", de: "Chef: Die Halle wird um sechzehn abgeschlossen.\nDu: Mache ich.", pl: "Halę zamykają o szesnastej.", question: "Co masz zrobić?", options: ["Zostawić jak jest", "Nic nie ruszać", "Zamknięcie o 16"], answer: 2),
+        SiteLine(topic: "Porządek", de: "Chef: Licht aus, wenn du als Letzter gehst.\nDu: Mache ich.", pl: "Zgaś światło, jak wychodzisz ostatni.", question: "Co masz zrobić?", options: ["Zgasić światło", "Zostawić jak jest", "Nic nie ruszać"], answer: 0),
+        SiteLine(topic: "Porządek", de: "Chef: Die nassen Lappen kommen nicht auf die Heizung.\nDu: Mache ich.", pl: "Mokre szmaty nie kładź na grzejnik.", question: "Co masz zrobić?", options: ["Szmaty nie na grzejnik", "Zostawić jak jest", "Nic nie ruszać"], answer: 0),
+        SiteLine(topic: "Pomiar", de: "Chef: Miss noch einmal nach. Die Wand ist 3 Meter 20, nicht 3 Meter.\nDu: 3 Meter 20, ich messe nach.", pl: "Ściana ma 3 metry 20, nie 3 metry.", question: "Jaka długość?", options: ["3 m", "3 m 20", "4 m"], answer: 1),
+        SiteLine(topic: "Pomiar", de: "Chef: Die Deckenhöhe ist 2 Meter 50.\nDu: 2 Meter 50, notiert.", pl: "Wysokość sufitu to 2 metry 50.", question: "Jaka wysokość?", options: ["3 m", "2 m", "2 m 50"], answer: 2),
+        SiteLine(topic: "Pomiar", de: "Chef: Das Fenster sitzt 90 Zentimeter über dem Boden.\nDu: 90 Zentimeter, okay.", pl: "Okno jest 90 centymetrów nad podłogą.", question: "Na jakiej wysokości?", options: ["90 cm", "Przy suficie", "60 cm"], answer: 0),
+        SiteLine(topic: "Pomiar", de: "Chef: Die Öffnung ist 80 mal 200.\nDu: 80 breit, 200 hoch.", pl: "Otwór ma 80 na 200.", question: "Jaki otwór?", options: ["80 na 200", "Kwadrat 50", "100 na 100"], answer: 0),
+        SiteLine(topic: "Maszyna", de: "Chef: Der Mixer bleibt an, bis der Mörtel glatt ist.\nDu: Ich warte, bis er glatt ist.", pl: "Mieszalnik zostaje włączony, aż zaprawa będzie gładka.", question: "Kiedy go wyłączyć?", options: ["Od razu", "Gdy zaprawa jest gładka", "Po godzinie"], answer: 1),
+        SiteLine(topic: "Maszyna", de: "Chef: Den Rüttler nur kurz, sonst setzt sich das Wasser ab.\nDu: Kurz, verstanden.", pl: "Wibrator tylko krótko, inaczej woda się oddzieli.", question: "Jak długo wibrować?", options: ["Wcale", "Pięć minut bez przerwy", "Krótko"], answer: 2),
+        SiteLine(topic: "Maszyna", de: "Chef: Die Säge erst ausstecken, dann das Blatt wechseln.\nDu: Erst der Stecker, dann das Blatt.", pl: "Najpierw wyciągnij wtyczkę, potem zmień tarczę.", question: "Co najpierw?", options: ["Zmienić tarczę przy włączonej pile", "Wyciągnąć wtyczkę", "Polać wodą"], answer: 1),
+        SiteLine(topic: "Maszyna", de: "Chef: Der Hubwagen bleibt stehen, wenn die Gabel unten ist.\nDu: Gabel unten, dann stehen lassen.", pl: "Wózek paletowy zostawiasz z widłami na dole.", question: "Jak zostawić wózek?", options: ["Na rampie w biegu", "Widły w górze", "Widły na dole"], answer: 2),
     ]
 
     static var listen: [CoachData.ListenQ] {
