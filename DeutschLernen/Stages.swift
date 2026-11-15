@@ -159,6 +159,8 @@ struct PronounceView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text("To nie jest ocena akcentu. Pokazuję tylko słowa, które mikrofon naprawdę rozpoznał.")
                     .foregroundStyle(Theme.text2)
+                VoiceSexButtons()
+                PaceButtons()
                 Text(line.1).font(.headline)
                 Text(line.0).font(.title2.bold())
                 Button { Talk.de(line.0, rate: 0.42) } label: { Label("Posłuchaj wzoru", systemImage: "speaker.wave.2") }

@@ -36,6 +36,18 @@ enum Talk {
         return ["female", "anna", "helena", "petra", "katja", "shelley", "sandy", "flo", "grandma"].contains { blob.contains($0) }
     }
 
+    static func femaleVoice() -> AVSpeechSynthesisVoice? {
+        let girls = germanVoices().filter { isGirl($0) }
+        return girls.max { rank($0) < rank($1) }
+            ?? AVSpeechSynthesisVoice(identifier: "com.apple.voice.compact.de-DE.Anna")
+            ?? AVSpeechSynthesisVoice(language: "de-DE")
+    }
+
+    static func chosenVoice() -> AVSpeechSynthesisVoice? {
+        if UserDefaults.standard.string(forKey: "voiceSex") == "f" { return femaleVoice() }
+        return maleVoice()
+    }
+
     static func maleVoice() -> AVSpeechSynthesisVoice? {
         let males = germanVoices().filter { !isGirl($0) }
         return males.max { rank($0) < rank($1) }
@@ -88,7 +100,11 @@ final class Speaker: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     }
 
     static func savedPace() -> Float {
-        UserDefaults.standard.string(forKey: "talkPace") == "normal" ? 0.44 : 0.36
+        switch UserDefaults.standard.string(forKey: "talkPace") {
+        case "fast": return 0.56
+        case "normal": return 0.46
+        default: return 0.36
+        }
     }
 
     private func sayNext(_ gen: Int) {
@@ -124,16 +140,10 @@ final class Speaker: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     }
 
     private func picked(_ voice: String?) -> AVSpeechSynthesisVoice? {
-        if let voice, !voice.isEmpty, let chosen = AVSpeechSynthesisVoice(identifier: voice), !Talk.isGirl(chosen) {
+        if let voice, !voice.isEmpty, let chosen = AVSpeechSynthesisVoice(identifier: voice) {
             return chosen
         }
-        if let stored = UserDefaults.standard.string(forKey: "deVoice"),
-           !stored.isEmpty,
-           let chosen = AVSpeechSynthesisVoice(identifier: stored),
-           !Talk.isGirl(chosen) {
-            return chosen
-        }
-        return Talk.maleVoice()
+        return Talk.chosenVoice()
     }
 
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
@@ -147,6 +157,26 @@ final class Speaker: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     }
 }
 
+struct VoiceSexButtons: View {
+    @AppStorage("voiceSex") private var sex = "m"
+
+    var body: some View {
+        HStack(spacing: 8) {
+            one("Mężczyzna", "m")
+            one("Kobieta", "f")
+        }
+    }
+
+    private func one(_ title: String, _ value: String) -> some View {
+        Button(title) { sex = value }
+            .font(.caption.weight(.semibold))
+            .padding(.horizontal, 12)
+            .frame(minHeight: 36)
+            .background(sex == value ? Theme.ok : Theme.card, in: Capsule())
+            .foregroundStyle(sex == value ? Theme.ink : Theme.text)
+    }
+}
+
 struct PaceButtons: View {
     @AppStorage("talkPace") private var pace = "slow"
 
@@ -154,6 +184,7 @@ struct PaceButtons: View {
         HStack(spacing: 8) {
             paceButton("Wolno", "slow")
             paceButton("Zwykle", "normal")
+            paceButton("Szybko", "fast")
         }
     }
 
@@ -216,6 +247,7 @@ final class VoiceBox: NSObject, ObservableObject {
     fileprivate var lastClip: Data?
 
     private let male = ["nPczCjzI2devNBz1zQrb", "onwK4e9ZLuTAKqWW03F9"]
+    private let female = ["21m00Tcm4TlvDq8ikWAM", "MF3mGyEYCl7XYWbV9V6O"]
 
     func speak(_ text: String, rate: Float, voice: String?) {
         let clean = text.replacingOccurrences(of: "*", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -313,8 +345,10 @@ final class VoiceBox: NSObject, ObservableObject {
     }
 
     private func fetch(_ text: String, key: String) async throws -> Data {
-        let voices = male
-        let slow = UserDefaults.standard.string(forKey: "talkPace") != "normal"
+        let sex = UserDefaults.standard.string(forKey: "voiceSex")
+        let voices = sex == "f" ? female : male
+        let pace = UserDefaults.standard.string(forKey: "talkPace") ?? "slow"
+        let speed = pace == "fast" ? 1.12 : (pace == "normal" ? 1.0 : 0.82)
         var last = "ElevenLabs nie oddał nagrania."
         for voice in voices {
             var req = URLRequest(url: URL(string: "https://api.elevenlabs.io/v1/text-to-speech/\(voice)?output_format=mp3_44100_128")!)
@@ -332,7 +366,7 @@ final class VoiceBox: NSObject, ObservableObject {
                     "similarity_boost": 0.8,
                     "style": 0.0,
                     "use_speaker_boost": true,
-                    "speed": slow ? 0.8 : 1.0
+                    "speed": speed
                 ]
             ]
             req.httpBody = try JSONSerialization.data(withJSONObject: body)

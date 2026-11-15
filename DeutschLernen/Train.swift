@@ -703,7 +703,7 @@ struct ListenView: View {
                     Text("Najpierw samo ucho. Tekst i pytanie dopiero po odtworzeniu.")
                         .font(.subheadline)
                         .foregroundStyle(Theme.text2)
-                    Text("\(index + 1) z \(deck.count) · w banku \(CoachData.listen.count + DailyPack.listen.count)")
+                    Text("\(index + 1) z \(deck.count) · w banku \(CoachData.listen.count + DailyPack.listen.count + SiteTalk.listen.count)")
                         .font(.footnote)
                         .foregroundStyle(Theme.text2)
                     Picker("Tempo", selection: $speed) {
@@ -712,6 +712,7 @@ struct ListenView: View {
                         Text("Szybko").tag(Float(0.62))
                     }
                     .pickerStyle(.segmented)
+                    VoiceSexButtons()
                     if voices.count > 1 {
                         Picker("Głos", selection: $voice) {
                             Text("Domyślny").tag("")
@@ -818,8 +819,8 @@ struct ListenView: View {
     private func loadDeck(forceAll: Bool) {
         let heard = forceAll ? [] : (UserDefaults.standard.stringArray(forKey: "heardListen") ?? [])
         if forceAll { UserDefaults.standard.removeObject(forKey: "heardListen") }
-        let fresh = (CoachData.listen + DailyPack.listen).filter { !heard.contains($0.de) }
-        let pool = fresh.isEmpty ? (CoachData.listen + DailyPack.listen) : fresh
+        let fresh = (CoachData.listen + DailyPack.listen + SiteTalk.listen).filter { !heard.contains($0.de) }
+        let pool = fresh.isEmpty ? (CoachData.listen + DailyPack.listen + SiteTalk.listen) : fresh
         let talks = pool.filter { $0.de.contains("\n") }
         let lines = pool.filter { !$0.de.contains("\n") }.shuffled()
         deck = talks + lines

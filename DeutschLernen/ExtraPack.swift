@@ -364,7 +364,10 @@ struct WorkHubView: View {
                     Text("Narzędzia, materiały i polecenia z budowy").frame(maxWidth: .infinity).padding(.vertical, 8)
                 }
                 NavigationLink { WorkCourseView() } label: {
-                    Text("Cały kurs: szef, maszyny, wypłata, nie rozumiem").frame(maxWidth: .infinity).padding(.vertical, 8)
+                    Text("Krótki kurs: szef, maszyny, wypłata").frame(maxWidth: .infinity).padding(.vertical, 8)
+                }
+                NavigationLink { SiteCourseView() } label: {
+                    Text("Dialogi z budowy").frame(maxWidth: .infinity).padding(.vertical, 8)
                 }
             }
             .padding(20)
