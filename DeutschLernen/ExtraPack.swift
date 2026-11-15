@@ -172,6 +172,7 @@ private struct RepairItem: Identifiable {
     let right: String
     let why: String
     let misses: Int
+    let prompt: String
 }
 
 struct RepairView: View {
@@ -198,10 +199,13 @@ struct RepairView: View {
                         .font(.footnote)
                         .foregroundStyle(Theme.text2)
                     Text(item.why)
+                        .foregroundStyle(Theme.text2)
                     if item.wrong != "—" {
-                        Text("Tak było: \(item.wrong)").foregroundStyle(Theme.bad)
+                        Text("Tak napisałeś: \(item.wrong)").foregroundStyle(Theme.bad)
                     }
-                    Text("Napisz poprawnie.").font(.headline)
+                    Text("Napisz to po niemiecku").font(.headline)
+                    Text(item.prompt)
+                        .font(.title2.bold())
                     TextField("Po niemiecku", text: $typed)
                         .textFieldStyle(.roundedBorder)
                         .textInputAutocapitalization(.never)
@@ -234,13 +238,13 @@ struct RepairView: View {
         cleared = loadClear()
         var out: [RepairItem] = []
         for slip in store.journal.mistakes where slip.hits < 2 && !slip.fix.isEmpty && (cleared[slip.fix] ?? 0) < 2 {
-            out.append(RepairItem(wrong: slip.text, right: slip.fix, why: "Zapisany błąd z Twoich odpowiedzi.", misses: max(slip.hits, 1)))
+            out.append(RepairItem(wrong: slip.text, right: slip.fix, why: "Zapisany błąd z Twoich odpowiedzi.", misses: max(slip.hits, 1), prompt: ask(slip.fix)))
         }
         let weak = store.stats
             .filter { $0.value.wrong >= 2 && $0.value.wrong > $0.value.correct && $0.value.days.count < 3 }
             .sorted { $0.value.wrong > $1.value.wrong }
         for pair in weak.prefix(6) where (cleared[pair.key] ?? 0) < 2 {
-            out.append(RepairItem(wrong: "—", right: pair.key, why: why(pair.key, pair.value), misses: pair.value.wrong))
+            out.append(RepairItem(wrong: "—", right: pair.key, why: why(pair.key, pair.value), misses: pair.value.wrong, prompt: ask(pair.key)))
         }
         var seen = Set<String>()
         round = out.filter { seen.insert($0.right.lowercased()).inserted }
@@ -260,6 +264,21 @@ struct RepairView: View {
             }
         }
         return out
+    }
+
+    private func ask(_ de: String) -> String {
+        let key = Normalizer.clean(de)
+        let found = (store.words + FreqBank.all).first {
+            Normalizer.clean($0.de) == key || Normalizer.clean($0.ex) == key
+        }
+        if let found, !found.pl.isEmpty { return found.pl }
+        if let found, !found.exPl.isEmpty { return found.exPl }
+        let parts = de.split(separator: " ").map(String.init)
+        let articles = ["der", "die", "das", "ein", "eine", "einen", "einem", "einer"]
+        if let first = parts.first?.lowercased(), articles.contains(first), parts.count > 1 {
+            return "Rzeczownik: \(parts.dropFirst().joined(separator: " ")). Dopisz der, die albo das."
+        }
+        return "Napisz to zdanie jeszcze raz, poprawnie."
     }
 
     private func why(_ de: String, _ stat: WordStat) -> String {
