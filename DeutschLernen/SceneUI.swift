@@ -132,12 +132,11 @@ struct SceneLibraryView: View {
 struct SceneStudyView: View {
     @EnvironmentObject var store: LearningStore
     let scene: MiniScene
-    @State private var step = 0
     @State private var picked: Int?
-    @State private var showPL = false
     @State private var typed = ""
     @State private var verdict = ""
     @State private var gloss = ""
+    @State private var glossToken = ""
     @State private var fav = false
 
     var body: some View {
@@ -155,15 +154,96 @@ struct SceneStudyView: View {
                 }
                 Text(scene.title).font(.title2.bold())
                 Text(scene.situation).foregroundStyle(Theme.text2)
-                Text(stepTitle).font(.headline)
-                if step == 0 { listenStep }
-                if step == 1 { guessStep }
-                if step >= 2 { germanStep }
-                if step >= 3 { polishStep }
-                if step >= 4 { practiceStep }
+                Button {
+                    Talk.de(scene.lines.map(\.de).joined(separator: " "), rate: Speaker.savedPace())
+                } label: {
+                    Label("Odtwórz cały dialog", systemImage: "speaker.wave.2.fill")
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                }
+                .buttonStyle(MatteGlassButton())
+                Text("Tekst jest od razu. Stuknij słowo, żeby zobaczyć polski. Głos jest z aplikacji.")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.text2)
+                ForEach(scene.lines) { line in
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text(line.who).font(.caption.weight(.bold)).foregroundStyle(Theme.ok)
+                            Spacer()
+                            Button {
+                                Talk.de(line.de, rate: Speaker.savedPace())
+                            } label: {
+                                Label("Odtwórz", systemImage: "speaker.wave.1.fill")
+                                    .font(.caption.weight(.semibold))
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(Theme.ok)
+                        }
+                        LineWords(text: line.de, selected: glossToken) { token in
+                            glossToken = token
+                            gloss = meaning(token)
+                        }
+                        Text(line.pl).font(.subheadline).foregroundStyle(Theme.text2)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+                if !gloss.isEmpty {
+                    Text(gloss)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.ink)
+                        .padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Theme.ok, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                Text(scene.question).font(.title3.bold())
+                ForEach(scene.options.indices, id: \.self) { index in
+                    Button(scene.options[index]) {
+                        guard picked == nil else { return }
+                        picked = index
+                        let ok = index == scene.answer
+                        store.noteListen(ok: ok)
+                        if !ok { HardBook.add(de: scene.lines.map(\.de).joined(separator: " "), pl: scene.situation) }
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+                    .padding(.horizontal, 12)
+                    .foregroundStyle(.white)
+                    .background(fill(index), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+                if let picked {
+                    Text(picked == scene.answer ? "Dobrze." : "Poprawnie: \(scene.options[scene.answer])")
+                        .foregroundStyle(picked == scene.answer ? Theme.ok : Theme.bad)
+                }
+                Text("Słówka").font(.headline)
+                ForEach(scene.words) { word in
+                    Text("\(word.de) — \(word.pl)").font(.subheadline)
+                }
+                Text("Zwroty").font(.headline)
+                ForEach(scene.phrases, id: \.self) { phrase in
+                    Button {
+                        Talk.de(phrase, rate: Speaker.savedPace())
+                    } label: {
+                        Label(phrase, systemImage: "speaker.wave.1")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Theme.text)
+                }
+                MerkeBox(text: scene.note)
+                Text("Powiedz albo napisz po niemiecku:").font(.headline)
+                Text(scene.replyPL)
+                TextField("Po niemiecku", text: $typed)
+                    .textFieldStyle(.roundedBorder)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                Button("Sprawdź") { checkReply() }.primaryButton().disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
+                if !verdict.isEmpty { Text(verdict).foregroundStyle(Theme.text2) }
+                Text("Wzorzec: \(scene.replyDE)").font(.footnote).foregroundStyle(Theme.text2)
+                Button { Talk.de(scene.replyDE, rate: Speaker.savedPace()) } label: { Label("Posłuchaj wzorca", systemImage: "speaker.wave.2") }
+                    .buttonStyle(.glass)
             }
             .padding(16)
-            .padding(.bottom, 40)
+            .padding(.bottom, 24)
         }
         .navigationTitle("Scenka")
         .containerBackground(for: .navigation) { Color.black }
@@ -171,110 +251,31 @@ struct SceneStudyView: View {
         .onDisappear { Talk.stop() }
     }
 
-    private var stepTitle: String {
-        ["1. Najpierw samo ucho", "2. O co tu chodzi?", "3. Tekst po niemiecku", "4. Polskie tłumaczenie", "5. Pytanie i Twoja odpowiedź"][min(step, 4)]
-    }
-
-    private var listenStep: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Button {
-                Talk.de(scene.lines.map(\.de).joined(separator: " "), rate: Speaker.savedPace())
-            } label: {
-                Label("Odtwórz cały dialog", systemImage: "speaker.wave.2.fill")
-                    .frame(maxWidth: .infinity, minHeight: 48)
-            }
-            .buttonStyle(MatteGlassButton())
-            Text("Najpierw bez tekstu. Potem sprawdzisz, czy złapałeś sytuację.")
-                .font(.footnote)
-                .foregroundStyle(Theme.text2)
-            Button("Słyszałem, sprawdzam") { step = 1 }.primaryButton()
-        }
-    }
-
-    private var guessStep: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(scene.question).font(.title3.bold())
-            ForEach(scene.options.indices, id: \.self) { index in
-                Button(scene.options[index]) {
-                    guard picked == nil else { return }
-                    picked = index
-                    let ok = index == scene.answer
-                    store.noteListen(ok: ok)
-                    if !ok { HardBook.add(de: scene.lines.map(\.de).joined(separator: " "), pl: scene.situation) }
-                }
-                .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
-                .padding(.horizontal, 12)
-                .foregroundStyle(.white)
-                .background(fill(index), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            }
-            if picked != nil {
-                Text(picked == scene.answer ? "Dobrze." : "Poprawnie: \(scene.options[scene.answer])")
-                    .foregroundStyle(picked == scene.answer ? Theme.ok : Theme.bad)
-                Button("Pokaż niemiecki") { step = 2 }.primaryButton()
-            }
-        }
-    }
-
-    private var germanStep: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ForEach(scene.lines) { line in
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(line.who).font(.caption.weight(.bold)).foregroundStyle(Theme.ok)
-                    LineWords(text: line.de) { token in gloss = meaning(token) }
-                    if showPL { Text(line.pl).foregroundStyle(Theme.text2) }
-                    Button { Talk.de(line.de, rate: Speaker.savedPace()) } label: {
-                        Image(systemName: "speaker.wave.1")
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(Theme.ok)
-                }
-                .padding(10)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            }
-            if !gloss.isEmpty { Text(gloss).font(.subheadline).foregroundStyle(Theme.ok) }
-            if step == 2 { Button("Pokaż polski") { showPL = true; step = 3 }.primaryButton() }
-        }
-    }
-
-    private var polishStep: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Słówka").font(.headline)
-            ForEach(scene.words) { word in
-                Text("\(word.de) — \(word.pl)").font(.subheadline)
-            }
-            Text("Zwroty").font(.headline)
-            ForEach(scene.phrases, id: \.self) { phrase in
-                Text(phrase).font(.subheadline)
-            }
-            MerkeBox(text: scene.note)
-            if step == 3 { Button("Ćwiczę odpowiedź") { step = 4 }.primaryButton() }
-        }
-    }
-
-    private var practiceStep: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Powiedz albo napisz po niemiecku:").font(.headline)
-            Text(scene.replyPL)
-            TextField("Po niemiecku", text: $typed)
-                .textFieldStyle(.roundedBorder)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-            Button("Sprawdź") { checkReply() }.primaryButton().disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
-            if !verdict.isEmpty { Text(verdict).foregroundStyle(Theme.text2) }
-            Text("Wzorzec: \(scene.replyDE)").font(.footnote).foregroundStyle(Theme.text2)
-            Button { Talk.de(scene.replyDE, rate: Speaker.savedPace()) } label: { Label("Posłuchaj wzorca", systemImage: "speaker.wave.2") }
-                .buttonStyle(.glass)
-        }
-    }
-
     private func meaning(_ token: String) -> String {
         let bare = token.lowercased().filter { $0.isLetter || "äöüß".contains($0) }
-        if let hit = scene.words.first(where: { $0.de.lowercased().contains(bare) && bare.count > 2 }) {
+        if let hit = scene.words.first(where: { gloss in
+            gloss.de.lowercased().split { !($0.isLetter || "äöüß".contains($0)) }.contains { String($0) == bare }
+        }) {
             return "\(hit.de) — \(hit.pl)"
         }
-        return "Nie mam osobnego tłumaczenia dla „\(token)”. Słuchaj całego zdania."
+        if let known = Self.bits[bare] { return "\(token) — \(known)" }
+        return "Nie mam osobnego tłumaczenia dla „\(token)”. Pod spodem jest całe zdanie."
     }
+
+    private static let bits = [
+        "ich": "ja", "du": "ty", "er": "on", "sie": "ona, oni albo pan", "es": "to",
+        "wir": "my", "ihr": "wy", "mein": "mój", "meine": "moja", "meinen": "mojego",
+        "ist": "jest", "sind": "są", "bin": "jestem", "bist": "jesteś",
+        "habe": "mam", "hast": "masz", "hat": "ma", "haben": "mamy / mają",
+        "der": "rodzajnik męski", "die": "rodzajnik żeński albo liczba mnoga", "das": "rodzajnik nijaki",
+        "ein": "jakiś", "eine": "jakaś", "einen": "jakiegoś", "dem": "temu", "den": "tego",
+        "und": "i", "oder": "albo", "aber": "ale", "nicht": "nie", "kein": "żaden", "keine": "żadna",
+        "wo": "gdzie", "was": "co", "wie": "jak", "wann": "kiedy", "warum": "dlaczego",
+        "bitte": "proszę", "danke": "dziękuję", "ja": "tak", "nein": "nie",
+        "auf": "na", "mit": "z", "für": "dla", "von": "od", "zu": "do", "nach": "do / po", "bei": "przy",
+        "im": "w", "am": "przy", "zum": "do", "zur": "do", "mal": "na chwilę",
+        "schon": "już", "noch": "jeszcze", "hier": "tu", "da": "tu / tam", "auch": "też"
+    ]
 
     private func fill(_ index: Int) -> Color {
         guard let picked else { return Color.white.opacity(0.08) }
@@ -303,16 +304,27 @@ struct SceneStudyView: View {
 
 struct LineWords: View {
     let text: String
+    var selected: String = ""
     let tap: (String) -> Void
 
     var body: some View {
         WordFlow(spacing: 6) {
             ForEach(Array(text.split(separator: " ").enumerated()), id: \.offset) { _, part in
-                Button(String(part)) { tap(String(part)) }
+                let raw = String(part)
+                let on = !selected.isEmpty && bare(raw) == bare(selected)
+                Button(raw) { tap(raw) }
                     .buttonStyle(.plain)
                     .font(.body.weight(.semibold))
+                    .foregroundStyle(on ? Theme.ink : .white)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 4)
+                    .background(on ? Theme.ok : Color.white.opacity(0.08), in: Capsule())
             }
         }
+    }
+
+    private func bare(_ token: String) -> String {
+        token.lowercased().filter { $0.isLetter || "äöüß".contains($0) }
     }
 }
 
