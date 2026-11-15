@@ -223,62 +223,51 @@ struct TodayView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    HStack(alignment: .top) {
-                        Text("Deutsch\nna budowie")
-                            .font(.system(size: 34, weight: .bold))
-                            .foregroundStyle(Theme.text)
-                        Spacer()
-                        HStack(spacing: 6) {
-                            Text("🔥")
-                            Text("Seria \(store.streak)")
-                                .font(.subheadline.weight(.bold))
-                        }
-                        .foregroundStyle(Theme.text)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(.ultraThinMaterial, in: Capsule())
-                        .overlay(Capsule().stroke(Color.white.opacity(0.16), lineWidth: 1))
-                    }
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Dziś: polecenia szefa")
-                            .font(.system(size: 28, weight: .bold))
-                        Text("Zrozumiesz, co mówi szef, i odpowiesz po niemiecku.")
-                            .font(.body)
-                            .foregroundStyle(Color.white.opacity(0.9))
-                            .fixedSize(horizontal: false, vertical: true)
-                        ProgressView(value: Double(todayScore), total: 10)
-                            .tint(Theme.sign)
-                        Text("\(todayScore) z 10 poprawnych odpowiedzi")
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Cześć")
+                        .font(.system(size: 34, weight: .bold))
+                    Text("Dziś \(plan.blocks.reduce(0) { $0 + $1.minutes }) minut. Słuchanie i mówienie są pierwsze.")
+                        .foregroundStyle(Theme.text2)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Plan na dziś")
+                            .font(.headline)
+                        Text(plan.note)
                             .font(.subheadline)
-                            .foregroundStyle(Color.white.opacity(0.85))
-                        NavigationLink { DailyRunView() } label: {
-                            Text("Zacznij lekcję")
+                            .foregroundStyle(Theme.text2)
+                        ForEach(plan.blocks) { block in
+                            HStack {
+                                Text(block.title)
+                                Spacer()
+                                Text("\(block.minutes) min")
+                                    .foregroundStyle(Theme.text2)
+                                if done.contains(block.id) {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                            .font(.subheadline)
+                        }
+                        NavigationLink { Plan45View() } label: {
+                            Text("Rozpocznij dzisiejszą naukę")
                                 .font(.system(size: 18, weight: .bold))
-                                .foregroundStyle(Theme.ink)
-                                .frame(maxWidth: .infinity, minHeight: 52)
-                                .background(Theme.sign, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .foregroundStyle(.black)
+                                .frame(maxWidth: .infinity, minHeight: 54)
+                                .background(.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                         }
                         .buttonStyle(.plain)
                     }
-                    .padding(18)
-                    .background(Theme.gradient, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(Color.white.opacity(0.9), lineWidth: 3).padding(6))
-                    .shadow(color: Color.black.opacity(0.25), radius: 16, y: 8)
-                    Text("Szybki trening")
-                        .font(.title2.bold())
-                        .foregroundStyle(Theme.text)
-                    moreRow("Myślenie po niemiecku", "Ułóż odpowiedź z kafelków", "brain") { ThinkView() }
-                    moreRow("Trener błędów", "Wracają zdania, które Ci nie wyszły", "target") { RepairView() }
-                    Text("Reszta")
-                        .font(.title3.weight(.semibold))
+                    .padding(16)
+                    .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Color.white.opacity(0.12), lineWidth: 1))
+                    moreRow("Trening słuchania", "Wolno, normalnie, szybko", "headphones") { ListenView() }
+                    moreRow("Rozmowa z AI", "Mówisz, AI odpowiada po niemiecku", "bubble.left.and.bubble.right") { TutorView() }
+                    moreRow("Niemiecki w pracy", "Szef, koledzy, budowa", "helmet") { WorkHubView() }
+                    moreRow("Codzienne życie", "Sklep, lekarz, dojazd", "house") { LifeView() }
+                    moreRow("Powtórka błędów", "Tylko Twoje pomyłki", "target") { RepairView() }
+                    moreRow("Postępy", "Czas, słowa, błędy", "chart.bar") { StatsView() }
+                    Text("Opanowane słowa: \(store.masteredCount) · Zdania: \(sentences)")
+                        .font(.footnote)
                         .foregroundStyle(Theme.text2)
-                    moreRow("Mówienie", "Rozmowa z AI", "bubble.left.and.bubble.right") { TutorView() }
-                    moreRow("Słuchanie", "Naturalny niemiecki", "headphones") { ListenView() }
-                    moreRow("Niemiecki w pracy", "Szef i budowa", "helmet") { WorkHubView() }
-                    moreRow("Zwroty", "Całe zdania", "book") { PhraseView() }
-                    moreRow("Opisz obrazek", "Budowa, sklep, ulica", "photo") { PictureTalk() }
-                    moreRow("Shadowing", "Powtórz za zdaniem", "ear") { ShadowView() }
+                        .frame(maxWidth: .infinity)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 12)
@@ -287,8 +276,18 @@ struct TodayView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
             .safeAreaPadding(.top, 8)
-            .containerBackground(for: .navigation) { Theme.background }
+            .containerBackground(for: .navigation) { Color.black }
         }
+    }
+
+    private var plan: (blocks: [PlanBlock], note: String) { DayPlan.make(store.journal) }
+
+    private var done: Set<String> {
+        Set(UserDefaults.standard.stringArray(forKey: "plan45-\(LearningStore.dayKey())") ?? [])
+    }
+
+    private var sentences: Int {
+        store.stats.filter { $0.key.contains(" ") && $0.value.days.count >= 3 }.count
     }
 
     private var todayScore: Int {
