@@ -223,57 +223,112 @@ struct TodayView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Cześć")
-                        .font(.system(size: 34, weight: .bold))
-                    Text("Dziś \(plan.blocks.reduce(0) { $0 + $1.minutes }) minut. Słuchanie i mówienie są pierwsze.")
-                        .foregroundStyle(Theme.text2)
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Plan na dziś")
-                            .font(.headline)
-                        Text(plan.note)
-                            .font(.subheadline)
-                            .foregroundStyle(Theme.text2)
-                        ForEach(plan.blocks) { block in
-                            HStack {
-                                Text(block.title)
-                                Spacer()
-                                Text("\(block.minutes) min")
-                                    .foregroundStyle(Theme.text2)
-                                if done.contains(block.id) {
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                            .font(.subheadline)
+                VStack(alignment: .leading, spacing: 18) {
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Halo!")
+                                .font(.system(size: 34, weight: .bold))
+                            Text("Dzisiaj nauczymy się czegoś nowego.")
+                                .foregroundStyle(Theme.text2)
                         }
+                        Spacer()
+                        Text(Theme.dni(store.streak))
+                            .font(.subheadline.weight(.semibold))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Color.white.opacity(0.08), in: Capsule())
+                    }
+                    VStack(alignment: .leading, spacing: 14) {
+                        HStack {
+                            Text("TWÓJ PLAN NA DZIŚ")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(Color(hex: "16301C"))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(Theme.ok, in: Capsule())
+                            Spacer()
+                            Text("45 minut")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Theme.text2)
+                        }
+                        Text("Zrozum Niemców\nna budowie.")
+                            .font(.system(size: 32, weight: .bold))
+                        Text("Dzisiaj poćwiczysz polecenia szefa, szybką mowę i odpowiadanie bez zastanawiania się.")
+                            .foregroundStyle(Theme.text2)
+                            .fixedSize(horizontal: false, vertical: true)
+                        HStack {
+                            Text("Postęp lekcji")
+                                .foregroundStyle(Theme.text2)
+                            Spacer()
+                            Text("\(doneMinutes) / 45 min")
+                                .font(.headline)
+                        }
+                        ProgressView(value: Double(doneMinutes), total: 45)
+                            .tint(Theme.ok)
                         NavigationLink { Plan45View() } label: {
-                            Text("Rozpocznij dzisiejszą naukę")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundStyle(.black)
-                                .frame(maxWidth: .infinity, minHeight: 54)
-                                .background(.white, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            HStack(spacing: 8) {
+                                Image(systemName: "play.circle")
+                                Text("Rozpocznij dzisiejszą naukę")
+                                    .font(.body.weight(.bold))
+                            }
+                            .foregroundStyle(Theme.ink)
+                            .frame(maxWidth: .infinity, minHeight: 54)
+                            .background(Theme.ok, in: Capsule())
                         }
                         .buttonStyle(.plain)
                     }
                     .padding(16)
-                    .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Color.white.opacity(0.12), lineWidth: 1))
-                    moreRow("Trening słuchania", "Wolno, normalnie, szybko", "headphones") { ListenView() }
-                    moreRow("Rozmowa z AI", "Mówisz, AI odpowiada po niemiecku", "bubble.left.and.bubble.right") { TutorView() }
-                    moreRow("Niemiecki w pracy", "Szef, koledzy, budowa", "helmet") { WorkHubView() }
-                    moreRow("Codzienne życie", "Sklep, lekarz, dojazd", "house") { DailySituationsView() }
-                    moreRow("Powtórka błędów", "Tylko Twoje pomyłki", "target") { RepairView() }
-                    moreRow("Wymowa", "Słowa, które złapał mikrofon", "waveform") { PronounceView() }
-                    moreRow("Test na start", "Sześć pytań, bez udawanego egzaminu", "checklist") { PlacementView() }
-                    moreRow("Postępy", "Czas, słowa, błędy", "chart.bar") { StatsView() }
-                    Text("Opanowane słowa: \(store.masteredCount) · Zdania: \(sentences)")
-                        .font(.footnote)
-                        .foregroundStyle(Theme.text2)
-                        .frame(maxWidth: .infinity)
+                    .background(Color(hex: "13241C"), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    Text("Twój trening")
+                        .font(.title3.weight(.semibold))
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                        trainTile("Słuchanie", "Zrozum szybki niemiecki", "headphones", plan.blocks.first { $0.id == "listen" }?.minutes ?? 10) { ListenView() }
+                        trainTile("Rozmowa AI", "Rozmawiaj po niemiecku", "mic", plan.blocks.first { $0.id == "talk" }?.minutes ?? 10) { TutorView() }
+                        trainTile("Praca", "Szef i współpracownicy", "helmet", plan.blocks.first { $0.id == "work" }?.minutes ?? 10) { WorkHubView() }
+                        trainTile("Codzienne życie", "Niemiecki poza pracą", "house", plan.blocks.first { $0.id == "life" }?.minutes ?? 10) { DailySituationsView() }
+                    }
+                    NavigationLink { RepairView() } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "brain")
+                                .font(.title2)
+                                .foregroundStyle(Theme.ok)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Trener błędów").font(.headline)
+                                Text("Powtarzaj to, co sprawia Ci trudność")
+                                    .font(.subheadline)
+                                    .foregroundStyle(Theme.text2)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right").foregroundStyle(Theme.text2)
+                        }
+                        .padding(16)
+                        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Twój rozwój").font(.headline)
+                        HStack {
+                            statBlock("\(sentences)", "Zdań")
+                            statBlock("\(phrases)", "Zwrotów")
+                            statBlock(levelName, "Poziom")
+                        }
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    HStack(spacing: 14) {
+                        NavigationLink("Wymowa") { PronounceView() }
+                        NavigationLink("Test") { PlacementView() }
+                        NavigationLink("Słownik") { WordsView() }
+                        NavigationLink("Ćwicz") { PracticeView() }
+                        NavigationLink("Profil") { ProfileView() }
+                    }
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.text2)
                 }
                 .padding(.horizontal, 16)
-                .padding(.top, 12)
-                .padding(.bottom, 120)
+                .padding(.top, 8)
+                .padding(.bottom, 110)
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .navigationBar)
@@ -290,6 +345,51 @@ struct TodayView: View {
 
     private var sentences: Int {
         store.stats.filter { $0.key.contains(" ") && $0.value.days.count >= 3 }.count
+    }
+
+    private var doneMinutes: Int {
+        plan.blocks.filter { done.contains($0.id) }.reduce(0) { $0 + $1.minutes }
+    }
+
+    private var phrases: Int {
+        HardBook.all().filter { $0.hits >= 2 }.count
+    }
+
+    private var levelName: String {
+        let bands = store.bandProgress()
+        return bands.first { Double($0.known) / Double(max($0.total, 1)) < 0.8 }?.name ?? "B2"
+    }
+
+    private func statBlock(_ value: String, _ label: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(value).font(.system(size: 32, weight: .bold))
+            Text(label).font(.caption).foregroundStyle(Theme.text2)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func trainTile<Dest: View>(_ title: String, _ text: String, _ icon: String, _ minutes: Int, @ViewBuilder dest: () -> Dest) -> some View {
+        NavigationLink { dest() } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                Image(systemName: icon)
+                    .font(.title2)
+                    .foregroundStyle(Theme.ok)
+                Text(title).font(.headline).foregroundStyle(.white)
+                Text(text)
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.text2)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("\(minutes) minut")
+                    .font(.caption.weight(.semibold))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.white.opacity(0.08), in: Capsule())
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, minHeight: 150, alignment: .topLeading)
+            .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 
     private var todayScore: Int {
@@ -626,7 +726,7 @@ struct ListenView: View {
                             .font(.body.weight(.semibold))
                             .frame(maxWidth: .infinity)
                             .frame(minHeight: 52)
-                            .background(Theme.gradient, in: Capsule())
+                            .background(Theme.ok, in: Capsule())
                             .foregroundStyle(Theme.ink)
                     }
                     .buttonStyle(.plain)

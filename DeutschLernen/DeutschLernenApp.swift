@@ -24,15 +24,15 @@ struct RootView: View {
 
     var body: some View {
         TabView {
-            TodayView().tabItem { Label("Lekcje", systemImage: "book.closed") }
-            PracticeView().tabItem { Label("Ćwicz", systemImage: "bubble.left.and.bubble.right") }
-            NavigationStack {
-                WordsView()
-            }
-            .tabItem { Label("Słownik", systemImage: "text.book.closed") }
-            ProfileView().tabItem { Label("Profil", systemImage: "person.crop.circle") }
+            TodayView().tabItem { Label("Start", systemImage: "house.fill") }
+            NavigationStack { ListenView() }
+                .tabItem { Label("Słuchaj", systemImage: "headphones") }
+            TutorView().tabItem { Label("Mów", systemImage: "mic.fill") }
+            NavigationStack { WorkHubView() }
+                .tabItem { Label("Praca", systemImage: "helmet") }
+            StatsView().tabItem { Label("Postęp", systemImage: "chart.bar.fill") }
         }
-        .tint(Color(hex: "1F5FBF"))
+        .tint(Theme.ok)
         .preferredColorScheme(.dark)
         .fontDesign(.rounded)
         .onAppear {
