@@ -135,8 +135,6 @@ struct SceneStudyView: View {
     @State private var picked: Int?
     @State private var typed = ""
     @State private var verdict = ""
-    @State private var gloss = ""
-    @State private var glossToken = ""
     @State private var fav = false
 
     var body: some View {
@@ -161,7 +159,7 @@ struct SceneStudyView: View {
                         .frame(maxWidth: .infinity, minHeight: 48)
                 }
                 .buttonStyle(MatteGlassButton())
-                Text("Tekst jest od razu. Stuknij słowo, żeby zobaczyć polski. Głos jest z aplikacji.")
+                Text("Stuknij słowo. Tłumaczenie wyskoczy w małym okienku. Głos jest z aplikacji.")
                     .font(.footnote)
                     .foregroundStyle(Theme.text2)
                 ForEach(scene.lines) { line in
@@ -178,23 +176,11 @@ struct SceneStudyView: View {
                             .buttonStyle(.plain)
                             .foregroundStyle(Theme.ok)
                         }
-                        LineWords(text: line.de, selected: glossToken) { token in
-                            glossToken = token
-                            gloss = meaning(token)
-                        }
-                        Text(line.pl).font(.subheadline).foregroundStyle(Theme.text2)
+                        LineWords(text: line.de, meaning: meaning)
                     }
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                }
-                if !gloss.isEmpty {
-                    Text(gloss)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.ink)
-                        .padding(12)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.ok, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
                 Text(scene.question).font(.title3.bold())
                 ForEach(scene.options.indices, id: \.self) { index in
@@ -259,7 +245,7 @@ struct SceneStudyView: View {
             return "\(hit.de) — \(hit.pl)"
         }
         if let known = Self.bits[bare] { return "\(token) — \(known)" }
-        return "Nie mam osobnego tłumaczenia dla „\(token)”. Pod spodem jest całe zdanie."
+        return "Nie mam osobnego tłumaczenia dla „\(token)”."
     }
 
     private static let bits = [
@@ -304,27 +290,32 @@ struct SceneStudyView: View {
 
 struct LineWords: View {
     let text: String
-    var selected: String = ""
-    let tap: (String) -> Void
+    let meaning: (String) -> String
+    @State private var open: String?
 
     var body: some View {
-        WordFlow(spacing: 6) {
+        WordFlow(spacing: 5) {
             ForEach(Array(text.split(separator: " ").enumerated()), id: \.offset) { _, part in
                 let raw = String(part)
-                let on = !selected.isEmpty && bare(raw) == bare(selected)
-                Button(raw) { tap(raw) }
-                    .buttonStyle(.plain)
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(on ? Theme.ink : .white)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 4)
-                    .background(on ? Theme.ok : Color.white.opacity(0.08), in: Capsule())
+                Button {
+                    open = raw
+                } label: {
+                    Text(raw)
+                        .font(.body)
+                        .foregroundStyle(.white)
+                        .underline(open == raw, color: Theme.ok)
+                }
+                .buttonStyle(.plain)
+                .popover(isPresented: Binding(get: { open == raw }, set: { if !$0 { open = nil } })) {
+                    Text(meaning(raw))
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(Theme.text)
+                        .padding(16)
+                        .frame(maxWidth: 260)
+                        .presentationCompactAdaptation(.popover)
+                }
             }
         }
-    }
-
-    private func bare(_ token: String) -> String {
-        token.lowercased().filter { $0.isLetter || "äöüß".contains($0) }
     }
 }
 
