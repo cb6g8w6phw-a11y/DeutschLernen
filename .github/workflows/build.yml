@@ -23,9 +23,12 @@ jobs:
 
       - name: Build (unsigned)
         run: |
+          set -o pipefail
+          export NSUnbufferedIO=YES
           xcodebuild -project DeutschLernen.xcodeproj -scheme DeutschLernen \
             -configuration Release -sdk iphoneos -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build
 
       - name: Package IPA
         run: |

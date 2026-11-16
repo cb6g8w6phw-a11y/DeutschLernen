@@ -8,6 +8,18 @@ struct ChatMsg: Identifiable {
     var fix: String = ""
 }
 
+struct ChatWord: Identifiable {
+    var id: String { de }
+    let de: String
+    let pl: String
+}
+
+struct ChatTopic: Identifiable {
+    var id: String { title }
+    let title: String
+    let prompt: String
+}
+
 struct ChatView: View {
     @EnvironmentObject var store: LearningStore
     @Environment(\.dismiss) private var dismiss
@@ -16,15 +28,15 @@ struct ChatView: View {
     @State private var loading = false
     @State private var saved: Set<String> = []
 
-    private let topics: [(title: String, prompt: String)] = [
-        ("Sklep", "Zacznij krótką rozmowę w sklepie. Chcę kupić chleb i zapłacić kartą."),
-        ("Lekarz", "Zacznij rozmowę u lekarza. Boli mnie gardło i potrzebuję zwolnienia."),
-        ("Szef", "Zacznij rozmowę z szefem. Spóźnię się, bo autobus nie przyjechał."),
-        ("Dojazd", "Zacznij rozmowę na przystanku. Nie wiem, który autobus jechać."),
-        ("Urząd", "Zacznij rozmowę w urzędzie. Muszę umówić termin i mam dowód."),
-        ("Mieszkanie", "Zacznij rozmowę z wynajmującym. Ogrzewanie nie działa."),
-        ("Sąsiad", "Zacznij grzeczną rozmowę z sąsiadem. Jest za głośno."),
-        ("Budowa", "Zacznij rozmowę na budowie. Szef kazał przynieść drabinę.")
+    private let topics: [ChatTopic] = [
+        ChatTopic(title: "Sklep", prompt: "Zacznij krótką rozmowę w sklepie. Chcę kupić chleb i zapłacić kartą."),
+        ChatTopic(title: "Lekarz", prompt: "Zacznij rozmowę u lekarza. Boli mnie gardło i potrzebuję zwolnienia."),
+        ChatTopic(title: "Szef", prompt: "Zacznij rozmowę z szefem. Spóźnię się, bo autobus nie przyjechał."),
+        ChatTopic(title: "Dojazd", prompt: "Zacznij rozmowę na przystanku. Nie wiem, który autobus jechać."),
+        ChatTopic(title: "Urząd", prompt: "Zacznij rozmowę w urzędzie. Muszę umówić termin i mam dowód."),
+        ChatTopic(title: "Mieszkanie", prompt: "Zacznij rozmowę z wynajmującym. Ogrzewanie nie działa."),
+        ChatTopic(title: "Sąsiad", prompt: "Zacznij grzeczną rozmowę z sąsiadem. Jest za głośno."),
+        ChatTopic(title: "Budowa", prompt: "Zacznij rozmowę na budowie. Szef kazał przynieść drabinę.")
     ]
 
     var body: some View {
@@ -48,7 +60,7 @@ struct ChatView: View {
                         }
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
-                                ForEach(topics, id: \.title) { topic in
+                                ForEach(topics) { topic in
                                     Button(topic.title) { Task { await send(topic.prompt) } }
                                         .font(.subheadline.weight(.semibold))
                                         .padding(.horizontal, 12)
@@ -130,7 +142,7 @@ struct ChatView: View {
                     if !piece.polish.isEmpty {
                         Text(piece.polish).font(.subheadline).foregroundStyle(Theme.text2)
                     }
-                    ForEach(piece.words, id: \.de) { word in
+                    ForEach(piece.words) { word in
                         HStack {
                             Text(word.de).font(.subheadline.weight(.semibold))
                             Text(word.pl).font(.subheadline).foregroundStyle(Theme.text2)
@@ -204,22 +216,19 @@ struct ChatView: View {
 struct ChatPiece {
     var german: String
     var polish: String
-    var words: [(de: String, pl: String)]
+    var words: [ChatWord]
 
     static func parse(_ raw: String) -> ChatPiece {
         let text = raw.replacingOccurrences(of: "**", with: "").replacingOccurrences(of: "*", with: "")
         let german = section(text, start: "Po niemiecku:", ends: ["Po polsku:", "Słówka:"])
         let polish = section(text, start: "Po polsku:", ends: ["Słówka:", "Po niemiecku:"])
         let wordsRaw = section(text, start: "Słówka:", ends: [])
-        let words = wordsRaw.split(separator: "\n").compactMap { line -> (de: String, pl: String)? in
+        let words = wordsRaw.split(separator: "\n").compactMap { line -> ChatWord? in
             let parts = line.split(separator: "—", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
-            if parts.count < 2 {
-                let dash = line.split(separator: "-", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
-                guard dash.count == 2, !dash[0].isEmpty else { return nil }
-                return (dash[0], dash[1])
-            }
-            guard !parts[0].isEmpty else { return nil }
-            return (parts[0], parts[1])
+            if parts.count == 2, !parts[0].isEmpty { return ChatWord(de: parts[0], pl: parts[1]) }
+            let dash = line.split(separator: "-", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
+            guard dash.count == 2, !dash[0].isEmpty else { return nil }
+            return ChatWord(de: dash[0], pl: dash[1])
         }
         if german.isEmpty && polish.isEmpty {
             return ChatPiece(german: text.trimmingCharacters(in: .whitespacesAndNewlines), polish: "", words: [])
