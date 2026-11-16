@@ -99,10 +99,10 @@ struct SettingsView: View {
                         .onChange(of: gemini) { _, value in Secret.save(value, "geminiKey") }
                     Link("Klucz Gemini: aistudio.google.com/apikey",
                          destination: URL(string: "https://aistudio.google.com/apikey")!)
-                    Text("Zapas. Aplikacja użyje go, gdy Groq nie odpowie.")
+                    Text("Czat Gemini używa tego klucza jako pierwszego. W aplikacji nie ma limitu wiadomości ani subskrypcji. Obowiązuje tylko darmowy limit konta Google.")
                         .font(.footnote).foregroundStyle(.secondary)
                 } header: {
-                    Text("Gemini — zapas")
+                    Text("Gemini — czat")
                 }
                 Section {
                     Button {

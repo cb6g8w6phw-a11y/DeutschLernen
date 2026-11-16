@@ -285,6 +285,7 @@ struct TodayView: View {
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                         trainTile("Słuchanie", "Zrozum szybki niemiecki", "headphones", dayPlan.blocks.first { $0.id == "listen" }?.minutes ?? 10) { ListenView() }
                         trainTile("Rozmowa AI", "Rozmawiaj po niemiecku", "mic", dayPlan.blocks.first { $0.id == "talk" }?.minutes ?? 10) { TutorView() }
+                        trainTile("Czat Gemini", "Rozmowa bez limitu", "text.bubble", 0) { ChatView() }
                         trainTile("Praca", "Szef i współpracownicy", "helmet", dayPlan.blocks.first { $0.id == "work" }?.minutes ?? 10) { WorkHubView() }
                         trainTile("Codzienne życie", "Niemiecki poza pracą", "house", dayPlan.blocks.first { $0.id == "life" }?.minutes ?? 10) { DailySituationsView() }
                     }
@@ -364,7 +365,7 @@ struct TodayView: View {
                     .font(.subheadline)
                     .foregroundStyle(Theme.text2)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("\(minutes) minut")
+                Text(minutes > 0 ? "\(minutes) minut" : "bez limitu")
                     .font(.caption.weight(.semibold))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)

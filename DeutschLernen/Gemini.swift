@@ -27,12 +27,19 @@ struct GeminiMessage {
     let text: String
 }
 
+enum GeminiRoute { case groqFirst, geminiFirst }
+
 enum Gemini {
-    static func send(messages: [GeminiMessage], system: String, json: Bool = false) async throws -> String {
+    static func send(messages: [GeminiMessage], system: String, json: Bool = false, route: GeminiRoute = .groqFirst) async throws -> String {
         let keys = resolved()
         guard !keys.groq.isEmpty || !keys.gemini.isEmpty else { throw GeminiError.noKey }
 
         var last: Error = GeminiError.badResponse
+        if route == .geminiFirst {
+            if let text = try? await geminiChain(key: keys.gemini, messages: messages, system: system, json: json) {
+                return text
+            }
+        }
         if !keys.groq.isEmpty {
             let listed = await groqModels(key: keys.groq)
             let models = listed.isEmpty ? ["openai/gpt-oss-20b", "openai/gpt-oss-120b"] : listed
@@ -48,11 +55,32 @@ enum Gemini {
                 }
             }
         }
-        if !keys.gemini.isEmpty {
-            for model in ["gemini-2.0-flash", "gemini-3.8-flash"] {
-                do { return try await geminiSend(key: keys.gemini, model: model, messages: messages, system: system, json: json) }
-                catch { last = error }
+        if route != .geminiFirst, let text = try? await geminiChain(key: keys.gemini, messages: messages, system: system, json: json) {
+            return text
+        }
+        if route == .geminiFirst, keys.gemini.isEmpty == false {
+            do {
+                return try await geminiChainThrowing(key: keys.gemini, messages: messages, system: system, json: json)
+            } catch {
+                last = error
             }
+        }
+        throw last
+    }
+
+    private static let geminiModels = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-flash-latest", "gemini-3.8-flash"]
+
+    private static func geminiChain(key: String, messages: [GeminiMessage], system: String, json: Bool) async throws -> String? {
+        guard !key.isEmpty else { return nil }
+        do { return try await geminiChainThrowing(key: key, messages: messages, system: system, json: json) }
+        catch { return nil }
+    }
+
+    private static func geminiChainThrowing(key: String, messages: [GeminiMessage], system: String, json: Bool) async throws -> String {
+        var last: Error = GeminiError.badResponse
+        for model in geminiModels {
+            do { return try await geminiSend(key: key, model: model, messages: messages, system: system, json: json) }
+            catch { last = error }
         }
         throw last
     }

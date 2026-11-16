@@ -10,141 +10,161 @@ struct ChatMsg: Identifiable {
 
 struct ChatView: View {
     @EnvironmentObject var store: LearningStore
+    @Environment(\.dismiss) private var dismiss
     @State private var messages: [ChatMsg] = []
     @State private var input = ""
     @State private var loading = false
+    @State private var saved: Set<String> = []
+
+    private let topics: [(title: String, prompt: String)] = [
+        ("Sklep", "Zacznij krótką rozmowę w sklepie. Chcę kupić chleb i zapłacić kartą."),
+        ("Lekarz", "Zacznij rozmowę u lekarza. Boli mnie gardło i potrzebuję zwolnienia."),
+        ("Szef", "Zacznij rozmowę z szefem. Spóźnię się, bo autobus nie przyjechał."),
+        ("Dojazd", "Zacznij rozmowę na przystanku. Nie wiem, który autobus jechać."),
+        ("Urząd", "Zacznij rozmowę w urzędzie. Muszę umówić termin i mam dowód."),
+        ("Mieszkanie", "Zacznij rozmowę z wynajmującym. Ogrzewanie nie działa."),
+        ("Sąsiad", "Zacznij grzeczną rozmowę z sąsiadem. Jest za głośno."),
+        ("Budowa", "Zacznij rozmowę na budowie. Szef kazał przynieść drabinę.")
+    ]
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 12) {
-                            if messages.isEmpty {
-                                Text("Napisz po niemiecku albo po polsku. Poprawię i dopasuję rozmowę do tego, co już umiesz. Na przykład: idę do lekarza, boli mnie nos.")
-                                    .foregroundStyle(.secondary)
-                                    .padding(16)
-                                    .liquidGlass(radius: 22)
+        VStack(spacing: 0) {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Rozmowa bez limitu w aplikacji. Piszesz po polsku albo po niemiecku, Gemini odpowiada krótkim niemieckim zdaniem, tłumaczeniem i słówkami.")
+                            .font(.subheadline)
+                            .foregroundStyle(Theme.text2)
+                        if Secret.load("geminiKey").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            NavigationLink { SettingsView() } label: {
+                                Text("Wklej darmowy klucz Gemini w ustawieniach. Karta nie jest potrzebna. Bez klucza czat spróbuje Groq.")
+                                    .font(.footnote)
+                                    .foregroundStyle(Theme.ink)
+                                    .padding(12)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(Theme.ok, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                             }
-                            ForEach(messages) { m in
-                                Text(Self.plain(m.text))
-                                    .foregroundStyle(.primary)
-                                    .padding(14)
-                                    .liquidGlass(
-                                        radius: 22,
-                                        tint: m.role == "user" ? Ink.brass.opacity(0.45) : nil
-                                    )
-                                    .frame(maxWidth: .infinity, alignment: m.role == "user" ? .trailing : .leading)
-                                    .id(m.id)
-                            }
-                            if loading {
-                                Text("Łączę… jeśli klucz jest zły, za chwilę zobaczysz błąd.")
-                                    .font(.footnote).foregroundStyle(.secondary)
-                                ProgressView().padding()
+                            .buttonStyle(.plain)
+                        }
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(topics, id: \.title) { topic in
+                                    Button(topic.title) { Task { await send(topic.prompt) } }
+                                        .font(.subheadline.weight(.semibold))
+                                        .padding(.horizontal, 12)
+                                        .frame(minHeight: 44)
+                                        .background(Color.white.opacity(0.08), in: Capsule())
+                                        .foregroundStyle(.white)
+                                }
                             }
                         }
-                        .padding()
+                        ForEach(messages) { message in
+                            bubble(message).id(message.id)
+                        }
+                        if loading {
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                Text("Gemini układa odpowiedź…").font(.footnote).foregroundStyle(Theme.text2)
+                            }
+                        }
                     }
-                    .scrollDismissesKeyboard(.interactively)
-                    .onChange(of: messages.count) { _, _ in
-                        if let last = messages.last { proxy.scrollTo(last.id, anchor: .bottom) }
-                    }
+                    .padding(16)
+                    .padding(.bottom, 12)
                 }
-                HStack(spacing: 10) {
-                    TextField("Wiadomość…", text: $input, axis: .vertical)
-                        .lineLimit(1...4)
-                        .submitLabel(.send)
-                        .onSubmit { Task { await send() } }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                    Button { Keyboard.hide() } label: {
-                        Image(systemName: "keyboard.chevron.compact.down")
-                            .frame(width: 44, height: 44)
-                    }
-                    .buttonStyle(.glass)
-                    Button { Task { await send() } } label: {
-                        Image(systemName: "paperplane.fill")
-                            .frame(width: 44, height: 44)
-                    }
-                    .buttonStyle(MatteGlassButton())
-                    .tint(Ink.brass)
-                    .disabled(loading || input.trimmingCharacters(in: .whitespaces).isEmpty)
+                .scrollDismissesKeyboard(.interactively)
+                .onChange(of: messages.count) { _, _ in
+                    if let last = messages.last { proxy.scrollTo(last.id, anchor: .bottom) }
                 }
-                .padding(10)
-                .liquidGlass(radius: 28, interactive: true)
-                .padding(.horizontal)
-                .padding(.bottom, 8)
             }
-            .navigationTitle("Czat")
-            .containerBackground(for: .navigation) { NightGlow() }
-            .toolbarBackground(.hidden, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cofnij") { undo() }
-                        .buttonStyle(.glass)
-                        .disabled(messages.isEmpty || loading)
+            HStack(spacing: 8) {
+                TextField("Po polsku albo po niemiecku", text: $input, axis: .vertical)
+                    .lineLimit(1...4)
+                    .textFieldStyle(.roundedBorder)
+                Button { Task { await send(input) } } label: {
+                    Image(systemName: "paperplane.fill")
+                        .frame(width: 44, height: 44)
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Wyczyść") { messages = [] }
-                        .buttonStyle(.glass)
-                        .disabled(messages.isEmpty)
-                }
-                ToolbarItemGroup(placement: .keyboard) {
-                    Button("Cofnij") { undo() }
-                        .disabled(messages.isEmpty || loading)
-                    Spacer()
-                    Button("Zamknij") { Keyboard.hide() }
-                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Theme.ink)
+                .background(Theme.ok, in: Circle())
+                .disabled(loading || input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+        }
+        .navigationTitle("Czat Gemini")
+        .screenChrome()
+        .containerBackground(for: .navigation) { Color.black }
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Wróć") { dismiss() }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Wyczyść") { messages = [] }
+                    .disabled(messages.isEmpty)
             }
         }
     }
 
-    private func systemPrompt() -> String {
-        """
-        Jesteś cierpliwym nauczycielem niemieckiego dla Polaka na poziomie A1/A2. Uczy się niemieckiego do codziennego życia i pracy w Niemczech.
-        Każda odpowiedź ma DOKŁADNIE trzy części, w tej kolejności. Języków nie mieszaj.
-
-        Po niemiecku:
-        Cała odpowiedź tylko po niemiecku. Krótkie zdania, poziom A2. Na końcu jedno krótkie pytanie. Zero polskich słów, zero tłumaczeń w nawiasie, zero listy słówek.
-
-        Po polsku:
-        Dokładne tłumaczenie CAŁEGO tekstu z części „Po niemiecku”, tylko po polsku. Pytanie też przetłumacz. Ta część nigdy nie jest po niemiecku.
-
-        Słówka:
-        Dokładnie 2 albo 3 nowe, przydatne słowa. Każde w osobnej linii: niemieckie słowo — polskie znaczenie. Nic więcej.
-
-        Zakazy:
-        - Nie wstawiaj polskiego do części niemieckiej.
-        - Nie pisz części „Po polsku” po niemiecku.
-        - Nie używaj markdownu, gwiazdek ani pogrubień.
-        - Jeśli użytkownik pisze po polsku, odpowiedz na treść po niemiecku, a pod spodem daj pełne polskie tłumaczenie tej odpowiedzi.
-        - Jeśli użytkownik zrobi błąd po niemiecku, w części niemieckiej użyj poprawnej formy, a w części polskiej jednym zdaniem napisz, co było nie tak.
-
-        Wzór:
-        Po niemiecku:
-        Du solltest einen Arzt aufsuchen. Der Arzt kann dir ein Medikament geben. Wie heißt dein Hausarzt?
-
-        Po polsku:
-        Powinieneś iść do lekarza. Lekarz może ci dać lek. Jak nazywa się twój lekarz rodzinny?
-
-        Słówka:
-        der Arzt — lekarz
-        das Medikament — lek
-        die Infektion — infekcja
-
-        Dopasuj temat i trudność do postępów ucznia:
-        \(store.progressSummary())
-        """
+    @ViewBuilder
+    private func bubble(_ message: ChatMsg) -> some View {
+        let piece = message.role == "user" ? ChatPiece(german: message.text, polish: "", words: []) : ChatPiece.parse(message.text)
+        VStack(alignment: message.role == "user" ? .trailing : .leading, spacing: 8) {
+            if message.role == "user" {
+                Text(message.text)
+                    .padding(12)
+                    .background(Theme.ok.opacity(0.22), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            } else if piece.german.isEmpty {
+                Text(message.text)
+                    .padding(12)
+                    .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            } else {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(piece.german).font(.body.weight(.semibold))
+                    Button { Talk.de(piece.german, rate: 0.46) } label: {
+                        Label("Odsłuchaj", systemImage: "speaker.wave.2")
+                            .font(.caption.weight(.semibold))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Theme.ok)
+                    if !piece.polish.isEmpty {
+                        Text(piece.polish).font(.subheadline).foregroundStyle(Theme.text2)
+                    }
+                    ForEach(piece.words, id: \.de) { word in
+                        HStack {
+                            Text(word.de).font(.subheadline.weight(.semibold))
+                            Text(word.pl).font(.subheadline).foregroundStyle(Theme.text2)
+                            Spacer()
+                            Button(saved.contains(word.de) ? "Zapisane" : "Do słówek") {
+                                keep(word.de, word.pl, piece.german, piece.polish)
+                            }
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(Theme.ink)
+                            .padding(.horizontal, 10)
+                            .frame(minHeight: 32)
+                            .background(Theme.ok, in: Capsule())
+                            .disabled(saved.contains(word.de))
+                        }
+                    }
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: message.role == "user" ? .trailing : .leading)
     }
 
-    private static func plain(_ text: String) -> String {
-        text.replacingOccurrences(of: "**", with: "")
-            .replacingOccurrences(of: "*", with: "")
+    private func keep(_ de: String, _ pl: String, _ german: String, _ polish: String) {
+        let card = Vocab(de: de, pl: pl, plural: "", ex: german, exPl: polish, topic: "Czat", kind: "Z czatu", note: "")
+        VocabBook.saveMine(card)
+        store.pinForReview(Word(de: de, pl: pl, ex: german.isEmpty ? de : german, exPl: polish.isEmpty ? pl : polish, topic: "Czat", level: "A1"))
+        saved.insert(de)
     }
 
-    private func send() async {
-        let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return }
+    private func send(_ raw: String) async {
+        let text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty, !loading else { return }
         input = ""
         Keyboard.hide()
         messages.append(ChatMsg(role: "user", text: text))
@@ -152,16 +172,69 @@ struct ChatView: View {
         defer { loading = false }
         do {
             let history = messages.map { GeminiMessage(role: $0.role, text: $0.text) }
-            let reply = try await Gemini.send(messages: history, system: systemPrompt())
+            let reply = try await Gemini.send(messages: history, system: systemPrompt(), route: .geminiFirst)
             messages.append(ChatMsg(role: "model", text: reply))
+            store.noteSkill("speak", ok: true)
         } catch {
             messages.append(ChatMsg(role: "model", text: error.localizedDescription))
         }
     }
 
-    private func undo() {
-        guard !messages.isEmpty else { return }
-        messages.removeLast()
-        if messages.last?.role == "user" { messages.removeLast() }
+    private func systemPrompt() -> String {
+        """
+        Jesteś cierpliwym nauczycielem niemieckiego dla Polaka na poziomie A1. Uczy się do pracy na budowie i do życia codziennego: sklep, lekarz, szef, autobus, urząd, mieszkanie.
+        Nie ma limitu długości rozmowy. Każda odpowiedź ma DOKŁADNIE trzy części, w tej kolejności, bez markdownu i bez gwiazdek.
+
+        Po niemiecku:
+        Dwa albo trzy krótkie zdania, poziom A1. Na końcu jedno krótkie pytanie. Zero polskich słów.
+
+        Po polsku:
+        Dokładne tłumaczenie całego tekstu z części niemieckiej. Jednym zdaniem popraw błąd użytkownika, jeśli był.
+
+        Słówka:
+        Dwa albo trzy słowa. Każde w osobnej linii: niemieckie słowo — polskie znaczenie.
+
+        Jeśli użytkownik pisze po polsku, odpowiedz na tę sytuację po niemiecku, tak jak w prawdziwej rozmowie.
+        Postęp ucznia:
+        \(store.progressSummary())
+        """
+    }
+}
+
+struct ChatPiece {
+    var german: String
+    var polish: String
+    var words: [(de: String, pl: String)]
+
+    static func parse(_ raw: String) -> ChatPiece {
+        let text = raw.replacingOccurrences(of: "**", with: "").replacingOccurrences(of: "*", with: "")
+        let german = section(text, start: "Po niemiecku:", ends: ["Po polsku:", "Słówka:"])
+        let polish = section(text, start: "Po polsku:", ends: ["Słówka:", "Po niemiecku:"])
+        let wordsRaw = section(text, start: "Słówka:", ends: [])
+        let words = wordsRaw.split(separator: "\n").compactMap { line -> (de: String, pl: String)? in
+            let parts = line.split(separator: "—", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
+            if parts.count < 2 {
+                let dash = line.split(separator: "-", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
+                guard dash.count == 2, !dash[0].isEmpty else { return nil }
+                return (dash[0], dash[1])
+            }
+            guard !parts[0].isEmpty else { return nil }
+            return (parts[0], parts[1])
+        }
+        if german.isEmpty && polish.isEmpty {
+            return ChatPiece(german: text.trimmingCharacters(in: .whitespacesAndNewlines), polish: "", words: [])
+        }
+        return ChatPiece(german: german, polish: polish, words: words)
+    }
+
+    private static func section(_ text: String, start: String, ends: [String]) -> String {
+        guard let range = text.range(of: start) else { return "" }
+        var rest = text[range.upperBound...]
+        var cut = rest.endIndex
+        for end in ends {
+            if let found = rest.range(of: end) { cut = min(cut, found.lowerBound) }
+        }
+        rest = rest[..<cut]
+        return rest.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

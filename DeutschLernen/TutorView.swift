@@ -138,7 +138,7 @@ struct TutorView: View {
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    NavigationLink("Pismo") { ChatView() }
+                    NavigationLink("Czat") { ChatView() }
                         .font(.system(size: 15, weight: .semibold, design: .rounded))
                 }
                 ToolbarItem(placement: .principal) {

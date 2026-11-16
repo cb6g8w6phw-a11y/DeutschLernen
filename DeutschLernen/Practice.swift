@@ -449,6 +449,7 @@ private struct HubList: View {
 private struct TalkHub: View {
     var body: some View {
         HubList(title: "Rozmowy i teksty", items: [
+            HubItem(id: "geminichat", title: "Czat Gemini", icon: "bubble.left.and.text.bubble.right.fill", screen: AnyView(ChatView())),
             HubItem(id: "scenes", title: "Mini dialogi", icon: "bubble.left.and.bubble.right.fill", screen: AnyView(SceneLibraryView())),
             HubItem(id: "texts", title: "Teksty i historie", icon: "book.closed.fill", screen: AnyView(TextLibraryView())),
             HubItem(id: "picture", title: "Opisz obrazek", icon: "photo", screen: AnyView(PictureTalk())),
