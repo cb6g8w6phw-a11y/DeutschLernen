@@ -129,36 +129,70 @@ enum VocabBook {
 
     static let topics = ["Budowa", "Narzędzia", "Materiały", "Praca", "Codzienne życie", "Sklep", "Lekarz", "Urząd", "Mieszkanie", "Jedzenie", "Transport", "Czasowniki", "Przymiotniki", "Zwroty", "Moje"]
 
-    static func today(_ store: LearningStore, limit: Int, topic: String) -> [Vocab] {
-        let cap = max(limit, 1)
-        let key = "wortToday-\(LearningStore.dayKey())-\(topic)-\(cap)"
-        let pool = core(store, topic: topic)
-        let map = Dictionary(uniqueKeysWithValues: pool.map { ($0.de, $0) })
-        let saved = UserDefaults.standard.stringArray(forKey: key) ?? []
-        var kept = saved.compactMap { map[$0] }
-        if kept.count < cap {
-            let used = Set(kept.map(\.de))
-            let rest = pool.filter { !used.contains($0.de) }
-            let backlog = Self.due(store).count
-            let allowNew = backlog < 25
-            let fresh = allowNew ? rest.filter { tier(store, $0) == 0 }.shuffled() : []
-            let overdue = rest.filter { card in
-                guard let stat = store.stats[card.de] else { return false }
-                return stat.due <= Date() && (stat.correct + stat.wrong + stat.reps) > 0
-            }
-            let learning = rest.filter { tier(store, $0) == 1 }.shuffled()
-            let known = rest.filter { tier(store, $0) == 2 }.shuffled()
-            kept.append(contentsOf: (overdue + fresh + learning + known).prefix(cap - kept.count))
-        }
-        let pick = Array(kept.prefix(cap))
-        if !pick.isEmpty { UserDefaults.standard.set(pick.map(\.de), forKey: key) }
-        return pick
+    static func band(_ card: Vocab) -> String {
+        let note = card.note.uppercased()
+        if ["A1", "A2", "B1", "B2"].contains(note) { return note }
+        let a1: Set<String> = ["das Wasser", "das Brot", "der Apfel", "die Milch", "das Brötchen", "der Bus", "der Zug", "die Tür", "der Schlüssel", "der Chef", "die Pause", "machen", "sagen", "gehen", "kommen", "schnell", "fertig", "kaputt", "Ich bin gleich da."]
+        let b1: Set<String> = ["die Nebenkosten", "die Kaution", "die Überweisung", "die Krankenkasse", "besprechen", "der Vermieter"]
+        if a1.contains(card.de) { return "A1" }
+        if b1.contains(card.de) { return "B1" }
+        return "A2"
     }
 
-    private static func tier(_ store: LearningStore, _ card: Vocab) -> Int {
-        let s = stat(store, card)
-        if s.correct + s.wrong + s.reps == 0 { return 0 }
-        return FSRS.mastered(s) ? 2 : 1
+    static func didStudy(_ de: String, ok: Bool) {
+        guard ok else { return }
+        var list = UserDefaults.standard.stringArray(forKey: "wortRecent") ?? []
+        list.removeAll { $0 == de }
+        list.insert(de, at: 0)
+        UserDefaults.standard.set(Array(list.prefix(160)), forKey: "wortRecent")
+    }
+
+    static func today(_ store: LearningStore, limit: Int, topic: String, band wanted: String = "Wszystkie", mode: String = "smart") -> [Vocab] {
+        let cap = max(limit, 1)
+        var pool = core(store, topic: topic)
+        if wanted != "Wszystkie" && wanted != "Wszystko" {
+            pool = pool.filter { band($0) == wanted }
+        }
+        let recent = Set(UserDefaults.standard.stringArray(forKey: "wortRecent") ?? [])
+        let now = Date()
+        func seen(_ card: Vocab) -> Bool {
+            let s = stat(store, card)
+            return s.correct + s.wrong + s.reps > 0
+        }
+        func overdue(_ card: Vocab) -> Bool {
+            guard seen(card) else { return false }
+            return stat(store, card).due <= now
+        }
+        func hard(_ card: Vocab) -> Bool {
+            let s = stat(store, card)
+            return seen(card) && s.wrong > s.correct
+        }
+        var pick: [Vocab] = []
+        var used = Set<String>()
+        func add(_ cards: [Vocab]) {
+            for card in cards where pick.count < cap && used.insert(card.de).inserted {
+                pick.append(card)
+            }
+        }
+        switch mode {
+        case "review":
+            add(pool.filter(overdue).shuffled())
+            add(pool.filter { hard($0) && !recent.contains($0.de) }.shuffled())
+        case "new":
+            add(pool.filter { !seen($0) && !recent.contains($0.de) }.shuffled())
+            add(pool.filter { !seen($0) }.shuffled())
+        case "hard":
+            add(pool.filter(hard).shuffled())
+            add(pool.filter(overdue).shuffled())
+        default:
+            add(pool.filter { overdue($0) || hard($0) }.shuffled())
+            if due(store).count < 25 {
+                add(pool.filter { !seen($0) && !recent.contains($0.de) }.shuffled())
+            }
+            add(pool.filter { !FSRS.mastered(stat(store, $0)) && !recent.contains($0.de) }.shuffled())
+            add(pool.filter { !FSRS.mastered(stat(store, $0)) }.shuffled())
+        }
+        return pick
     }
 
     static func core(_ store: LearningStore, topic: String) -> [Vocab] {
@@ -284,6 +318,10 @@ struct WortHome: View {
                     .padding(14)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Theme.ok.opacity(0.16), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                NavigationLink { WortPlan() } label: {
+                    Text("Zacznij naukę").primaryButton()
                 }
                 .buttonStyle(.plain)
                 SkillToday()
@@ -636,6 +674,7 @@ struct WortSession: View {
         banner = ""
         guard index < deck.count else { return }
         if !wasOK { again(deck[index]) }
+        else { VocabBook.didStudy(deck[index].de, ok: true) }
         index += 1
         prepare()
     }
