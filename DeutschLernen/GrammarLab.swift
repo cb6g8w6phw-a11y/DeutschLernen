@@ -222,7 +222,7 @@ struct GrammarLessonView: View {
                 }
                 .frame(maxWidth: .infinity, minHeight: 48)
                 .foregroundStyle(.white)
-                .background(index == lesson.answer && picked != nil ? Theme.ok.opacity(0.8) : Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .background(grammarFill(index), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
             if let picked {
                 MerkeBox(text: picked == lesson.answer ? "Dobrze. Wzorzec: \(lesson.pattern)" : "Jeszcze nie. \(lesson.explain)")
@@ -233,6 +233,13 @@ struct GrammarLessonView: View {
                 }
             }
         }
+    }
+
+    private func grammarFill(_ index: Int) -> Color {
+        guard picked != nil else { return Color.white.opacity(0.08) }
+        if index == lesson.answer { return Theme.ok.opacity(0.85) }
+        if index == picked { return Theme.bad.opacity(0.8) }
+        return Color.white.opacity(0.08)
     }
 
     private var orderStep: some View {

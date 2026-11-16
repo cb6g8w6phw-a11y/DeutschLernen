@@ -398,6 +398,7 @@ struct WortSession: View {
     @State private var choices: [String] = []
     @State private var banner = ""
     @State private var showHint = false
+    @State private var chosen: String?
 
     private var card: Vocab? { index < deck.count ? deck[index] : nil }
 
@@ -419,8 +420,20 @@ struct WortSession: View {
                         WortCard(card: card, show: true)
                         Button("Znam") { mark(card, ok: true) }.primaryButton()
                         Button("Jeszcze nie") { mark(card, ok: false) }.buttonStyle(.glass)
-                    case .review, .cards:
-                        Button { show.toggle() } label: { WortCard(card: face(card), show: show || mode == .review) }
+                    case .review:
+                        Text(card.de)
+                            .font(.system(size: 34, weight: .bold))
+                            .foregroundStyle(Theme.ok)
+                            .frame(maxWidth: .infinity)
+                        if !card.ex.isEmpty {
+                            Text(card.ex)
+                                .font(.body)
+                                .foregroundStyle(Theme.text2)
+                                .frame(maxWidth: .infinity)
+                        }
+                        reviewOptions(card)
+                    case .cards:
+                        Button { show.toggle() } label: { WortCard(card: face(card), show: show) }
                             .buttonStyle(.plain)
                         if mode == .cards {
                             Button(flipToPolish ? "Pokazuj najpierw niemiecki" : "Pokazuj najpierw polski") { flipToPolish.toggle(); show = false }
@@ -447,7 +460,6 @@ struct WortSession: View {
                             .autocorrectionDisabled()
                         Button("Sprawdź") { checkType(card) }.primaryButton().disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
                         if !note.isEmpty { Text(note).foregroundStyle(Theme.text2) }
-                        if showHint { VocabHintCard(card: card) }
                     case .learn:
                         WortDrill(topic: topic, limit: limit)
                     }
@@ -462,6 +474,24 @@ struct WortSession: View {
         .containerBackground(for: .navigation) { Color.black }
         .onAppear(perform: load)
         .onDisappear { Talk.stop() }
+        .sheet(isPresented: $showHint) {
+            if let card {
+                VStack(alignment: .leading, spacing: 16) {
+                    VocabHintCard(card: card)
+                    Button("Dalej") {
+                        showHint = false
+                        advance()
+                    }
+                    .primaryButton()
+                }
+                .padding(20)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .background(Color.black)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(Color.black)
+            }
+        }
     }
 
     private var title: String {
@@ -493,8 +523,39 @@ struct WortSession: View {
     private func prepare() {
         guard index < deck.count else { choices = []; return }
         let card = deck[index]
-        let wrong = VocabBook.all(store).filter { $0.pl != card.pl }.shuffled().prefix(3).map(\.pl)
+        let wrong = VocabBook.all(store).filter { $0.pl != card.pl }.shuffled().prefix(2).map(\.pl)
         choices = ([card.pl] + wrong).shuffled()
+    }
+
+    private func reviewOptions(_ card: Vocab) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(choices, id: \.self) { choice in
+                Button(choice) {
+                    guard picked == nil else { return }
+                    picked = 1
+                    chosen = choice
+                    let ok = choice == card.pl
+                    showHint = !ok
+                    mark(card, ok: ok, advance: false)
+                    note = ok ? "Dobrze." : "Poprawnie: \(card.pl)"
+                }
+                .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
+                .padding(.horizontal, 14)
+                .foregroundStyle(.white)
+                .background(reviewFill(choice, card), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .disabled(picked != nil && choice != card.pl && note == "Dobrze.")
+            }
+            if picked != nil, !showHint {
+                Button("Dalej") { advance() }.primaryButton()
+            }
+        }
+    }
+
+    private func reviewFill(_ choice: String, _ card: Vocab) -> Color {
+        guard picked != nil else { return Color.white.opacity(0.08) }
+        if choice == card.pl { return Theme.ok.opacity(0.85) }
+        if choice == chosen { return Theme.bad.opacity(0.8) }
+        return Color.white.opacity(0.08)
     }
 
     private func options(_ card: Vocab, prompt: String) -> some View {
@@ -504,6 +565,7 @@ struct WortSession: View {
                 Button(choice) {
                     guard picked == nil else { return }
                     picked = 1
+                    chosen = choice
                     let ok = choice == card.pl
                     showHint = !ok
                     mark(card, ok: ok, advance: false)
@@ -512,11 +574,10 @@ struct WortSession: View {
                 .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
                 .padding(.horizontal, 12)
                 .foregroundStyle(.white)
-                .background(choice == card.pl && picked != nil ? Theme.ok.opacity(0.8) : (picked != nil && choice != card.pl ? Color.white.opacity(0.08) : Color.white.opacity(0.08)), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .background(reviewFill(choice, card), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
             if picked != nil {
                 Text(note).foregroundStyle(Theme.text2)
-                if showHint { VocabHintCard(card: card) }
                 Text(card.de).font(.headline)
                 if !card.plural.isEmpty { Text(card.plural).foregroundStyle(Theme.text2) }
                 Button("Dalej") { advance() }.primaryButton()
@@ -581,6 +642,7 @@ struct WortSession: View {
         heard = false
         typed = ""
         showHint = false
+        chosen = nil
         if !keepIndex { index += 1 }
         if index > deck.count { index = deck.count }
         prepare()
@@ -677,7 +739,6 @@ struct WortDrill: View {
                     }
                 }
                 if !note.isEmpty { Text(note).foregroundStyle(Theme.text2) }
-                if showHint { VocabHintCard(card: card) }
                 if picked != nil || showHint {
                     Button("Dalej") { next() }.primaryButton()
                 }
@@ -688,6 +749,24 @@ struct WortDrill: View {
             }
         }
         .onAppear(perform: load)
+        .sheet(isPresented: $showHint) {
+            if let card {
+                VStack(alignment: .leading, spacing: 16) {
+                    VocabHintCard(card: card)
+                    Button("Dalej") {
+                        showHint = false
+                        next()
+                    }
+                    .primaryButton()
+                }
+                .padding(20)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .background(Color.black)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(Color.black)
+            }
+        }
     }
 
     private func fill(_ choice: String, _ card: Vocab) -> Color {
@@ -705,7 +784,7 @@ struct WortDrill: View {
     private func prepare() {
         guard index < deck.count else { return }
         let card = deck[index]
-        let wrong = VocabBook.all(store).filter { $0.pl != card.pl }.shuffled().prefix(3).map(\.pl)
+        let wrong = VocabBook.all(store).filter { $0.pl != card.pl }.shuffled().prefix(2).map(\.pl)
         choices = ([card.pl] + wrong).shuffled()
         picked = nil
         typed = ""

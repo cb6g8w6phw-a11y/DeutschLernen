@@ -446,7 +446,7 @@ struct QuizView: View {
             let pool = store.catalog(level: band).filter { $0.de != w.de }
             let same = pool.filter { $0.topic == w.topic }.shuffled()
             let rest = pool.filter { $0.topic != w.topic }.shuffled()
-            let distractors = Array((same + rest).prefix(3))
+            let distractors = Array((same + rest).prefix(2))
             options = ([w] + distractors).shuffled().map { choice($0) }
         }
     }
@@ -489,7 +489,7 @@ struct QuizView: View {
                   let bad = obj["bad"] as? [String] else { return }
             let fresh = bad.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty && $0 != correct }
             guard fresh.count >= 2, !answered, current?.ex == correct else { return }
-            options = ([correct] + fresh.prefix(3)).shuffled()
+            options = ([correct] + fresh.prefix(2)).shuffled()
         }
     }
 

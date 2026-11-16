@@ -410,7 +410,7 @@ struct RepairView: View {
             wrong.append(text)
         }
         let near = wrong.filter { abs($0.count - right.count) <= max(4, right.count / 2) }
-        let three = Array((near.count >= 3 ? near : wrong).prefix(3))
+        let three = Array((near.count >= 2 ? near : wrong).prefix(2))
         return (three + [right]).shuffled()
     }
 }
