@@ -32,7 +32,7 @@ struct RootView: View {
                 case 1: NavigationStack { MoreTools() }
                 case 2: NavigationStack { ListenView() }
                 case 14: NavigationStack { NewsListView() }
-                case 3: TutorView()
+                case 3: AITrainerView()
                 case 4: NavigationStack { MoreTools() }
                 case 5: NavigationStack { SceneLibraryView() }
                 case 6: NavigationStack { GrammarLibraryView() }
@@ -117,7 +117,7 @@ struct AppDock: View {
             icon(1, "book", "Ucz się")
             icon(2, "headphones", "Słuchaj")
             icon(14, "newspaper", "Wiadomości")
-            icon(3, "mic", "Mów")
+            icon(3, "bubble.left.and.bubble.right.fill", "Trener")
             icon(11, "person", "Profil")
         }
         .padding(.top, 8)
