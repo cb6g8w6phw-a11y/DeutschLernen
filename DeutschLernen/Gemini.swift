@@ -68,7 +68,7 @@ enum Gemini {
         throw last
     }
 
-    private static let geminiModels = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-flash-latest", "gemini-3.8-flash"]
+    private static let geminiModels = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-3.5-flash"]
 
     private static func geminiChain(key: String, messages: [GeminiMessage], system: String, json: Bool) async throws -> String? {
         guard !key.isEmpty else { return nil }
@@ -151,7 +151,7 @@ enum Gemini {
         let endpoint = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
         var req = URLRequest(url: URL(string: endpoint)!)
         req.httpMethod = "POST"
-        req.timeoutInterval = 18
+        req.timeoutInterval = 12
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue(key, forHTTPHeaderField: "x-goog-api-key")
         var body: [String: Any] = [

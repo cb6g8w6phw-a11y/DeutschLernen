@@ -144,7 +144,7 @@ struct TutorView: View {
                 ToolbarItem(placement: .principal) {
                     VStack(spacing: 0) {
                         Text(launch?.title ?? persona).font(.system(size: 17, weight: .bold, design: .rounded))
-                        Text("Scena, praca").font(.system(size: 12, design: .rounded)).foregroundStyle(Theme.text2)
+                        Text(launch == nil ? "Gemini" : "Scena").font(.system(size: 12, design: .rounded)).foregroundStyle(Theme.text2)
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -536,16 +536,13 @@ struct TutorView: View {
             return
         }
         let expected = turns.dropLast().last(where: { $0.role == "model" && !$0.say.isEmpty })?.say ?? ""
-        if !expected.isEmpty {
-            pushLocal(said: text, expected: expected)
-            return
-        }
         loading = true
+        chatError = nil
         defer { loading = false }
         let history = turns.map { GeminiMessage(role: $0.role, text: $0.role == "user" ? $0.german : packed($0)) }
         let prompt = systemPrompt()
         do {
-            let reply = try await replyOrGiveUp(history, system: prompt)
+            let reply = try await Gemini.send(messages: history, system: prompt, route: .geminiFirst)
             let turn = parse(reply)
             if !turn.err.isEmpty { store.addMistake(turn.err) }
             turns.append(turn)
@@ -553,21 +550,8 @@ struct TutorView: View {
             store.noteSaid(ok: turn.flag != "fix")
             Talk.de(speech(turn))
         } catch {
-            pushLocal(said: text, expected: "")
-        }
-    }
-
-    private func replyOrGiveUp(_ history: [GeminiMessage], system: String) async throws -> String {
-        try await withThrowingTaskGroup(of: String.self) { group in
-            group.addTask { try await Gemini.send(messages: history, system: system) }
-            group.addTask {
-                try await Task.sleep(nanoseconds: 8_000_000_000)
-                throw GeminiError.http(408, "za długo")
-            }
-            let value = try await group.next() ?? ""
-            group.cancelAll()
-            if value.isEmpty { throw GeminiError.badResponse }
-            return value
+            chatError = error.localizedDescription
+            pushLocal(said: text, expected: expected)
         }
     }
 
@@ -616,7 +600,8 @@ struct TutorView: View {
         do {
             hint = try await Gemini.send(
                 messages: [GeminiMessage(role: "user", text: prompt)],
-                system: "Podajesz tylko 3 gotowe zdania i tłumaczenia.")
+                system: "Podajesz tylko 3 gotowe zdania i tłumaczenia.",
+                route: .geminiFirst)
         } catch {
             hint = error.localizedDescription
         }
