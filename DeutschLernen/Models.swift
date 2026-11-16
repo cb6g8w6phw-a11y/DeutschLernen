@@ -49,8 +49,12 @@ struct WordStat: Codable {
     var wrong: Int = 0
     var due: Date = .distantPast
     var days: [String] = []
+    var ease: Double = 2.5
+    var gap: Int = 0
+    var reps: Int = 0
+    var lapses: Int = 0
 
-    private enum CodingKeys: String, CodingKey { case box, correct, wrong, due, days }
+    private enum CodingKeys: String, CodingKey { case box, correct, wrong, due, days, ease, gap, reps, lapses }
 
     init() {}
 
@@ -61,6 +65,10 @@ struct WordStat: Codable {
         wrong = try c.decodeIfPresent(Int.self, forKey: .wrong) ?? 0
         due = try c.decodeIfPresent(Date.self, forKey: .due) ?? .distantPast
         days = try c.decodeIfPresent([String].self, forKey: .days) ?? []
+        ease = try c.decodeIfPresent(Double.self, forKey: .ease) ?? 2.5
+        gap = try c.decodeIfPresent(Int.self, forKey: .gap) ?? 0
+        reps = try c.decodeIfPresent(Int.self, forKey: .reps) ?? 0
+        lapses = try c.decodeIfPresent(Int.self, forKey: .lapses) ?? 0
     }
 
     func encode(to encoder: Encoder) throws {
@@ -70,6 +78,44 @@ struct WordStat: Codable {
         try c.encode(wrong, forKey: .wrong)
         try c.encode(due, forKey: .due)
         try c.encode(days, forKey: .days)
+        try c.encode(ease, forKey: .ease)
+        try c.encode(gap, forKey: .gap)
+        try c.encode(reps, forKey: .reps)
+        try c.encode(lapses, forKey: .lapses)
+    }
+}
+
+enum ReviewAlgo {
+    static func apply(_ stat: inout WordStat, quality: Int, now: Date = Date()) {
+        let q = min(5, max(0, quality))
+        var ease = stat.ease
+        if ease < 1.3 { ease = 2.5 }
+        ease += 0.1 - Double(5 - q) * (0.08 + Double(5 - q) * 0.02)
+        if ease < 1.3 { ease = 1.3 }
+        stat.ease = ease
+        if q < 3 {
+            stat.reps = 0
+            stat.gap = 0
+            stat.lapses += 1
+            stat.due = Calendar.current.date(byAdding: .minute, value: 10, to: now) ?? now
+            return
+        }
+        let interval: Int
+        if stat.reps <= 0 { interval = 1 }
+        else if stat.reps == 1 { interval = 6 }
+        else { interval = max(stat.gap + 1, Int((Double(max(stat.gap, 1)) * ease).rounded())) }
+        stat.reps += 1
+        stat.gap = interval
+        stat.box = min(stat.reps, 5)
+        stat.due = Calendar.current.date(byAdding: .day, value: interval, to: now) ?? now
+    }
+
+    static func when(_ stat: WordStat) -> String {
+        let left = stat.due.timeIntervalSinceNow
+        if left < 3600 { return "Wróci za kilka minut." }
+        let days = max(1, Int((left / 86400).rounded()))
+        if days == 1 { return "Następna powtórka jutro." }
+        return "Następna powtórka za \(days) dni."
     }
 }
 
@@ -315,23 +361,17 @@ final class LearningStore: ObservableObject {
         switch g {
         case .hard:
             s.wrong += 1
-            if s.days.count > 1 { s.days.removeLast() }
-            s.box = min(s.days.count, 5)
-            s.due = Calendar.current.date(byAdding: .day, value: 1, to: Date()) ?? Date()
+            ReviewAlgo.apply(&s, quality: 1)
             UserDefaults.standard.set(w.de, forKey: "lastMiss")
-        case .mid, .easy:
+        case .mid:
             s.correct += 1
-            if produced, !s.days.contains(today) { s.days.append(today) }
-            s.box = min(s.days.count, 5)
-            let gap: Int
-            switch s.days.count {
-            case 0, 1: gap = 1
-            case 2: gap = 3
-            case 3: gap = 7
-            default: gap = 14
-            }
-            let wait = produced ? gap : 1
-            s.due = Calendar.current.date(byAdding: .day, value: wait, to: Date()) ?? Date()
+            if !s.days.contains(today) { s.days.append(today) }
+            ReviewAlgo.apply(&s, quality: 3)
+            UserDefaults.standard.set(w.de, forKey: "lastHit")
+        case .easy:
+            s.correct += 1
+            if !s.days.contains(today) { s.days.append(today) }
+            ReviewAlgo.apply(&s, quality: produced ? 5 : 4)
             UserDefaults.standard.set(w.de, forKey: "lastHit")
         }
         stats[w.de] = s
@@ -339,17 +379,9 @@ final class LearningStore: ObservableObject {
         save()
     }
 
-    /// Dwa trafienia pod rząd: słowo schodzi z bieżącej puli i wraca za dwa dni.
+    /// Zostawione dla starych wywołań. Teraz liczy odstęp algorytmem SM-2, nie stałe 2 dni.
     func parkTwoDays(_ w: Word) {
-        var s = stats[w.de] ?? WordStat()
-        s.correct += 1
-        let today = Self.dayKey()
-        if !s.days.contains(today) { s.days.append(today) }
-        s.box = min(max(s.days.count, 2), 5)
-        s.due = Calendar.current.date(byAdding: .day, value: 2, to: Date()) ?? Date()
-        stats[w.de] = s
-        noteSkill("vocab", ok: true)
-        save()
+        grade(w, .easy)
     }
 
     func scheduleTomorrow(_ w: Word) {
@@ -373,7 +405,8 @@ final class LearningStore: ObservableObject {
             return false
         }.sorted { a, b in
             let sa = stats[a.de]!, sb = stats[b.de]!
-            if sa.box != sb.box { return sa.box < sb.box }
+            if sa.due != sb.due { return sa.due < sb.due }
+            if sa.ease != sb.ease { return sa.ease < sb.ease }
             return sa.wrong > sb.wrong
         }
         let reviewCap = min(reviews.count, max(2, size / 2))

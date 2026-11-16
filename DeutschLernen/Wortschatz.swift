@@ -374,9 +374,7 @@ enum VocabPace {
     }
 
     static func resting(_ stat: WordStat, _ de: String) -> Bool {
-        guard stat.due > Date() else { return false }
-        if streak(de) >= 2 { return true }
-        return stat.correct >= 2 && stat.wrong == 0
+        stat.correct > 0 && stat.due > Date()
     }
 }
 
@@ -549,29 +547,29 @@ struct WortSession: View {
     private func mark(_ card: Vocab, ok: Bool, advance go: Bool = true) {
         let word = Word(de: card.de, pl: card.pl, ex: card.ex, exPl: card.exPl, topic: card.topic)
         if ok {
-            let n = VocabPace.streak(card.de) + 1
-            VocabPace.set(card.de, n)
-            if n >= 2 {
-                store.parkTwoDays(word)
-                VocabBook.remember(card)
-                replace(card)
-                banner = "Zaliczone. Powtórka za 2 dni."
-                Haptic.good()
-                if go { step(keepIndex: true) }
-                return
-            }
             store.grade(word, .easy)
             VocabBook.remember(card)
-            banner = "Raz dobrze. Drugi raz pod rząd zalicza i odkłada na 2 dni."
+            banner = ReviewAlgo.when(store.stats[word.de] ?? WordStat())
+            replace(card)
             Haptic.good()
+            if go { step(keepIndex: true) }
+            return
         } else {
             VocabPace.set(card.de, 0)
             store.grade(word, .hard)
-            store.pinForReview(word)
-            banner = "Jeszcze nie. Seria od nowa."
+            banner = "Jeszcze nie. Wróci za kilka kart, a potem za 10 minut."
+            again(card)
             Haptic.bad()
         }
         if go { step(keepIndex: false) }
+    }
+
+    private func again(_ card: Vocab) {
+        let spot = min(deck.count, index + 3)
+        let ahead = deck.dropFirst(min(deck.count, index + 1)).prefix(3)
+        if !ahead.contains(where: { $0.de == card.de }) {
+            deck.insert(card, at: spot)
+        }
     }
 
     private func replace(_ card: Vocab) {
@@ -686,7 +684,7 @@ struct WortDrill: View {
                     }
                 }
                 if !note.isEmpty { Text(note).foregroundStyle(Theme.text2) }
-                if showHint, let card { VocabHintCard(card: card) }
+                if showHint { VocabHintCard(card: card) }
                 if picked != nil || showHint {
                     Button("Dalej") { next() }.primaryButton()
                 }
@@ -743,10 +741,12 @@ struct WortDrill: View {
         let word = Word(de: card.de, pl: card.pl, ex: card.ex, exPl: card.exPl, topic: card.topic)
         if ok {
             store.grade(word, .easy)
+            note = "Dobrze. " + ReviewAlgo.when(store.stats[card.de] ?? WordStat())
             Haptic.good()
         } else {
             store.grade(word, .hard)
-            store.pinForReview(word)
+            let spot = min(deck.count, index + 3)
+            deck.insert(card, at: spot)
             Haptic.bad()
         }
     }
