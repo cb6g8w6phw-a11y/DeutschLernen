@@ -200,7 +200,7 @@ struct VoiceSexButtons: View {
 }
 
 struct PaceButtons: View {
-    @AppStorage("talkPace") private var pace = "slow"
+    @AppStorage("talkPace") private var pace = "normal"
 
     var body: some View {
         HStack(spacing: 8) {
@@ -208,15 +208,24 @@ struct PaceButtons: View {
             paceButton("Zwykle", "normal")
             paceButton("Szybko", "fast")
         }
+        .onAppear {
+            if UserDefaults.standard.string(forKey: "paceNormal151") == nil {
+                pace = "normal"
+                UserDefaults.standard.set("1", forKey: "paceNormal151")
+            }
+        }
     }
 
     private func paceButton(_ title: String, _ value: String) -> some View {
-        Button(title) { pace = value }
-            .font(.caption.weight(.semibold))
-            .padding(.horizontal, 12)
-            .frame(minHeight: 36)
-            .background(pace == value ? Theme.accent : Theme.card, in: Capsule())
-            .foregroundStyle(Theme.text)
+        Button { pace = value } label: {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .padding(.horizontal, 14)
+                .frame(minHeight: 36)
+                .background(pace == value ? Theme.accent : Theme.card, in: Capsule())
+                .foregroundStyle(pace == value ? Color.white : Theme.text)
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -290,7 +299,7 @@ final class VoiceBox: NSObject, ObservableObject {
             guard let self else { return }
             if geminiOn, !geminiKey.isEmpty {
                 do {
-                    let data = try await GeminiVoice.clip(for: clean, key: geminiKey)
+                    let data = try await GeminiVoice.clip(for: clean, key: geminiKey, pace: self.paceName(rate))
                     guard gen == self.generation else { return }
                     self.lastClip = data
                     try self.play(data, speechRate: rate)
@@ -389,15 +398,20 @@ final class VoiceBox: NSObject, ObservableObject {
     }
 
     private func geminiPace(_ speechRate: Float) -> Float {
-        if speechRate > 0.2 {
-            if speechRate < 0.42 { return 1.05 }
-            if speechRate < 0.55 { return 1.25 }
-            return 1.45
+        switch paceName(speechRate) {
+        case "slow": return 0.92
+        case "fast": return 1.08
+        default: return 1.0
         }
-        let pace = UserDefaults.standard.string(forKey: "talkPace") ?? "normal"
-        if pace == "fast" { return 1.5 }
-        if pace == "slow" { return 1.15 }
-        return 1.32
+    }
+
+    private func paceName(_ speechRate: Float) -> String {
+        if speechRate > 0.2 {
+            if speechRate < 0.42 { return "slow" }
+            if speechRate < 0.55 { return "normal" }
+            return "fast"
+        }
+        return UserDefaults.standard.string(forKey: "talkPace") ?? "normal"
     }
 
     private func fetch(_ text: String, key: String) async throws -> Data {

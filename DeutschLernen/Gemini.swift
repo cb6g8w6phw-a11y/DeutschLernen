@@ -193,17 +193,17 @@ enum Gemini {
 }
 
 enum GeminiVoice {
-    static func clip(for text: String, key: String) async throws -> Data {
+    static func clip(for text: String, key: String, pace: String = "normal") async throws -> Data {
         let models = ["gemini-2.5-flash-preview-tts", "gemini-2.5-flash-tts"]
         var last: Error = GeminiError.badResponse
         for model in models {
-            do { return try await once(model: model, text: text, key: key) }
+            do { return try await once(model: model, text: text, key: key, pace: pace) }
             catch { last = error }
         }
         throw last
     }
 
-    private static func once(model: String, text: String, key: String) async throws -> Data {
+    private static func once(model: String, text: String, key: String, pace: String) async throws -> Data {
         let endpoint = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
         guard let url = URL(string: endpoint) else { throw GeminiError.badResponse }
         var req = URLRequest(url: url)
@@ -212,7 +212,7 @@ enum GeminiVoice {
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue(key, forHTTPHeaderField: "x-goog-api-key")
         let body: [String: Any] = [
-            "contents": [["parts": [["text": "Sprich auf Deutsch, natürlich und zügig, nicht langsam: \(text)"]]]],
+            "contents": [["parts": [["text": say(pace, text)]]]],
             "generationConfig": [
                 "responseModalities": ["AUDIO"],
                 "speechConfig": [
@@ -243,6 +243,14 @@ enum GeminiVoice {
             return wav(pcm: raw, rate: max(rate, 8000))
         }
         throw GeminiError.badResponse
+    }
+
+    private static func say(_ pace: String, _ text: String) -> String {
+        switch pace {
+        case "slow": return "Sprich sehr langsam und deutlich auf Deutsch: \(text)"
+        case "fast": return "Sprich etwas schneller, aber noch deutlich auf Deutsch: \(text)"
+        default: return "Sprich in normalem Alltagstempo auf Deutsch: \(text)"
+        }
     }
 
     private static func wav(pcm: Data, rate: Int) -> Data {
