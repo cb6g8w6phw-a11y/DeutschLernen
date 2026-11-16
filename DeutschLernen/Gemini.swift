@@ -192,6 +192,89 @@ enum Gemini {
     }
 }
 
+enum GeminiVoice {
+    static func clip(for text: String, key: String) async throws -> Data {
+        let models = ["gemini-2.5-flash-preview-tts", "gemini-2.5-flash-tts"]
+        var last: Error = GeminiError.badResponse
+        for model in models {
+            do { return try await once(model: model, text: text, key: key) }
+            catch { last = error }
+        }
+        throw last
+    }
+
+    private static func once(model: String, text: String, key: String) async throws -> Data {
+        let endpoint = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent"
+        guard let url = URL(string: endpoint) else { throw GeminiError.badResponse }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.timeoutInterval = 20
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(key, forHTTPHeaderField: "x-goog-api-key")
+        let body: [String: Any] = [
+            "contents": [["parts": [["text": "Sprich langsam und deutlich auf Deutsch: \(text)"]]]],
+            "generationConfig": [
+                "responseModalities": ["AUDIO"],
+                "speechConfig": [
+                    "voiceConfig": [
+                        "prebuiltVoiceConfig": ["voiceName": "Charon"]
+                    ]
+                ]
+            ]
+        ]
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse else { throw GeminiError.badResponse }
+        guard http.statusCode == 200 else {
+            let extra = String((String(data: data, encoding: .utf8) ?? "").prefix(80))
+            throw GeminiError.http(http.statusCode, "Gemini głos: \(extra)")
+        }
+        guard let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let candidates = obj["candidates"] as? [[String: Any]],
+              let content = candidates.first?["content"] as? [String: Any],
+              let parts = content["parts"] as? [[String: Any]] else { throw GeminiError.badResponse }
+        for part in parts {
+            let inline = part["inlineData"] as? [String: Any] ?? part["inline_data"] as? [String: Any]
+            guard let inline, let b64 = inline["data"] as? String, let raw = Data(base64Encoded: b64), !raw.isEmpty else { continue }
+            let mime = ((inline["mimeType"] as? String) ?? (inline["mime_type"] as? String) ?? "").lowercased()
+            if mime.contains("mpeg") || mime.contains("mp3") || mime.contains("wav") { return raw }
+            let digits = mime.split(separator: "=").last.map { String($0.filter(\.isNumber)) } ?? ""
+            let rate = Int(digits) ?? 24000
+            return wav(pcm: raw, rate: max(rate, 8000))
+        }
+        throw GeminiError.badResponse
+    }
+
+    private static func wav(pcm: Data, rate: Int) -> Data {
+        var data = Data()
+        func ascii(_ s: String) { data.append(contentsOf: s.utf8) }
+        func le32(_ v: UInt32) {
+            var x = v.littleEndian
+            withUnsafeBytes(of: &x) { data.append(contentsOf: $0) }
+        }
+        func le16(_ v: UInt16) {
+            var x = v.littleEndian
+            withUnsafeBytes(of: &x) { data.append(contentsOf: $0) }
+        }
+        let size = UInt32(pcm.count)
+        ascii("RIFF")
+        le32(36 + size)
+        ascii("WAVE")
+        ascii("fmt ")
+        le32(16)
+        le16(1)
+        le16(1)
+        le32(UInt32(rate))
+        le32(UInt32(rate * 2))
+        le16(2)
+        le16(16)
+        ascii("data")
+        le32(size)
+        data.append(pcm)
+        return data
+    }
+}
+
 enum Keyboard {
     static func hide() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)

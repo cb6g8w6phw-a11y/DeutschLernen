@@ -281,18 +281,38 @@ final class VoiceBox: NSObject, ObservableObject {
         Speaker.shared.stop()
         lastText = clean
         note = ""
-        let key = Secret.load("elevenKey").trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !key.isEmpty else {
-            note = "Brak klucza ElevenLabs. Ustawienia → wklej klucz, wtedy głos będzie naturalny."
-            Speaker.shared.speak(clean, rate: rate, voice: voice)
-            return
-        }
+        let geminiOn = UserDefaults.standard.object(forKey: "geminiVoice") as? Bool ?? true
+        let geminiKey = Secret.load("geminiKey").trimmingCharacters(in: .whitespacesAndNewlines)
+        let elevenKey = Secret.load("elevenKey").trimmingCharacters(in: .whitespacesAndNewlines)
         playing = true
         Speaker.shared.speaking = true
         job = Task { [weak self] in
             guard let self else { return }
+            if geminiOn, !geminiKey.isEmpty {
+                do {
+                    let data = try await GeminiVoice.clip(for: clean, key: geminiKey)
+                    guard gen == self.generation else { return }
+                    self.lastClip = data
+                    try self.play(data)
+                    return
+                } catch is CancellationError {
+                    return
+                } catch {
+                    guard gen == self.generation else { return }
+                    self.note = "Głos Gemini niedostępny. Czytam głosem zapasowym."
+                }
+            }
+            guard !elevenKey.isEmpty else {
+                self.playing = false
+                Speaker.shared.speaking = false
+                if self.note.isEmpty {
+                    self.note = "Brak klucza Gemini. Ustawienia → wklej klucz, wtedy mówi Gemini."
+                }
+                Speaker.shared.speak(clean, rate: rate, voice: voice)
+                return
+            }
             do {
-                let data = try await self.fetch(clean, key: key)
+                let data = try await self.fetch(clean, key: elevenKey)
                 guard gen == self.generation else { return }
                 self.lastClip = data
                 try self.play(data)

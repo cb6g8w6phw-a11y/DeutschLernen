@@ -4,6 +4,7 @@ struct SettingsView: View {
     @EnvironmentObject var store: LearningStore
     @State private var groq = ""
     @State private var gemini = ""
+    @AppStorage("geminiVoice") private var geminiVoice = true
     @State private var eleven = ""
     @State private var keyOK = false
     @AppStorage("profileJob") private var job = ""
@@ -99,10 +100,15 @@ struct SettingsView: View {
                         .onChange(of: gemini) { _, value in Secret.save(value, "geminiKey") }
                     Link("Klucz Gemini: aistudio.google.com/apikey",
                          destination: URL(string: "https://aistudio.google.com/apikey")!)
-                    Text("Czat Gemini używa tego klucza jako pierwszego. W aplikacji nie ma limitu wiadomości ani subskrypcji. Obowiązuje tylko darmowy limit konta Google.")
+                    Toggle("Głos Gemini ma pierwszeństwo", isOn: $geminiVoice)
+                    Text("Rozmowa i odsłuch idą najpierw głosem Gemini. Jak nie odpowie, zostaje ElevenLabs albo głos iPhone'a. W aplikacji nie ma limitu wiadomości.")
                         .font(.footnote).foregroundStyle(.secondary)
+                    Link("Otwórz aplikację Gemini do gadania głosem",
+                         destination: URL(string: "https://gemini.google.com/app")!)
+                    Link("Zainstaluj aplikację Gemini",
+                         destination: URL(string: "https://apps.apple.com/app/google-gemini/id6477489729")!)
                 } header: {
-                    Text("Gemini — czat")
+                    Text("Gemini — czat i głos")
                 }
                 Section {
                     Button {

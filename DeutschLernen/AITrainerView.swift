@@ -86,8 +86,8 @@ struct AITrainerView: View {
     @State private var filter = "Wszystkie"
 
     private var shown: [TrainScene] {
-        if filter == "Wszystkie" { return TrainScene.list }
-        return TrainScene.list.filter { $0.group == filter }
+        if filter == "Wszystkie" { return TrainScene.all }
+        return TrainScene.all.filter { $0.group == filter }
     }
 
     var body: some View {
