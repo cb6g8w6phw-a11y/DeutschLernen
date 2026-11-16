@@ -362,24 +362,9 @@ struct MoreTools: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                Text("Więcej")
-                    .font(.title2.bold)
-                    .padding(.bottom, 4)
-                Text("Wszystkie narzędzia do nauki niemieckiego w jednym miejscu.")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.text2)
-                    .padding(.bottom, 14)
-                hub("Rozmowy i teksty", "Mini dialogi · Teksty i historie · Opisz obrazek", "bubble.left.and.bubble.right") { TalkHub() }
-                hairline
-                hub("Słownictwo", "Słówka · Całe zwroty · Słownik · Zeszyt", "book") { WordsHub() }
-                hairline
-                hub("Gramatyka", "Wzorce gramatyczne · Gramatyka", "list.bullet.rectangle") { GrammarHub() }
-                hairline
-                hub("Wymowa i rozumienie", "Wymowa · Myślenie po niemiecku", "headphones") { SpeakHub() }
-                hairline
-                hub("Ćwiczenia i testy", "Pisanie · Test · Egzamin · Ćwicz · Błędy", "pencil") { DrillHub() }
-                hairline
-                hub("Niemiecki w pracy", "Budowa · Narzędzia · Polecenia · Rozmowy w pracy", "briefcase") { WorkHubView() }
+                header
+                topRows
+                bottomRows
             }
             .padding(16)
             .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 26, style: .continuous))
@@ -392,11 +377,70 @@ struct MoreTools: View {
         .containerBackground(for: .navigation) { Color.black }
     }
 
-    private var hairline: some View {
-        Divider().overlay(Color.white.opacity(0.12)).padding(.leading, 68)
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Więcej").font(.title2.bold)
+            Text("Wszystkie narzędzia do nauki niemieckiego w jednym miejscu.")
+                .font(.subheadline)
+                .foregroundStyle(Theme.text2)
+                .padding(.bottom, 10)
+        }
     }
 
-    private func hub<Dest: View>(_ title: String, _ detail: String, _ icon: String, @ViewBuilder dest: () -> Dest) -> some View {
+    private var topRows: some View {
+        VStack(spacing: 0) {
+            talkRow
+            MoreHairline()
+            wordsRow
+            MoreHairline()
+            grammarRow
+        }
+    }
+
+    private var bottomRows: some View {
+        VStack(spacing: 0) {
+            MoreHairline()
+            speakRow
+            MoreHairline()
+            drillRow
+            MoreHairline()
+            workRow
+        }
+    }
+
+    private var talkRow: some View {
+        MoreRow(title: "Rozmowy i teksty", detail: "Mini dialogi · Teksty i historie · Opisz obrazek", icon: "bubble.left.and.bubble.right") { TalkHub() }
+    }
+    private var wordsRow: some View {
+        MoreRow(title: "Słownictwo", detail: "Słówka · Całe zwroty · Słownik · Zeszyt", icon: "book") { WordsHub() }
+    }
+    private var grammarRow: some View {
+        MoreRow(title: "Gramatyka", detail: "Wzorce gramatyczne · Gramatyka", icon: "list.bullet.rectangle") { GrammarHub() }
+    }
+    private var speakRow: some View {
+        MoreRow(title: "Wymowa i rozumienie", detail: "Wymowa · Myślenie po niemiecku", icon: "headphones") { SpeakHub() }
+    }
+    private var drillRow: some View {
+        MoreRow(title: "Ćwiczenia i testy", detail: "Pisanie · Test · Egzamin · Ćwicz · Błędy", icon: "pencil") { DrillHub() }
+    }
+    private var workRow: some View {
+        MoreRow(title: "Niemiecki w pracy", detail: "Budowa · Narzędzia · Polecenia · Rozmowy w pracy", icon: "briefcase") { WorkHubView() }
+    }
+}
+
+private struct MoreHairline: View {
+    var body: some View {
+        Divider().overlay(Color.white.opacity(0.12)).padding(.leading, 68)
+    }
+}
+
+private struct MoreRow<Dest: View>: View {
+    let title: String
+    let detail: String
+    let icon: String
+    @ViewBuilder var dest: () -> Dest
+
+    var body: some View {
         NavigationLink { dest() } label: {
             HStack(spacing: 14) {
                 Image(systemName: icon)
@@ -406,7 +450,7 @@ struct MoreTools: View {
                     .background(Theme.ok.opacity(0.16), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title).font(.body.weight(.semibold)).foregroundStyle(.white)
-                    Text(detail).font(.caption).foregroundStyle(Theme.text2).fixedSize(horizontal: false, vertical: true)
+                    Text(detail).font(.caption).foregroundStyle(Theme.text2)
                 }
                 Spacer(minLength: 8)
                 Image(systemName: "chevron.right")
@@ -475,10 +519,20 @@ private struct HubScreen<Content: View>: View {
 private struct TalkHub: View {
     var body: some View {
         HubScreen(title: "Rozmowy i teksty") {
+            first
+            second
+        }
+    }
+    private var first: some View {
+        VStack(spacing: 0) {
             HubLink(title: "Mini dialogi", icon: "bubble.left.and.bubble.right.fill") { SceneLibraryView() }
             HubLink(title: "Teksty i historie", icon: "book.closed.fill") { TextLibraryView() }
             HubLink(title: "Opisz obrazek", icon: "photo") { PictureTalk() }
             HubLink(title: "Jak mówią", icon: "quote.bubble") { StreetView() }
+        }
+    }
+    private var second: some View {
+        VStack(spacing: 0) {
             HubLink(title: "Shadowing", icon: "ear") { ShadowView() }
             HubLink(title: "Wiadomości", icon: "newspaper") { NewsListView() }
             HubLink(title: "Z twojego życia", icon: "sparkles") { LifeView() }
@@ -490,10 +544,20 @@ private struct TalkHub: View {
 private struct WordsHub: View {
     var body: some View {
         HubScreen(title: "Słownictwo") {
+            first
+            second
+        }
+    }
+    private var first: some View {
+        VStack(spacing: 0) {
             HubLink(title: "Słówka", icon: "rectangle.stack.fill") { WortHome() }
             HubLink(title: "Uzupełnij słówko", icon: "character.cursor.ibeam") { StudyView() }
             HubLink(title: "Całe zwroty", icon: "text.bubble") { PhraseView() }
             HubLink(title: "Słownik", icon: "text.book.closed") { WordsView() }
+        }
+    }
+    private var second: some View {
+        VStack(spacing: 0) {
             HubLink(title: "Zeszyt", icon: "book.closed") { NotebookView() }
             HubLink(title: "Słówka z filmu", icon: "play.rectangle") { ClipView() }
             HubLink(title: "Z życia", icon: "plus.circle.fill", last: true) { CaptureView() }
@@ -523,10 +587,20 @@ private struct SpeakHub: View {
 private struct DrillHub: View {
     var body: some View {
         HubScreen(title: "Ćwiczenia i testy") {
+            first
+            second
+        }
+    }
+    private var first: some View {
+        VStack(spacing: 0) {
             HubLink(title: "Pisanie", icon: "square.and.pencil") { WriteLearnView() }
             HubLink(title: "Test", icon: "checkmark.circle") { PlacementView() }
             HubLink(title: "Egzamin", icon: "checkmark.seal") { ExamView() }
             HubLink(title: "Ćwicz", icon: "figure.run") { PracticeView() }
+        }
+    }
+    private var second: some View {
+        VStack(spacing: 0) {
             HubLink(title: "Błędy", icon: "exclamationmark.bubble") { MistakeReview() }
             HubLink(title: "Dyktando", icon: "pencil.line") { DictationView() }
             HubLink(title: "Gry", icon: "gamecontroller") { GamesHome() }
