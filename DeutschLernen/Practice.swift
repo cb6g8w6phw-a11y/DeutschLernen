@@ -409,22 +409,22 @@ struct MoreTools: View {
     }
 
     private var talkRow: some View {
-        MoreRow(title: "Rozmowy i teksty", detail: "Mini dialogi · Teksty i historie · Opisz obrazek", icon: "bubble.left.and.bubble.right") { TalkHub() }
+        MoreRow(title: "Rozmowy i teksty", detail: "Mini dialogi · Teksty i historie · Opisz obrazek", icon: "bubble.left.and.bubble.right", dest: AnyView(TalkHub()))
     }
     private var wordsRow: some View {
-        MoreRow(title: "Słownictwo", detail: "Słówka · Całe zwroty · Słownik · Zeszyt", icon: "book") { WordsHub() }
+        MoreRow(title: "Słownictwo", detail: "Słówka · Całe zwroty · Słownik · Zeszyt", icon: "book", dest: AnyView(WordsHub()))
     }
     private var grammarRow: some View {
-        MoreRow(title: "Gramatyka", detail: "Wzorce gramatyczne · Gramatyka", icon: "list.bullet.rectangle") { GrammarHub() }
+        MoreRow(title: "Gramatyka", detail: "Wzorce gramatyczne · Gramatyka", icon: "list.bullet.rectangle", dest: AnyView(GrammarHub()))
     }
     private var speakRow: some View {
-        MoreRow(title: "Wymowa i rozumienie", detail: "Wymowa · Myślenie po niemiecku", icon: "headphones") { SpeakHub() }
+        MoreRow(title: "Wymowa i rozumienie", detail: "Wymowa · Myślenie po niemiecku", icon: "headphones", dest: AnyView(SpeakHub()))
     }
     private var drillRow: some View {
-        MoreRow(title: "Ćwiczenia i testy", detail: "Pisanie · Test · Egzamin · Ćwicz · Błędy", icon: "pencil") { DrillHub() }
+        MoreRow(title: "Ćwiczenia i testy", detail: "Pisanie · Test · Egzamin · Ćwicz · Błędy", icon: "pencil", dest: AnyView(DrillHub()))
     }
     private var workRow: some View {
-        MoreRow(title: "Niemiecki w pracy", detail: "Budowa · Narzędzia · Polecenia · Rozmowy w pracy", icon: "briefcase") { WorkHubView() }
+        MoreRow(title: "Niemiecki w pracy", detail: "Budowa · Narzędzia · Polecenia · Rozmowy w pracy", icon: "briefcase", dest: AnyView(WorkHubView()))
     }
 }
 
@@ -434,14 +434,14 @@ private struct MoreHairline: View {
     }
 }
 
-private struct MoreRow<Dest: View>: View {
+private struct MoreRow: View {
     let title: String
     let detail: String
     let icon: String
-    @ViewBuilder var dest: () -> Dest
+    let dest: AnyView
 
     var body: some View {
-        NavigationLink { dest() } label: {
+        NavigationLink { dest } label: {
             HStack(spacing: 14) {
                 Image(systemName: icon)
                     .font(.system(size: 18, weight: .medium))
@@ -464,15 +464,15 @@ private struct MoreRow<Dest: View>: View {
     }
 }
 
-private struct HubLink<Dest: View>: View {
+private struct HubLink: View {
     let title: String
     let icon: String
     var last = false
-    @ViewBuilder var dest: () -> Dest
+    let dest: AnyView
 
     var body: some View {
         VStack(spacing: 0) {
-            NavigationLink { dest() } label: {
+            NavigationLink { dest } label: {
                 HStack(spacing: 14) {
                     Image(systemName: icon)
                         .font(.system(size: 17, weight: .medium))
@@ -496,13 +496,13 @@ private struct HubLink<Dest: View>: View {
     }
 }
 
-private struct HubScreen<Content: View>: View {
+private struct HubScreen: View {
     let title: String
-    @ViewBuilder var content: () -> Content
+    let content: AnyView
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) { content() }
+            content
                 .padding(.horizontal, 16)
                 .padding(.vertical, 6)
                 .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 26, style: .continuous))
@@ -518,93 +518,78 @@ private struct HubScreen<Content: View>: View {
 
 private struct TalkHub: View {
     var body: some View {
-        HubScreen(title: "Rozmowy i teksty") {
-            first
-            second
-        }
+        HubScreen(title: "Rozmowy i teksty", content: AnyView(rows))
     }
-    private var first: some View {
+    private var rows: some View {
         VStack(spacing: 0) {
-            HubLink(title: "Mini dialogi", icon: "bubble.left.and.bubble.right.fill") { SceneLibraryView() }
-            HubLink(title: "Teksty i historie", icon: "book.closed.fill") { TextLibraryView() }
-            HubLink(title: "Opisz obrazek", icon: "photo") { PictureTalk() }
-            HubLink(title: "Jak mówią", icon: "quote.bubble") { StreetView() }
-        }
-    }
-    private var second: some View {
-        VStack(spacing: 0) {
-            HubLink(title: "Shadowing", icon: "ear") { ShadowView() }
-            HubLink(title: "Wiadomości", icon: "newspaper") { NewsListView() }
-            HubLink(title: "Z twojego życia", icon: "sparkles") { LifeView() }
-            HubLink(title: "Ścieżka lekcji", icon: "point.topleft.down.curvedto.point.bottomright.scurvepath", last: true) { CourseView() }
+            HubLink(title: "Mini dialogi", icon: "bubble.left.and.bubble.right.fill", dest: AnyView(SceneLibraryView()))
+            HubLink(title: "Teksty i historie", icon: "book.closed.fill", dest: AnyView(TextLibraryView()))
+            HubLink(title: "Opisz obrazek", icon: "photo", dest: AnyView(PictureTalk()))
+            HubLink(title: "Jak mówią", icon: "quote.bubble", dest: AnyView(StreetView()))
+            HubLink(title: "Shadowing", icon: "ear", dest: AnyView(ShadowView()))
+            HubLink(title: "Wiadomości", icon: "newspaper", dest: AnyView(NewsListView()))
+            HubLink(title: "Z twojego życia", icon: "sparkles", dest: AnyView(LifeView()))
+            HubLink(title: "Ścieżka lekcji", icon: "point.topleft.down.curvedto.point.bottomright.scurvepath", last: true, dest: AnyView(CourseView()))
         }
     }
 }
 
 private struct WordsHub: View {
     var body: some View {
-        HubScreen(title: "Słownictwo") {
-            first
-            second
-        }
+        HubScreen(title: "Słownictwo", content: AnyView(rows))
     }
-    private var first: some View {
+    private var rows: some View {
         VStack(spacing: 0) {
-            HubLink(title: "Słówka", icon: "rectangle.stack.fill") { WortHome() }
-            HubLink(title: "Uzupełnij słówko", icon: "character.cursor.ibeam") { StudyView() }
-            HubLink(title: "Całe zwroty", icon: "text.bubble") { PhraseView() }
-            HubLink(title: "Słownik", icon: "text.book.closed") { WordsView() }
-        }
-    }
-    private var second: some View {
-        VStack(spacing: 0) {
-            HubLink(title: "Zeszyt", icon: "book.closed") { NotebookView() }
-            HubLink(title: "Słówka z filmu", icon: "play.rectangle") { ClipView() }
-            HubLink(title: "Z życia", icon: "plus.circle.fill", last: true) { CaptureView() }
+            HubLink(title: "Słówka", icon: "rectangle.stack.fill", dest: AnyView(WortHome()))
+            HubLink(title: "Uzupełnij słówko", icon: "character.cursor.ibeam", dest: AnyView(StudyView()))
+            HubLink(title: "Całe zwroty", icon: "text.bubble", dest: AnyView(PhraseView()))
+            HubLink(title: "Słownik", icon: "text.book.closed", dest: AnyView(WordsView()))
+            HubLink(title: "Zeszyt", icon: "book.closed", dest: AnyView(NotebookView()))
+            HubLink(title: "Słówka z filmu", icon: "play.rectangle", dest: AnyView(ClipView()))
+            HubLink(title: "Z życia", icon: "plus.circle.fill", last: true, dest: AnyView(CaptureView()))
         }
     }
 }
 
 private struct GrammarHub: View {
     var body: some View {
-        HubScreen(title: "Gramatyka") {
-            HubLink(title: "Wzorce gramatyczne", icon: "text.book.closed.fill") { GrammarLibraryView() }
-            HubLink(title: "Gramatyka", icon: "textformat") { GrammarView() }
-            HubLink(title: "Generator zdań", icon: "text.badge.checkmark", last: true) { SentenceView() }
+        HubScreen(title: "Gramatyka", content: AnyView(rows))
+    }
+    private var rows: some View {
+        VStack(spacing: 0) {
+            HubLink(title: "Wzorce gramatyczne", icon: "text.book.closed.fill", dest: AnyView(GrammarLibraryView()))
+            HubLink(title: "Gramatyka", icon: "textformat", dest: AnyView(GrammarView()))
+            HubLink(title: "Generator zdań", icon: "text.badge.checkmark", last: true, dest: AnyView(SentenceView()))
         }
     }
 }
 
 private struct SpeakHub: View {
     var body: some View {
-        HubScreen(title: "Wymowa i rozumienie") {
-            HubLink(title: "Wymowa", icon: "waveform") { PronounceView() }
-            HubLink(title: "Myślenie po niemiecku", icon: "brain", last: true) { ThinkView() }
+        HubScreen(title: "Wymowa i rozumienie", content: AnyView(rows))
+    }
+    private var rows: some View {
+        VStack(spacing: 0) {
+            HubLink(title: "Wymowa", icon: "waveform", dest: AnyView(PronounceView()))
+            HubLink(title: "Myślenie po niemiecku", icon: "brain", last: true, dest: AnyView(ThinkView()))
         }
     }
 }
 
 private struct DrillHub: View {
     var body: some View {
-        HubScreen(title: "Ćwiczenia i testy") {
-            first
-            second
-        }
+        HubScreen(title: "Ćwiczenia i testy", content: AnyView(rows))
     }
-    private var first: some View {
+    private var rows: some View {
         VStack(spacing: 0) {
-            HubLink(title: "Pisanie", icon: "square.and.pencil") { WriteLearnView() }
-            HubLink(title: "Test", icon: "checkmark.circle") { PlacementView() }
-            HubLink(title: "Egzamin", icon: "checkmark.seal") { ExamView() }
-            HubLink(title: "Ćwicz", icon: "figure.run") { PracticeView() }
-        }
-    }
-    private var second: some View {
-        VStack(spacing: 0) {
-            HubLink(title: "Błędy", icon: "exclamationmark.bubble") { MistakeReview() }
-            HubLink(title: "Dyktando", icon: "pencil.line") { DictationView() }
-            HubLink(title: "Gry", icon: "gamecontroller") { GamesHome() }
-            HubLink(title: "Ratunek", icon: "lifepreserver", last: true) { RescueView() }
+            HubLink(title: "Pisanie", icon: "square.and.pencil", dest: AnyView(WriteLearnView()))
+            HubLink(title: "Test", icon: "checkmark.circle", dest: AnyView(PlacementView()))
+            HubLink(title: "Egzamin", icon: "checkmark.seal", dest: AnyView(ExamView()))
+            HubLink(title: "Ćwicz", icon: "figure.run", dest: AnyView(PracticeView()))
+            HubLink(title: "Błędy", icon: "exclamationmark.bubble", dest: AnyView(MistakeReview()))
+            HubLink(title: "Dyktando", icon: "pencil.line", dest: AnyView(DictationView()))
+            HubLink(title: "Gry", icon: "gamecontroller", dest: AnyView(GamesHome()))
+            HubLink(title: "Ratunek", icon: "lifepreserver", last: true, dest: AnyView(RescueView()))
         }
     }
 }
