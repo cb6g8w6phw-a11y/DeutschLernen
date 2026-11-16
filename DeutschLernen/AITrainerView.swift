@@ -3,48 +3,70 @@ import SwiftUI
 struct TrainScene: Identifiable, Hashable {
     let id: String
     let title: String
+    let group: String
+    let level: String
+    let minutes: Int
+    let icon: String
     let tags: String
     let who: String
     let de: String
     let pl: String
     let chips: [String]
 
+    static let filters = ["Wszystkie", "Urzędy (Amt)", "Mieszkanie", "Praca", "Zdrowie", "Zakupy", "Komunikacja"]
+
     static let list: [TrainScene] = [
         TrainScene(
-            id: "amt",
-            title: "Anmeldung w Bürgeramt",
+            id: "amt", title: "Anmeldung w Bürgeramt", group: "Urzędy (Amt)", level: "A2/B1", minutes: 5, icon: "building.columns",
             tags: "Bürgeramt, Termin, Wohnungsgeberbestätigung",
             who: "Jesteś urzędnikiem w urzędzie meldunkowym. Uczeń chce się zameldować.",
-            de: "Guten Tag! Willkommen im Bürgeramt. Sie möchten sich anmelden, richtig? Haben Sie heute einen Termin? Wenn ja, zeigen Sie mir bitte Ihren Ausweis und die Wohnungsgeberbestätigung.",
-            pl: "Dzień dobry! Witamy w urzędzie meldunkowym. Chciałby się pan zameldować, zgadza się? Czy ma pan dziś umówioną wizytę? Jeśli tak, proszę pokazać dowód i potwierdzenie od wynajmującego.",
+            de: "Guten Tag! Willkommen im Bürgeramt. Sie möchten sich anmelden, richtig? Haben Sie heute einen Termin?",
+            pl: "Dzień dobry! Witamy w urzędzie meldunkowym. Chce się pan zameldować, zgadza się? Czy ma pan dziś umówioną wizytę?",
             chips: ["Ich habe einen Termin.", "Hier ist mein Ausweis.", "Ich habe die Bestätigung."]),
         TrainScene(
-            id: "chef",
-            title: "Rozmowa z szefem",
-            tags: "Baustelle, Verspätung, Schicht",
-            who: "Jesteś szefem na budowie. Mówisz krótko i konkretnie.",
-            de: "Morgen. Du kommst spät. Was ist passiert?",
-            pl: "Dzień dobry. Spóźniasz się. Co się stało?",
-            chips: ["Der Bus kam nicht.", "Entschuldigung, ich bin da.", "Ich kann gleich anfangen."]),
+            id: "blick", title: "Oglądanie mieszkania (Besichtigung)", group: "Mieszkanie", level: "B1", minutes: 6, icon: "house",
+            tags: "Besichtigung, Miete, Kaution",
+            who: "Jesteś wynajmującym i oprowadzasz ucznia po mieszkaniu.",
+            de: "Guten Tag. Das ist die Wohnung. Die Küche ist hier, das Bad ist rechts. Haben Sie Fragen zur Miete?",
+            pl: "Dzień dobry. To jest mieszkanie. Kuchnia jest tutaj, łazienka po prawej. Ma pan pytania o czynsz?",
+            chips: ["Wie hoch ist die Miete?", "Ist die Heizung neu?", "Wann kann ich einziehen?"]),
         TrainScene(
-            id: "arzt",
-            title: "Wizyta u lekarza",
-            tags: "Arzt, Hals, Krankschreibung",
-            who: "Jesteś lekarzem. Pytasz o objawy i zwolnienie.",
+            id: "arzt", title: "Wizyta u lekarza (Hausarzt)", group: "Zdrowie", level: "A2", minutes: 4, icon: "cross.case",
+            tags: "Hausarzt, Hals, Krankschreibung",
+            who: "Jesteś lekarzem rodzinnym. Pytasz o objawy.",
             de: "Guten Tag. Was fehlt Ihnen denn?",
             pl: "Dzień dobry. Co panu dolega?",
             chips: ["Mir tut der Hals weh.", "Ich brauche eine Krankschreibung.", "Seit gestern."]),
         TrainScene(
-            id: "laden",
-            title: "W sklepie",
-            tags: "Laden, Brot, Karte",
-            who: "Jesteś sprzedawcą. Uczeń chce kupić chleb i zapłacić kartą.",
-            de: "Guten Tag. Kann ich Ihnen helfen?",
-            pl: "Dzień dobry. W czym mogę pomóc?",
-            chips: ["Ich möchte ein Brot.", "Kann ich mit Karte zahlen?", "Haben Sie Milch?"]),
+            id: "job", title: "Rozmowa w pracy i Krankmeldung", group: "Praca", level: "B1/B2", minutes: 5, icon: "briefcase",
+            tags: "Arbeit, Krankmeldung, Schicht",
+            who: "Jesteś szefem. Uczeń jest chory i musi zgłosić nieobecność.",
+            de: "Guten Morgen. Du bist heute nicht auf der Baustelle. Was ist los?",
+            pl: "Dzień dobry. Nie ma cię dziś na budowie. Co się dzieje?",
+            chips: ["Ich bin krank.", "Ich schicke die Krankmeldung.", "Ich kann morgen nicht kommen."]),
         TrainScene(
-            id: "wohnung",
-            title: "Awaria w mieszkaniu",
+            id: "pfand", title: "Zakupy, Pfand i reklamacja", group: "Zakupy", level: "A2", minutes: 4, icon: "bag",
+            tags: "Pfand, Bon, Reklamation",
+            who: "Jesteś kasjerem. Uczeń chce oddać kaucję za butelki albo zareklamować towar.",
+            de: "Guten Tag. Möchten Sie den Pfand abgeben oder etwas umtauschen?",
+            pl: "Dzień dobry. Chce pan oddać butelki na kaucję czy coś wymienić?",
+            chips: ["Ich möchte den Pfand abgeben.", "Das Brot ist schlecht.", "Hier ist der Bon."]),
+        TrainScene(
+            id: "bahn", title: "Deutsche Bahn i opóźnienie pociągu", group: "Komunikacja", level: "B1", minutes: 4, icon: "tram",
+            tags: "Bahn, Verspätung, Gleis",
+            who: "Jesteś pracownikiem kolei. Pociąg ucznia jest opóźniony.",
+            de: "Der Zug nach Hamburg hat zwanzig Minuten Verspätung. Kann ich Ihnen helfen?",
+            pl: "Pociąg do Hamburga ma dwadzieścia minut opóźnienia. Mogę w czymś pomóc?",
+            chips: ["Von welchem Gleis fährt er?", "Muss ich ein neues Ticket kaufen?", "Wo ist der nächste Zug?"]),
+        TrainScene(
+            id: "chef", title: "Spóźnienie na budowę", group: "Praca", level: "A2", minutes: 4, icon: "hammer",
+            tags: "Baustelle, Bus, Chef",
+            who: "Jesteś szefem na budowie. Uczeń się spóźnia, bo nie było autobusu.",
+            de: "Du kommst spät. Was ist passiert?",
+            pl: "Spóźniasz się. Co się stało?",
+            chips: ["Der Bus kam nicht.", "Entschuldigung, ich bin da.", "Ich kann gleich anfangen."]),
+        TrainScene(
+            id: "heizung", title: "Ogrzewanie nie działa", group: "Mieszkanie", level: "A2", minutes: 4, icon: "thermometer.medium",
             tags: "Heizung, Vermieter, Wohnung",
             who: "Jesteś wynajmującym. Uczeń dzwoni, bo ogrzewanie nie działa.",
             de: "Ja, hallo? Was gibt es denn?",
@@ -61,73 +83,149 @@ struct TrainLine: Identifiable {
 }
 
 struct AITrainerView: View {
+    @State private var filter = "Wszystkie"
+
+    private var shown: [TrainScene] {
+        if filter == "Wszystkie" { return TrainScene.list }
+        return TrainScene.list.filter { $0.group == filter }
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Realne sytuacje · Poziom A2–B2")
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.text2)
+                    Text("Życie w Niemczech")
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(TrainScene.filters, id: \.self) { name in
+                                Button(name) { filter = name }
+                                    .font(.subheadline.weight(.semibold))
+                                    .padding(.horizontal, 14)
+                                    .frame(minHeight: 36)
+                                    .background(filter == name ? Theme.ok : Color.white.opacity(0.08), in: Capsule())
+                                    .foregroundStyle(filter == name ? Color.black : Color.white)
+                            }
+                        }
+                    }
+                    VStack(spacing: 0) {
+                        ForEach(shown) { item in
+                            NavigationLink {
+                                TrainerChat(scene: item)
+                            } label: {
+                                sceneRow(item)
+                            }
+                            .buttonStyle(.plain)
+                            if item.id != shown.last?.id {
+                                Divider().overlay(Color.white.opacity(0.08)).padding(.leading, 72)
+                            }
+                        }
+                    }
+                    .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                }
+                .padding(16)
+                .padding(.bottom, 28)
+            }
+            .background(Color.black)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(.hidden, for: .navigationBar)
+        }
+    }
+
+    private func sceneRow(_ item: TrainScene) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: item.icon)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(Theme.ok)
+                .frame(width: 44, height: 44)
+                .background(Theme.ok.opacity(0.14), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(item.title)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.leading)
+                Text("\(item.group) · \(item.level) · \(item.minutes) min")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.text2)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
+    }
+}
+
+struct TrainerChat: View {
     @EnvironmentObject var store: LearningStore
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var mic = Mic()
-    @State private var scene = TrainScene.list[0]
+    let scene: TrainScene
     @State private var lines: [TrainLine] = []
     @State private var chips: [String] = []
     @State private var input = ""
     @State private var loading = false
     @State private var showPL = true
-    @State private var pickScene = false
     @State private var errorText = ""
     @State private var started = false
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                topBar
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 12) {
-                            banner
-                            ForEach(lines) { line in
-                                bubble(line).id(line.id)
-                            }
-                            if loading { ProgressView().tint(Theme.ok) }
-                            if !errorText.isEmpty {
-                                Text(errorText).font(.footnote).foregroundStyle(Theme.text2)
-                            }
+        VStack(spacing: 0) {
+            topBar
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        banner
+                        ForEach(lines) { line in
+                            bubble(line).id(line.id)
                         }
-                        .padding(16)
-                        .padding(.bottom, 8)
+                        if loading { ProgressView().tint(Theme.ok) }
+                        if !errorText.isEmpty {
+                            Text(errorText).font(.footnote).foregroundStyle(Theme.text2)
+                        }
                     }
-                    .scrollDismissesKeyboard(.interactively)
-                    .onChange(of: lines.count) { _, _ in
-                        if let last = lines.last { proxy.scrollTo(last.id, anchor: .bottom) }
-                    }
+                    .padding(16)
+                    .padding(.bottom, 8)
                 }
-                chipRow
-                composer
+                .scrollDismissesKeyboard(.interactively)
+                .onChange(of: lines.count) { _, _ in
+                    if let last = lines.last { proxy.scrollTo(last.id, anchor: .bottom) }
+                }
             }
-            .background(Color.black)
-            .toolbar(.hidden, for: .navigationBar)
-            .sheet(isPresented: $pickScene) { sceneList }
-            .onAppear {
-                mic.arm("de-DE")
-                guard !started else { return }
-                started = true
-                begin(scene)
-            }
-            .onChange(of: mic.listening) { was, now in
-                if was && !now { flushMic() }
-            }
-            .onDisappear {
-                mic.stop()
-                Talk.stop()
-            }
+            chipRow
+            composer
+        }
+        .background(Color.black)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
+        .onAppear {
+            mic.arm("de-DE")
+            guard !started else { return }
+            started = true
+            begin()
+        }
+        .onChange(of: mic.listening) { was, now in
+            if was && !now { flushMic() }
+        }
+        .onDisappear {
+            mic.stop()
+            Talk.stop()
         }
     }
 
     private var topBar: some View {
         HStack {
-            Button { pickScene = true } label: {
-                Label("Scenki", systemImage: "rectangle.3.group")
-                    .font(.subheadline.weight(.semibold))
+            Button { dismiss() } label: {
+                Image(systemName: "chevron.left")
+                    .font(.body.weight(.semibold))
+                    .frame(width: 36, height: 36)
             }
             .buttonStyle(.plain)
             .foregroundStyle(Theme.ok)
-            Spacer()
             Text("AI Trener").font(.headline)
             Spacer()
             Button { showPL.toggle() } label: {
@@ -141,7 +239,7 @@ struct AITrainerView: View {
             .foregroundStyle(Theme.ok)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.top, 8)
     }
 
     private var banner: some View {
@@ -151,7 +249,7 @@ struct AITrainerView: View {
                 Text(scene.tags).font(.caption).foregroundStyle(Theme.text2)
             }
             Spacer()
-            Button("Zakończ") { begin(scene) }
+            Button("Zakończ") { begin() }
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(Theme.ok)
         }
@@ -223,37 +321,11 @@ struct AITrainerView: View {
         .padding(.bottom, 8)
     }
 
-    private var sceneList: some View {
-        NavigationStack {
-            List(TrainScene.list) { item in
-                Button {
-                    scene = item
-                    begin(item)
-                    pickScene = false
-                } label: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(item.title).foregroundStyle(.white)
-                        Text(item.tags).font(.caption).foregroundStyle(Theme.text2)
-                    }
-                }
-            }
-            .scrollContentBackground(.hidden)
-            .background(Color.black)
-            .navigationTitle("Scenki")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Zamknij") { pickScene = false }
-                }
-            }
-        }
-        .presentationDetents([.medium, .large])
-    }
-
-    private func begin(_ item: TrainScene) {
+    private func begin() {
         errorText = ""
-        chips = item.chips
-        lines = [TrainLine(mine: false, de: item.de, pl: item.pl)]
-        Talk.de(item.de, rate: 0.46)
+        chips = scene.chips
+        lines = [TrainLine(mine: false, de: scene.de, pl: scene.pl)]
+        Talk.de(scene.de, rate: 0.46)
     }
 
     private func flushMic() {
