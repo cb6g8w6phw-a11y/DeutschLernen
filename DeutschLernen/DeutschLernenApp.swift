@@ -60,7 +60,7 @@ struct RootView: View {
                 .animation(.easeOut(duration: 0.2), value: dockHidden)
         }
         .background(NightGlow())
-        .background(DockPanBridge(hidden: $dockHidden))
+        .background(DockPanBridge(hidden: $dockHidden).allowsHitTesting(false))
         .onPreferenceChange(DockHeightKey.self) { height in
             if height > 40 { dockHeight = height }
         }
@@ -166,58 +166,43 @@ private struct DockPanBridge: UIViewRepresentable {
     func updateUIView(_ uiView: Probe, context: Context) {
         uiView.coordinator = context.coordinator
         context.coordinator.hidden = $hidden
-        context.coordinator.install(on: uiView)
+        context.coordinator.attach(uiView)
     }
 
     final class Probe: UIView {
         weak var coordinator: Coordinator?
         override func didMoveToWindow() {
             super.didMoveToWindow()
-            coordinator?.install(on: self)
+            coordinator?.attach(self)
         }
     }
 
-    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+    final class Coordinator: NSObject {
         var hidden: Binding<Bool>
-        private var installed = false
+        private weak var host: UIView?
         private weak var watching: UIScrollView?
         private var observed: NSKeyValueObservation?
         private var hold = Date.distantPast
+        private var timer: Timer?
 
         init(hidden: Binding<Bool>) { self.hidden = hidden }
 
-        func install(on view: UIView) {
-            guard let window = view.window else { return }
-            if !installed {
-                let pan = UIPanGestureRecognizer(target: self, action: #selector(panned(_:)))
-                pan.delegate = self
-                pan.cancelsTouchesInView = false
-                pan.delaysTouchesBegan = false
-                pan.delaysTouchesEnded = false
-                window.addGestureRecognizer(pan)
-                installed = true
+        func attach(_ view: UIView) {
+            host = view
+            if timer == nil {
+                let tick = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in
+                    self?.rebind()
+                }
+                RunLoop.main.add(tick, forMode: .common)
+                timer = tick
             }
-            if let scroll = liveScroll(in: window) { watch(scroll) }
+            rebind()
         }
 
-        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
-            true
-        }
-
-        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-            var view = touch.view
-            while let current = view {
-                if current is UIControl { return false }
-                view = current.superview
-            }
-            return true
-        }
-
-        @objc func panned(_ gesture: UIPanGestureRecognizer) {
-            guard let window = gesture.view as? UIWindow ?? gesture.view?.window else { return }
+        private func rebind() {
+            guard let window = host?.window else { return }
             guard let scroll = liveScroll(in: window) else { return }
             watch(scroll)
-            evaluate(scroll)
         }
 
         private func watch(_ scroll: UIScrollView) {
@@ -237,10 +222,12 @@ private struct DockPanBridge: UIViewRepresentable {
             guard scroll.window != nil else { return }
             let fromTop = scroll.contentOffset.y + scroll.adjustedContentInset.top
             let short = scroll.contentSize.height <= scroll.bounds.height + 24
-            let hide = !short && fromTop > 20
-            let show = short || fromTop <= 1
-            if hide { apply(true) }
-            else if show { apply(false) }
+            let moving = scroll.isDragging || scroll.isDecelerating
+            if short || fromTop <= 1 {
+                apply(false)
+            } else if moving, fromTop > 28 {
+                apply(true)
+            }
         }
 
         private func apply(_ hide: Bool) {
