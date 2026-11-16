@@ -133,6 +133,7 @@ struct Plan45View: View {
     }
 }
 
+@MainActor
 enum LessonClock {
     static func key(_ id: String) -> String { "lessonClock-\(LearningStore.dayKey())-\(id)" }
 
