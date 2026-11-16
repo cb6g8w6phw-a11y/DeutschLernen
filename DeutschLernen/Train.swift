@@ -671,20 +671,16 @@ struct ListenView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                if finished || item == nil {
-                    Text(deck.isEmpty ? "Ładuję…" : "Gotowe")
-                        .font(.largeTitle.bold())
-                    Text("Trafione: \(store.journal.listenOk) z \(store.journal.listenTries)")
-                        .font(.title3)
-                    Text("Następnym razem będą inne polecenia. Te zrobione dziś nie wracają od razu.")
-                        .font(.body)
-                        .foregroundStyle(Theme.text2)
+                if finished {
+                    LessonDone(title: "Gotowe", line: "Trafione: \(store.journal.listenOk) z \(store.journal.listenTries). Następnym razem będą inne polecenia.")
                     Button {
                         loadDeck(forceAll: true)
                     } label: {
                         Text("Jeszcze raz, inna kolejność").primaryButton()
                     }
                     .buttonStyle(.plain)
+                } else if item == nil {
+                    Text("Ładuję…").font(.title2.bold())
                 } else if let item {
                     Text("Najpierw samo ucho. Tekst i pytanie dopiero po odtworzeniu.")
                         .font(.subheadline)

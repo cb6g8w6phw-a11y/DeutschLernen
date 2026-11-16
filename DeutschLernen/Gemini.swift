@@ -212,7 +212,7 @@ enum GeminiVoice {
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue(key, forHTTPHeaderField: "x-goog-api-key")
         let body: [String: Any] = [
-            "contents": [["parts": [["text": "Sprich langsam und deutlich auf Deutsch: \(text)"]]]],
+            "contents": [["parts": [["text": "Sprich auf Deutsch, natürlich und zügig, nicht langsam: \(text)"]]]],
             "generationConfig": [
                 "responseModalities": ["AUDIO"],
                 "speechConfig": [

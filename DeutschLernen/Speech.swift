@@ -293,7 +293,7 @@ final class VoiceBox: NSObject, ObservableObject {
                     let data = try await GeminiVoice.clip(for: clean, key: geminiKey)
                     guard gen == self.generation else { return }
                     self.lastClip = data
-                    try self.play(data)
+                    try self.play(data, speechRate: rate)
                     return
                 } catch is CancellationError {
                     return
@@ -315,7 +315,7 @@ final class VoiceBox: NSObject, ObservableObject {
                 let data = try await self.fetch(clean, key: elevenKey)
                 guard gen == self.generation else { return }
                 self.lastClip = data
-                try self.play(data)
+                try self.play(data, speechRate: rate)
             } catch is CancellationError {
                 return
             } catch {
@@ -347,7 +347,7 @@ final class VoiceBox: NSObject, ObservableObject {
     func replay() {
         if let lastClip {
             note = ""
-            do { try play(lastClip) } catch {
+            do { try play(lastClip, speechRate: 0) } catch {
                 note = "Nie dało się odtworzyć nagrania jeszcze raz."
             }
             return
@@ -374,16 +374,30 @@ final class VoiceBox: NSObject, ObservableObject {
         Speaker.shared.speaking = false
     }
 
-    private func play(_ data: Data) throws {
+    private func play(_ data: Data, speechRate: Float) throws {
         try AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
         try AVAudioSession.sharedInstance().setActive(true)
         let audio = try AVAudioPlayer(data: data)
+        audio.enableRate = true
+        audio.rate = geminiPace(speechRate)
         audio.delegate = self
         audio.prepareToPlay()
         player = audio
         audio.play()
         playing = true
         Speaker.shared.speaking = true
+    }
+
+    private func geminiPace(_ speechRate: Float) -> Float {
+        if speechRate > 0.2 {
+            if speechRate < 0.42 { return 1.05 }
+            if speechRate < 0.55 { return 1.25 }
+            return 1.45
+        }
+        let pace = UserDefaults.standard.string(forKey: "talkPace") ?? "normal"
+        if pace == "fast" { return 1.5 }
+        if pace == "slow" { return 1.15 }
+        return 1.32
     }
 
     private func fetch(_ text: String, key: String) async throws -> Data {

@@ -487,8 +487,7 @@ struct WortSession: View {
                         WortDrill(topic: topic, limit: limit)
                     }
                 } else {
-                    Text("Koniec serii").font(.largeTitle.bold())
-                    Text("Poznane, zapamiętane i powtórki są zapisane.").foregroundStyle(Theme.text2)
+                    LessonDone(title: "Koniec serii", line: "Poznane, zapamiętane i powtórki są zapisane.")
                 }
             }
             .padding(20)
@@ -729,7 +728,7 @@ struct WortDrill: View {
             } else if deck.isEmpty {
                 Text("Brak słów w tej kategorii.").font(.title3.bold())
             } else {
-                Text("Koniec serii").font(.largeTitle.bold())
+                LessonDone(title: "Koniec serii", line: "Te słówka wrócą w powtórce.")
             }
         }
         .onAppear(perform: load)

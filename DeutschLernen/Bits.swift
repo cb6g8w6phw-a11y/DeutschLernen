@@ -89,24 +89,52 @@ struct ErrorRetry: View {
 
 struct ConfettiView: View {
     @State private var fall = false
+    @State private var pop = false
 
     var body: some View {
-        GeometryReader { geo in
-            ForEach(0..<28, id: \.self) { i in
-                Circle()
-                    .fill(Color.white.opacity(0.35 + Double(i % 4) * 0.15))
-                    .frame(width: 8, height: 8)
-                    .position(
-                        x: CGFloat((i * 41) % max(Int(geo.size.width), 1)),
-                        y: fall ? geo.size.height + 30 : -20
-                    )
-                    .animation(.easeIn(duration: 1.3).delay(Double(i) * 0.02), value: fall)
+        ZStack {
+            GeometryReader { geo in
+                ForEach(0..<40, id: \.self) { i in
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .fill(i % 3 == 0 ? Theme.ok : (i % 3 == 1 ? Theme.sign : Color.white))
+                        .frame(width: CGFloat(7 + (i % 4) * 2), height: CGFloat(12 + (i % 3) * 4))
+                        .rotationEffect(.degrees(fall ? Double(i * 28) : 0))
+                        .position(
+                            x: CGFloat((i * 29) % max(Int(geo.size.width), 1)),
+                            y: fall ? geo.size.height + 40 : -24
+                        )
+                        .animation(.easeIn(duration: 1.5).delay(Double(i % 10) * 0.05), value: fall)
+                }
             }
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 72))
+                .foregroundStyle(Theme.ok)
+                .scaleEffect(pop ? 1 : 0.15)
+                .opacity(pop ? 1 : 0)
         }
         .allowsHitTesting(false)
         .onAppear {
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.62)) { pop = true }
             fall = true
             Haptic.good()
         }
+    }
+}
+
+struct LessonDone: View {
+    let title: String
+    let line: String
+    @AppStorage("lessonMotion") private var motion = true
+
+    var body: some View {
+        VStack(spacing: 12) {
+            if motion { ConfettiView().frame(height: 160) }
+            Text(title).font(.largeTitle.bold()).foregroundStyle(Theme.text)
+            Text(line)
+                .font(.body)
+                .foregroundStyle(Theme.text2)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
     }
 }

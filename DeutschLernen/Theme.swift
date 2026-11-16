@@ -1,12 +1,13 @@
 import SwiftUI
 
 enum Theme {
-    static let bg = Color(hex: "0E1726")
-    static let card = Color(hex: "16233A")
-    static let card2 = Color(hex: "1C2C48")
+    private static var light: Bool { UserDefaults.standard.string(forKey: "appScheme") == "light" }
+    static var bg: Color { light ? Color(hex: "F4F7F5") : Color(hex: "0E1726") }
+    static var card: Color { light ? Color.white : Color(hex: "16233A") }
+    static var card2: Color { light ? Color(hex: "E6EEE8") : Color(hex: "1C2C48") }
     static let track = Color.white.opacity(0.16)
-    static let text = Color(hex: "EAF0FA")
-    static let text2 = Color(hex: "9AA9BF")
+    static var text: Color { light ? Color(hex: "142016") : Color(hex: "EAF0FA") }
+    static var text2: Color { light ? Color(hex: "5C6B62") : Color(hex: "9AA9BF") }
     static let accent = Color(hex: "1F5FBF")
     static let sign = Color(hex: "FFC400")
     static let orange = Color(hex: "FFC400")
@@ -19,7 +20,7 @@ enum Theme {
     }
 
     static var background: some View {
-        Color(hex: "0E1726")
+        Theme.bg
     }
 
     static func dni(_ n: Int) -> String {
@@ -65,7 +66,7 @@ extension View {
 
     func screenChrome() -> some View {
         toolbarBackground(.visible, for: .navigationBar)
-            .toolbarBackground(Color.black, for: .navigationBar)
+            .toolbarBackground(UserDefaults.standard.string(forKey: "appScheme") == "light" ? Color.white : Color.black, for: .navigationBar)
             .navigationBarTitleDisplayMode(.inline)
     }
 }

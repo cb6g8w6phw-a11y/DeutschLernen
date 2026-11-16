@@ -24,6 +24,7 @@ struct RootView: View {
     @State private var dockHidden = false
     @State private var dockHeight: CGFloat = 74
     @AppStorage("notifyExplained") private var notifyExplained = false
+    @AppStorage("appScheme") private var appScheme = "dark"
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -71,7 +72,7 @@ struct RootView: View {
             withTransaction(snap) { dockHidden = false }
         }
         .tint(Theme.ok)
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(appScheme == "light" ? .light : .dark)
         .fontDesign(.rounded)
         .onAppear {
             NewsClock.shared.start()

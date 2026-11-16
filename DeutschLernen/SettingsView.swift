@@ -5,6 +5,7 @@ struct SettingsView: View {
     @State private var groq = ""
     @State private var gemini = ""
     @AppStorage("geminiVoice") private var geminiVoice = true
+    @AppStorage("appScheme") private var appScheme = "dark"
     @State private var eleven = ""
     @State private var keyOK = false
     @AppStorage("profileJob") private var job = ""
@@ -62,36 +63,14 @@ struct SettingsView: View {
                 } header: {
                     Text("Głos offline")
                 }
-                Section("Wygląd") {
-                    ThemePicker()
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                }
-                Section {
-                    SecureField("Klucz ElevenLabs", text: $eleven)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .onChange(of: eleven) { _, value in Secret.save(value, "elevenKey") }
-                    Link("Klucz głosu: elevenlabs.io", destination: URL(string: "https://elevenlabs.io/app/settings/api-keys")!)
-                    Text("Ten klucz tylko czyta odpowiedzi na głos. Rozmowę dalej pisze Gemini albo Groq. Głos jest męski i niemiecki.")
+                Section("Motyw") {
+                    Picker("Motyw", selection: $appScheme) {
+                        Text("Ciemny").tag("dark")
+                        Text("Jasny").tag("light")
+                    }
+                    .pickerStyle(.segmented)
+                    Text("Ciemny jest domyślny. Jasny rozjaśnia tło i napisy.")
                         .font(.footnote).foregroundStyle(.secondary)
-                    Text("Jeśli nadal słyszysz kobietę, na iPhonie ściągnij głos Markus: Ustawienia, Dostępność, Treść mówiona, Głosy, Niemiecki.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                    PaceButtons()
-                } header: {
-                    Text("ElevenLabs — głos")
-                }
-                Section {
-                    SecureField("Klucz Groq", text: $groq)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .onChange(of: groq) { _, value in Secret.save(value, "groqKey") }
-                    Link("Darmowy klucz, bez karty: console.groq.com/keys",
-                         destination: URL(string: "https://console.groq.com/keys")!)
-                    Text("Konto na Groq, potem Create API Key i wklej tutaj. To działa, gdy Gemini ma przerwę.")
-                        .font(.footnote).foregroundStyle(.secondary)
-                } header: {
-                    Text("Groq — polecane")
                 }
                 Section {
                     SecureField("Klucz Gemini", text: $gemini)
@@ -100,15 +79,37 @@ struct SettingsView: View {
                         .onChange(of: gemini) { _, value in Secret.save(value, "geminiKey") }
                     Link("Klucz Gemini: aistudio.google.com/apikey",
                          destination: URL(string: "https://aistudio.google.com/apikey")!)
-                    Toggle("Głos Gemini ma pierwszeństwo", isOn: $geminiVoice)
-                    Text("Rozmowa i odsłuch idą najpierw głosem Gemini. Jak nie odpowie, zostaje ElevenLabs albo głos iPhone'a. W aplikacji nie ma limitu wiadomości.")
+                    Toggle("Głos Gemini wszędzie", isOn: $geminiVoice)
+                    Text("Każdy odsłuch w aplikacji idzie najpierw głosem Gemini. Tempo ustawiasz niżej. Jak Gemini nie odpowie, zostaje ElevenLabs albo głos iPhone'a.")
                         .font(.footnote).foregroundStyle(.secondary)
+                    PaceButtons()
                     Link("Otwórz aplikację Gemini do gadania głosem",
                          destination: URL(string: "https://gemini.google.com/app")!)
-                    Link("Zainstaluj aplikację Gemini",
-                         destination: URL(string: "https://apps.apple.com/app/google-gemini/id6477489729")!)
                 } header: {
-                    Text("Gemini — czat i głos")
+                    Text("Gemini — głos i czat")
+                }
+                Section {
+                    SecureField("Klucz ElevenLabs", text: $eleven)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .onChange(of: eleven) { _, value in Secret.save(value, "elevenKey") }
+                    Link("Klucz głosu: elevenlabs.io", destination: URL(string: "https://elevenlabs.io/app/settings/api-keys")!)
+                    Text("Zapasowy głos, gdy Gemini nie odpowie.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                } header: {
+                    Text("ElevenLabs — zapasowy głos")
+                }
+                Section {
+                    SecureField("Klucz Groq", text: $groq)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .onChange(of: groq) { _, value in Secret.save(value, "groqKey") }
+                    Link("Darmowy klucz, bez karty: console.groq.com/keys",
+                         destination: URL(string: "https://console.groq.com/keys")!)
+                    Text("Tekstowa zapasowa rozmowa, gdy Gemini ma przerwę. Głosu nie czyta.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                } header: {
+                    Text("Groq — zapasowy tekst")
                 }
                 Section {
                     Button {
