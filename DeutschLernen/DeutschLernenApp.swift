@@ -31,6 +31,7 @@ struct RootView: View {
                 switch tab {
                 case 1: NavigationStack { MoreTools() }
                 case 2: NavigationStack { ListenView() }
+                case 14: NavigationStack { NewsListView() }
                 case 3: TutorView()
                 case 4: NavigationStack { MoreTools() }
                 case 5: NavigationStack { SceneLibraryView() }
@@ -115,6 +116,7 @@ struct AppDock: View {
             icon(0, "house.fill", "Start")
             icon(1, "book", "Ucz się")
             icon(2, "headphones", "Słuchaj")
+            icon(14, "newspaper", "Wiadomości")
             icon(3, "mic", "Mów")
             icon(11, "person", "Profil")
         }
@@ -130,9 +132,9 @@ struct AppDock: View {
         Button { tab = value } label: {
             VStack(spacing: 4) {
                 Image(systemName: symbol)
-                    .font(.system(size: 20, weight: .regular))
+                    .font(.system(size: 18, weight: .regular))
                 Text(title)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: 10, weight: .medium))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
