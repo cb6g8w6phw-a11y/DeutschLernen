@@ -184,31 +184,7 @@ struct SceneStudyView: View {
                 Text(scene.title).font(.title2.bold())
                 Text(scene.situation).foregroundStyle(Theme.text2)
                 Text("Cały dialog").font(.headline)
-                ForEach(scene.lines) { line in
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text(line.who).font(.caption.weight(.bold)).foregroundStyle(Theme.ok)
-                            Spacer()
-                            Button {
-                                GermanVoice.shared.speak(lines: [DeTurn(speaker: line.who, text: line.de)])
-                            } label: {
-                                Label("Odtwórz", systemImage: "speaker.wave.1.fill")
-                                    .font(.caption.weight(.semibold))
-                            }
-                            .buttonStyle(.plain)
-                            .foregroundStyle(Theme.ok)
-                        }
-                        LineWords(text: line.de, meaning: meaning)
-                        Text(line.pl)
-                            .font(.subheadline)
-                            .foregroundStyle(Theme.text2)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    .padding(12)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color.white.opacity(0.18), lineWidth: 1))
-                }
+                ProsePage(sentences: proseLines, gloss: scene.words, explain: { token in meaning(token) })
                 Button {
                     GermanVoice.shared.speak(lines: scene.lines.map { DeTurn(speaker: $0.who, text: $0.de) })
                 } label: {
@@ -323,6 +299,12 @@ struct SceneStudyView: View {
         }
     }
 
+    private var proseLines: [ReadSentence] {
+        scene.lines.map { line in
+            ReadSentence(id: line.id, de: Prose.weave(line), pl: line.pl)
+        }
+    }
+
     private func meaning(_ token: String) -> String {
         let bare = token.lowercased().filter { $0.isLetter || "äöüß".contains($0) }
         if let hit = scene.words.first(where: { gloss in
@@ -347,7 +329,7 @@ struct SceneStudyView: View {
         scene.lines.first { $0.de.lowercased().contains(bare) }?.de ?? scene.lines[0].de
     }
 
-    private static let verbs: [String: (pl: String, inf: String, forms: String, ex: String)] = [
+    static let verbs: [String: (pl: String, inf: String, forms: String, ex: String)] = [
         "komme": ("przyjdę", "kommen", "ich komme, du kommst, er kommt, wir kommen", "Ich komme in zehn Minuten."),
         "kommst": ("przychodzisz", "kommen", "ich komme, du kommst, er kommt", "Wann kommst du zur Arbeit?"),
         "kommt": ("przychodzi", "kommen", "ich komme, du kommst, er kommt", "Der Bus kommt in fünf Minuten."),
@@ -399,7 +381,7 @@ struct SceneStudyView: View {
         "braucht": ("potrzebuje", "brauchen", "ich brauche, du brauchst, er braucht", "Er braucht Hilfe.")
     ]
 
-    private static let plurals = [
+    static let plurals = [
         "schlüssel": "die Schlüssel", "rechnung": "die Rechnungen", "waschmaschine": "die Waschmaschinen",
         "filter": "die Filter", "musik": "—", "fenster": "die Fenster", "joghurt": "die Joghurts",
         "flasche": "die Flaschen", "brot": "die Brote", "brötchen": "die Brötchen", "tisch": "die Tische",
@@ -410,7 +392,7 @@ struct SceneStudyView: View {
         "termin": "die Termine", "rezept": "die Rezepte", "zahn": "die Zähne", "rücken": "die Rücken"
     ]
 
-    private static let bits = [
+    static let bits = [
         "ich": "ja", "du": "ty", "er": "on", "sie": "ona, oni albo pan", "es": "to",
         "wir": "my", "ihr": "wy", "mein": "mój", "meine": "moja", "meinen": "mojego",
         "ist": "jest", "sind": "są", "bin": "jestem", "bist": "jesteś",

@@ -246,6 +246,18 @@ struct WortHome: View {
                         ForEach(VocabBook.topics, id: \.self, content: topicChip)
                     }
                 }
+                NavigationLink { WortSetup() } label: {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Jak chcesz się uczyć?").font(.headline).foregroundStyle(.white)
+                        Text("Odpowiedzi do wyboru, pisanie albo obie metody. Przy błędzie wychodzi wskazówka.")
+                            .font(.caption)
+                            .foregroundStyle(Theme.text2)
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Theme.ok.opacity(0.16), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                }
+                .buttonStyle(.plain)
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                     tile("Nowe słówka", "Codzienna porcja nauki", "book") { WortSession(mode: .fresh, topic: topic, limit: daily) }
                     tile("Powtórki", "Zapamiętywanie na długo", "brain") { WortSession(mode: .review, topic: topic, limit: daily) }
@@ -368,7 +380,7 @@ enum VocabPace {
     }
 }
 
-enum WortMode { case fresh, review, cards, hear, quiz, type }
+enum WortMode { case fresh, review, cards, hear, quiz, type, learn }
 
 struct WortSession: View {
     @EnvironmentObject var store: LearningStore
@@ -385,6 +397,7 @@ struct WortSession: View {
     @State private var heard = false
     @State private var choices: [String] = []
     @State private var banner = ""
+    @State private var showHint = false
 
     private var card: Vocab? { index < deck.count ? deck[index] : nil }
 
@@ -434,6 +447,9 @@ struct WortSession: View {
                             .autocorrectionDisabled()
                         Button("Sprawdź") { checkType(card) }.primaryButton().disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
                         if !note.isEmpty { Text(note).foregroundStyle(Theme.text2) }
+                        if showHint { VocabHintCard(card: card) }
+                    case .learn:
+                        WortDrill(topic: topic, limit: limit)
                     }
                 } else {
                     Text("Koniec serii").font(.largeTitle.bold())
@@ -456,6 +472,7 @@ struct WortSession: View {
         case .hear: return "Ze słuchu"
         case .quiz: return "Quiz"
         case .type: return "Z pamięci"
+        case .learn: return "Słówka"
         }
     }
 
@@ -488,6 +505,7 @@ struct WortSession: View {
                     guard picked == nil else { return }
                     picked = 1
                     let ok = choice == card.pl
+                    showHint = !ok
                     mark(card, ok: ok, advance: false)
                     note = ok ? "Dobrze." : "Poprawnie: \(card.pl). \(card.de)"
                 }
@@ -498,6 +516,7 @@ struct WortSession: View {
             }
             if picked != nil {
                 Text(note).foregroundStyle(Theme.text2)
+                if showHint { VocabHintCard(card: card) }
                 Text(card.de).font(.headline)
                 if !card.plural.isEmpty { Text(card.plural).foregroundStyle(Theme.text2) }
                 Button("Dalej") { advance() }.primaryButton()
@@ -508,6 +527,7 @@ struct WortSession: View {
     private func checkType(_ card: Vocab) {
         let ok = Normalizer.same(typed, card.de) || Normalizer.same(typed, card.ex)
         note = ok ? "Dobrze." : "Tak się pisze: \(card.de). Zdanie: \(card.ex)"
+        showHint = !ok
         mark(card, ok: ok, advance: false)
         if ok { advanceSoon() }
     }
@@ -560,12 +580,232 @@ struct WortSession: View {
         picked = nil
         heard = false
         typed = ""
+        showHint = false
         if !keepIndex { index += 1 }
         if index > deck.count { index = deck.count }
         prepare()
     }
 
     private func advance() { step(keepIndex: false) }
+}
+
+struct WortSetup: View {
+    @AppStorage("wortMethod") private var method = "choice"
+    @EnvironmentObject var store: LearningStore
+    @AppStorage("wortDaily") private var daily = 12
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Jak chcesz się uczyć?").font(.title2.bold())
+                methodRow("choice", "Odpowiedzi wielokrotnego wyboru", "Słuchasz i rozpoznajesz znaczenie.")
+                methodRow("write", "Pisząc", "Wpisujesz zdanie po niemiecku.")
+                methodRow("both", "Połącz obie metody", "Raz wybierasz, raz piszesz.")
+                NavigationLink {
+                    WortSession(mode: .learn, topic: "Wszystko", limit: daily)
+                } label: {
+                    Text("Zaczynam").primaryButton()
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(20)
+        }
+        .navigationTitle("Sposób nauki")
+        .containerBackground(for: .navigation) { Color.black }
+    }
+
+    private func methodRow(_ id: String, _ title: String, _ text: String) -> some View {
+        Button { method = id } label: {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title).font(.headline).foregroundStyle(.white)
+                    Text(text).font(.subheadline).foregroundStyle(Theme.text2)
+                }
+                Spacer()
+                Image(systemName: method == id ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(method == id ? Theme.ok : Theme.text2)
+            }
+            .padding(14)
+            .background(method == id ? Theme.ok.opacity(0.16) : Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(method == id ? Theme.ok : Color.white.opacity(0.08), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct WortDrill: View {
+    @EnvironmentObject var store: LearningStore
+    let topic: String
+    let limit: Int
+    @AppStorage("wortMethod") private var method = "choice"
+    @State private var deck: [Vocab] = []
+    @State private var index = 0
+    @State private var picked: String?
+    @State private var typed = ""
+    @State private var note = ""
+    @State private var choices: [String] = []
+    @State private var showHint = false
+
+    private var card: Vocab? { index < deck.count ? deck[index] : nil }
+    private var writing: Bool {
+        if method == "write" { return true }
+        if method == "both" { return index % 2 == 1 }
+        return false
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            if let card {
+                Text("\(index + 1) z \(deck.count)").font(.footnote).foregroundStyle(Theme.text2)
+                Text(writing ? card.pl : card.de).font(.title.bold())
+                if writing {
+                    TextField("Po niemiecku", text: $typed)
+                        .textFieldStyle(.roundedBorder)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    Button("Sprawdź") { gradeWrite(card) }
+                        .primaryButton()
+                        .disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
+                } else {
+                    ForEach(choices, id: \.self) { choice in
+                        Button(choice) { gradeChoice(card, choice) }
+                            .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+                            .padding(.horizontal, 12)
+                            .foregroundStyle(.white)
+                            .background(fill(choice, card), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .disabled(picked != nil)
+                    }
+                }
+                if !note.isEmpty { Text(note).foregroundStyle(Theme.text2) }
+                if showHint { VocabHintCard(card: card) }
+                if picked != nil || showHint {
+                    Button("Dalej") { next() }.primaryButton()
+                }
+            } else if deck.isEmpty {
+                Text("Brak słów w tej kategorii.").font(.title3.bold())
+            } else {
+                Text("Koniec serii").font(.largeTitle.bold())
+            }
+        }
+        .onAppear(perform: load)
+    }
+
+    private func fill(_ choice: String, _ card: Vocab) -> Color {
+        guard picked != nil else { return Color.white.opacity(0.08) }
+        if choice == card.pl { return Theme.ok.opacity(0.85) }
+        if choice == picked { return Theme.bad.opacity(0.75) }
+        return Color.white.opacity(0.08)
+    }
+
+    private func load() {
+        deck = VocabBook.today(store, limit: limit, topic: topic)
+        prepare()
+    }
+
+    private func prepare() {
+        guard index < deck.count else { return }
+        let card = deck[index]
+        let wrong = VocabBook.all(store).filter { $0.pl != card.pl }.shuffled().prefix(3).map(\.pl)
+        choices = ([card.pl] + wrong).shuffled()
+        picked = nil
+        typed = ""
+        note = ""
+        showHint = false
+    }
+
+    private func gradeChoice(_ card: Vocab, _ choice: String) {
+        guard picked == nil else { return }
+        picked = choice
+        let ok = choice == card.pl
+        showHint = !ok
+        note = ok ? "Dobrze." : "Poprawnie: \(card.pl)"
+        remember(card, ok: ok)
+    }
+
+    private func gradeWrite(_ card: Vocab) {
+        let ok = Normalizer.same(typed, card.de) || Normalizer.same(typed, card.ex)
+        picked = ok ? card.de : typed
+        showHint = !ok
+        note = ok ? "Dobrze." : "Tak się pisze: \(card.de)"
+        remember(card, ok: ok)
+    }
+
+    private func remember(_ card: Vocab, ok: Bool) {
+        let word = Word(de: card.de, pl: card.pl, ex: card.ex, exPl: card.exPl, topic: card.topic)
+        if ok {
+            store.grade(word, .easy)
+            Haptic.good()
+        } else {
+            store.grade(word, .hard)
+            store.pinForReview(word)
+            Haptic.bad()
+        }
+    }
+
+    private func next() {
+        index += 1
+        prepare()
+    }
+}
+
+struct VocabHintCard: View {
+    let card: Vocab
+
+    var body: some View {
+        let hint = VocabHint.make(card)
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Wskazówka").font(.headline)
+            line("Dobrze", hint.right, hint.rightPL)
+            line("Przeczenie", hint.neg, hint.negPL)
+            line("Pytanie", hint.ask, hint.askPL)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func line(_ title: String, _ de: String, _ pl: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title).font(.caption.weight(.bold)).foregroundStyle(Theme.ok)
+            Text(de).font(.body.weight(.semibold))
+            Text(pl).font(.subheadline).foregroundStyle(Theme.text2)
+        }
+    }
+}
+
+enum VocabHint {
+    static func make(_ card: Vocab) -> (right: String, rightPL: String, neg: String, negPL: String, ask: String, askPL: String) {
+        let right = card.ex.isEmpty ? card.de : card.ex
+        let rightPL = card.exPl.isEmpty ? card.pl : card.exPl
+        return (right, rightPL, negate(right), "Przeczenie: \(rightPL)", ask(right), "Pytanie: \(rightPL)")
+    }
+
+    private static func negate(_ sentence: String) -> String {
+        let lower = sentence.lowercased()
+        if lower.contains(" nicht") || lower.contains("kein") { return sentence }
+        if sentence.hasSuffix(".") { return String(sentence.dropLast()) + " nicht." }
+        return sentence + " nicht"
+    }
+
+    private static func ask(_ sentence: String) -> String {
+        let clean = sentence.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: "?", with: "")
+        var parts = clean.split(separator: " ").map(String.init)
+        guard parts.count >= 2 else { return sentence.hasSuffix("?") ? sentence : sentence + "?" }
+        let first = parts.removeFirst()
+        let second = parts.removeFirst()
+        let you: [String: String] = [
+            "bin": "Bist", "habe": "Hast", "gehe": "Gehst", "komme": "Kommst",
+            "muss": "Musst", "kann": "Kannst", "will": "Willst", "brauche": "Brauchst",
+            "fahre": "Fährst", "arbeite": "Arbeitest", "mache": "Machst", "sage": "Sagst"
+        ]
+        if first.lowercased() == "ich", let verb = you[second.lowercased()] {
+            let rest = parts.joined(separator: " ")
+            return rest.isEmpty ? "\(verb) du?" : "\(verb) du \(rest)?"
+        }
+        let rest = parts.joined(separator: " ")
+        let head = second.prefix(1).uppercased() + second.dropFirst()
+        return rest.isEmpty ? "\(head) \(first.lowercased())?" : "\(head) \(first.lowercased()) \(rest)?"
+    }
 }
 
 struct WortAdd: View {

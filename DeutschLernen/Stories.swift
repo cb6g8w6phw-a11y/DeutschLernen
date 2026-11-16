@@ -154,7 +154,25 @@ enum TextBook {
             ("die Abrechnung", "rozliczenie"),
             ("die Lohnzahlung", "wypłata"),
             ("die Personalabteilung", "kadry")
-        ], "O co prosi?", ["O doliczenie dwunastu godzin przed następną wypłatą", "O nową umowę od maja", "O wolne bez wpisu"], 0, "Na rozliczeniu brakuje dwunastu godzin.", "Auf der Abrechnung fehlen zwölf Stunden.")
+        ], "O co prosi?", ["O doliczenie dwunastu godzin przed następną wypłatą", "O nową umowę od maja", "O wolne bez wpisu"], 0, "Na rozliczeniu brakuje dwunastu godzin.", "Auf der Abrechnung fehlen zwölf Stunden."),
+        story("t011", "Droga na pocztę", "Codzienność", "A1", [
+            ("Lukas wohnt seit einer Woche in der Stadt.", "Lukas mieszka w tym mieście od tygodnia."),
+            ("Heute will er ein Paket zur Post bringen.", "Dziś chce zanieść paczkę na pocztę."),
+            ("Die Adresse hat er, die Straße aber nicht.", "Adres ma, ulicy jeszcze nie."),
+            ("An der Haltestelle fragt er eine Frau.", "Na przystanku pyta kobietę."),
+            ("„Entschuldigung, wo ist die Post?“", "Przepraszam, gdzie jest poczta?"),
+            ("„In der Marktstraße, neben der Bäckerei“, sagt sie.", "Na Marktstraße, obok piekarni, mówi ona."),
+            ("„Fährt der Bus direkt dorthin?“, fragt Lukas.", "Czy autobus jedzie tam bezpośrednio? pyta Lukas."),
+            ("„Nein. Gehen Sie geradeaus und an der Ampel links.“", "Nie. Proszę iść prosto, a przy światłach w lewo."),
+            ("„Danke, dann gehe ich zu Fuß.“", "Dziękuję, w takim razie pójdę pieszo."),
+            ("Nach zehn Minuten gibt er das Paket ab.", "Po dziesięciu minutach oddaje paczkę.")
+        ], [
+            ("die Post", "poczta"),
+            ("das Paket", "paczka"),
+            ("die Haltestelle", "przystanek"),
+            ("die Ampel", "sygnalizacja"),
+            ("zu Fuß", "pieszo")
+        ], "Jak Lukas dociera na pocztę?", ["Idzie pieszo", "Jedzie autobusem do końca", "Zostaje w domu"], 0, "Idę na pocztę pieszo.", "Ich gehe zu Fuß zur Post.")
     ]
 
     static func doneIDs() -> Set<String> { Set(UserDefaults.standard.stringArray(forKey: "textDone") ?? []) }
@@ -179,6 +197,132 @@ enum TextBook {
             replyPL: replyPL,
             replyDE: replyDE
         )
+    }
+}
+
+enum Prose {
+    static func weave(_ line: SayLine) -> String {
+        let raw = line.de.trimmingCharacters(in: .whitespacesAndNewlines)
+        let spoken = raw.hasPrefix("„") ? raw : "„\(raw)“"
+        if line.who == "Ty" { return "\(spoken), sagst du." }
+        return "\(spoken), sagt \(speaker(line.who))."
+    }
+
+    static func speaker(_ who: String) -> String {
+        switch who {
+        case "Partner": return "dein Partner"
+        case "Sąsiad": return "der Nachbar"
+        case "Wynajmujący": return "der Vermieter"
+        case "Kasjer", "Kasa": return "die Kasse"
+        case "Obsługa": return "die Bedienung"
+        case "Szef", "Kierownik": return "der Chef"
+        case "Kolega": return "der Kollege"
+        case "Lekarz": return "der Arzt"
+        case "Urzędnik", "Urząd": return "der Beamte"
+        case "Sprzedawca": return "der Verkäufer"
+        default:
+            let polish = "ąęśćźżńłóĄĘŚĆŹŻŃŁÓ"
+            if who.contains(where: { polish.contains($0) }) { return "er" }
+            return who
+        }
+    }
+}
+
+struct FlowWord: Identifiable {
+    let id: String
+    let surface: String
+    let sentenceID: String
+    let sentenceDE: String
+    let sentencePL: String
+}
+
+struct ProsePage: View {
+    let sentences: [ReadSentence]
+    let gloss: [LineGloss]
+    var explain: ((String) -> String)? = nil
+    @State private var picked: String?
+
+    private var words: [FlowWord] {
+        sentences.flatMap { sentence in
+            sentence.de.split(separator: " ").enumerated().map { index, part in
+                FlowWord(
+                    id: "\(sentence.id)-\(index)",
+                    surface: String(part),
+                    sentenceID: sentence.id,
+                    sentenceDE: sentence.de,
+                    sentencePL: sentence.pl
+                )
+            }
+        }
+    }
+
+    private var openWord: FlowWord? { words.first { $0.id == picked } }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            WordFlow(spacing: 5) {
+                ForEach(words) { word in
+                    Button {
+                        picked = picked == word.id ? nil : word.id
+                    } label: {
+                        Text(word.surface)
+                            .font(.system(size: 18))
+                            .foregroundStyle(openWord?.sentenceID == word.sentenceID ? Theme.ok : .white)
+                            .multilineTextAlignment(.leading)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            if let word = openWord {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(glossLine(word.surface))
+                        .font(.subheadline.weight(.semibold))
+                    Text(word.sentencePL)
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.text2)
+                    HStack(spacing: 16) {
+                        Button {
+                            let bare = word.surface.filter { $0.isLetter || "äöüÄÖÜß".contains($0) }
+                            GermanVoice.shared.speak(text: bare)
+                        } label: {
+                            Label("Słowo", systemImage: "speaker.wave.1.fill").font(.caption.weight(.semibold))
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(Theme.ok)
+                        Button {
+                            GermanVoice.shared.speak(text: word.sentenceDE)
+                        } label: {
+                            Label("Zdanie", systemImage: "speaker.wave.2.fill").font(.caption.weight(.semibold))
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(Theme.ok)
+                    }
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private func glossLine(_ token: String) -> String {
+        if let explain, explain(token).isEmpty == false, !explain(token).hasPrefix("Nie mam") {
+            return explain(token)
+        }
+        let bare = token.lowercased().filter { $0.isLetter || "äöüß".contains($0) }
+        if let hit = gloss.first(where: { item in
+            item.de.lowercased().split { !($0.isLetter || "äöüß".contains($0)) }.contains { String($0) == bare }
+        }) {
+            return "\(hit.de) — \(hit.pl)"
+        }
+        if let verb = SceneStudyView.verbs[bare] {
+            return "\(token) — \(verb.pl). Bezokolicznik: \(verb.inf)."
+        }
+        if let known = SceneStudyView.bits[bare] { return "\(token) — \(known)" }
+        return "W tym zdaniu: \(openWord?.sentencePL ?? "")"
     }
 }
 
@@ -229,7 +373,7 @@ struct TextLibraryView: View {
     var body: some View {
         List {
             Section {
-                Text("Ukończone \(TextBook.doneIDs().count) z \(TextBook.all.count). Tekst jest ciągiem zdań, jak w podręczniku. Polskie tłumaczenie zostaje schowane, dopóki nie stukniesz zdania.")
+                Text("Ukończone \(TextBook.doneIDs().count) z \(TextBook.all.count). Tekst idzie ciągiem, jak opowiadanie. Stuknij słowo: dostaniesz jego tłumaczenie i tylko to jedno zdanie po polsku.")
                     .font(.footnote)
                     .foregroundStyle(Theme.text2)
             }
@@ -299,7 +443,6 @@ struct TextLibraryView: View {
 struct TextStudyView: View {
     @EnvironmentObject var store: LearningStore
     let text: ReadText
-    @State private var open: Set<String> = []
     @State private var picked: Int?
     @State private var typed = ""
     @State private var verdict = ""
@@ -335,7 +478,7 @@ struct TextStudyView: View {
                 Text(text.category).font(.caption).foregroundStyle(Theme.text2)
             }
             Text(text.title).font(.title2.bold())
-            Text("Cały tekst jest po niemiecku. Stuknij jedno zdanie, żeby zobaczyć tylko jego tłumaczenie. Drugie stuknięcie je chowa.")
+            Text("Cały tekst jest po niemiecku, ciągiem. Stuknij słowo, a pod spodem wyjdzie tylko to słowo i zdanie, w którym stoi.")
                 .font(.footnote)
                 .foregroundStyle(Theme.text2)
             Button {
@@ -350,14 +493,7 @@ struct TextStudyView: View {
     }
 
     private var page: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            ForEach(text.sentences) { sentence in
-                sentenceRow(sentence)
-            }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        ProsePage(sentences: text.sentences, gloss: text.words)
     }
 
     private var savedBlock: some View {
@@ -434,43 +570,6 @@ struct TextStudyView: View {
 
     private func example(_ de: String) -> String {
         text.sentences.first { $0.de.lowercased().contains(ProgressBook.lemma(de)) }?.de ?? de
-    }
-
-    private func sentenceRow(_ sentence: ReadSentence) -> some View {
-        let shown = open.contains(sentence.id)
-        return VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Button {
-                    if shown { open.remove(sentence.id) } else { open.insert(sentence.id) }
-                } label: {
-                    Text(sentence.de)
-                        .font(.body)
-                        .foregroundStyle(shown ? Theme.ok : .white)
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .buttonStyle(.plain)
-                Button {
-                    GermanVoice.shared.speak(text: sentence.de)
-                } label: {
-                    Image(systemName: "speaker.wave.2.fill")
-                        .font(.caption)
-                        .frame(width: 28, height: 28)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(Theme.ok)
-            }
-            .padding(.vertical, 3)
-            .padding(.horizontal, 4)
-            .background(shown ? Theme.ok.opacity(0.14) : Color.clear, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-            if shown {
-                Text(sentence.pl)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.text2)
-                    .padding(.leading, 4)
-                    .padding(.bottom, 4)
-            }
-        }
     }
 
     private func check() {
