@@ -397,6 +397,7 @@ struct WortSession: View {
     @State private var banner = ""
     @State private var showHint = false
     @State private var chosen: String?
+    @State private var wasOK = false
 
     private var card: Vocab? { index < deck.count ? deck[index] : nil }
 
@@ -549,19 +550,17 @@ struct WortSession: View {
         if ok {
             store.grade(word, .easy)
             VocabBook.remember(card)
+            wasOK = true
             banner = ReviewAlgo.when(store.stats[word.de] ?? WordStat())
-            replace(card)
             Haptic.good()
-            if go { step(keepIndex: true) }
-            return
         } else {
             VocabPace.set(card.de, 0)
             store.grade(word, .hard)
+            wasOK = false
             banner = "Jeszcze nie. Wróci za kilka kart, a potem za 10 minut."
-            again(card)
             Haptic.bad()
         }
-        if go { step(keepIndex: false) }
+        if go { advance() }
     }
 
     private func again(_ card: Vocab) {
@@ -588,7 +587,13 @@ struct WortSession: View {
         typed = ""
         showHint = false
         chosen = nil
-        if !keepIndex { index += 1 }
+        banner = ""
+        if wasOK, index < deck.count {
+            replace(deck[index])
+        } else if index < deck.count {
+            again(deck[index])
+            index += 1
+        }
         if index > deck.count { index = deck.count }
         prepare()
     }

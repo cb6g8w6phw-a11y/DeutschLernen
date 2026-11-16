@@ -517,7 +517,7 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 10) {
                     NavigationLink {
                         PlanView()
                     } label: {
@@ -527,7 +527,7 @@ struct ProfileView: View {
                                 Image(systemName: "chevron.right").foregroundStyle(Theme.text2)
                             }
                             HStack(spacing: 16) {
-                                label(icon: "flag.fill", title: "Niemiecki", text: band == "oba" ? "A1–A2" : band, tint: Theme.orange)
+                                label(icon: "flag.fill", title: "Niemiecki", text: band == "oba" ? "A1–A2" : band, tint: Theme.ok)
                                 label(icon: "house.fill", title: "Życie i praca", text: "Codzienność", tint: Theme.ok)
                             }
                         }
@@ -551,7 +551,7 @@ struct ProfileView: View {
                                 Text("Praca i codzienność").font(.subheadline).foregroundStyle(Theme.text2)
                             }
                             Spacer()
-                            TutorAvatar(size: 84)
+                            TutorAvatar(size: 56)
                         }
                         .padding(16)
                         .themedCard()
@@ -560,8 +560,9 @@ struct ProfileView: View {
                     ShareLink(item: "Uczę się niemieckiego do pracy i codzienności.") {
                         HStack {
                             Image(systemName: "person.2.fill")
-                                .frame(width: 44, height: 44)
-                                .background(Theme.accent, in: Circle())
+                                .frame(width: 36, height: 36)
+                                .background(Theme.ok, in: Circle())
+                                .foregroundStyle(Theme.ink)
                             VStack(alignment: .leading) {
                                 Text("Zaproś znajomego").font(.headline)
                                 Text("Uczcie się razem").font(.caption).foregroundStyle(Theme.text2)
@@ -593,35 +594,22 @@ struct ProfileView: View {
                     NavigationLink { StatsView() } label: { profileRow("Postępy", "chart.bar.fill") }
                     NavigationLink { DayPlanView() } label: { profileRow("Plan dnia", "calendar") }
                     NavigationLink { OfflineView() } label: { profileRow("Offline", "arrow.down.circle") }
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Ukończone sesje  \(doneCount)")
-                            .font(.title3.bold())
-                        if done.isEmpty {
-                            Text("Jak skończysz lekcję albo scenę, pojawi się tutaj.")
-                                .font(.subheadline)
-                                .foregroundStyle(Theme.text2)
-                        }
-                        ForEach(done, id: \.title) { row in
-                            HStack {
-                                Image(systemName: row.icon)
-                                    .frame(width: 40, height: 40)
-                                    .background(Theme.accent, in: Circle())
-                                VStack(alignment: .leading) {
-                                    Text(row.title).font(.body.weight(.semibold))
-                                    Text(row.kind).font(.caption).foregroundStyle(Theme.text2)
-                                }
-                                Spacer()
-                                Text("Dziś").font(.caption).foregroundStyle(Theme.text2)
+                    if !done.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Dziś \(doneCount)").font(.headline)
+                            ForEach(done, id: \.title) { row in
+                                Text(row.title).font(.subheadline)
                             }
                         }
-                        NavigationLink {
-                            SettingsView()
-                        } label: {
-                            Text("Ustawienia i klucz").frame(minHeight: 44)
-                        }
+                        .padding(14)
+                        .themedCard()
                     }
-                    .padding(16)
-                    .themedCard()
+                    NavigationLink {
+                        SettingsView()
+                    } label: {
+                        profileRow("Ustawienia", "gearshape")
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 12)
@@ -665,7 +653,7 @@ struct ProfileView: View {
                     VStack(spacing: 6) {
                         ZStack {
                             Circle()
-                                .fill(day.done ? Theme.orange : Theme.track)
+                                .fill(day.done ? Theme.ok : Theme.track)
                                 .frame(width: 32, height: 32)
                             if day.done {
                                 Image(systemName: "checkmark")
@@ -675,7 +663,7 @@ struct ProfileView: View {
                         }
                         Text(day.label)
                             .font(.caption2)
-                            .foregroundStyle(day.today ? Theme.orange : Theme.text2)
+                            .foregroundStyle(day.today ? Theme.ok : Theme.text2)
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -684,13 +672,13 @@ struct ProfileView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("AKTUALNA PASSA").font(.caption2).foregroundStyle(Theme.text2)
                     Label("\(store.streak) \(store.streak == 1 ? "dzień" : "dni")", systemImage: "flame.fill")
-                        .foregroundStyle(Theme.orange)
+                        .foregroundStyle(Theme.ok)
                 }
                 Spacer()
                 VStack(alignment: .leading, spacing: 4) {
                     Text("NAJLEPSZA SERIA").font(.caption2).foregroundStyle(Theme.text2)
                     Label("\(max(store.journal.bestStreak, store.streak)) \(max(store.journal.bestStreak, store.streak) == 1 ? "dzień" : "dni")", systemImage: "flame.fill")
-                        .foregroundStyle(Theme.orange)
+                        .foregroundStyle(Theme.ok)
                 }
             }
         }
@@ -725,29 +713,192 @@ struct ProfileView: View {
 }
 
 struct PlanView: View {
+    @EnvironmentObject var store: LearningStore
     @AppStorage("band") private var band = "A1"
+    @AppStorage("goalLevel") private var goalLevel = "A2"
+    @AppStorage("dailyMinutes") private var dailyMinutes = 60
+    @AppStorage("goalDays") private var goalDays = 90
+    @State private var minutes = 60
+    @State private var horizon = 90
+    @State private var took = false
+
+    private let doses = [10, 20, 30, 60]
+    private let horizons = [(30, "1 mies."), (90, "3 mies."), (180, "pół roku"), (365, "rok")]
+    private let ladder = ["A1", "A2", "B1", "B2"]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Niemiecki do pracy i codzienności.")
-                .font(.body)
-                .foregroundStyle(Theme.text2)
-            Picker("Poziom", selection: $band) {
-                Text("A1").tag("A1")
-                Text("A2").tag("A2")
-                Text("A1–A2").tag("oba")
-                Text("B1").tag("B1")
-                Text("B2").tag("B2")
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Jak szybko chcesz dojść do \(goalLevel)?")
+                    .font(.title.bold())
+                Text("Cztery dawki. Wykres pokazuje, ile procent celu masz po kolejnych miesiącach.")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.text2)
+                HStack(spacing: 8) {
+                    ForEach(ladder, id: \.self) { level in
+                        Button(level) { goalLevel = level }
+                            .font(.caption.weight(.bold))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(goalLevel == level ? Theme.ok : Color.white.opacity(0.08), in: Capsule())
+                            .foregroundStyle(goalLevel == level ? Theme.ink : .white)
+                    }
+                }
+                HStack(spacing: 8) {
+                    ForEach(doses, id: \.self) { dose in
+                        Button {
+                            minutes = dose
+                        } label: {
+                            VStack(spacing: 2) {
+                                Text("\(dose)").font(.title2.bold())
+                                Text("min").font(.caption)
+                            }
+                            .frame(maxWidth: .infinity, minHeight: 72)
+                            .background(minutes == dose ? Theme.ok : Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                            .foregroundStyle(minutes == dose ? Theme.ink : .white)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                Text(forecastLine)
+                    .font(.subheadline.weight(.semibold))
+                PaceChart(words: wordsLeft, minutes: minutes, deadline: Double(horizon) / 30.0)
+                Text("Chcę zdążyć w").font(.headline)
+                HStack(spacing: 8) {
+                    ForEach(horizons, id: \.0) { item in
+                        Button(item.1) { horizon = item.0 }
+                            .font(.caption.weight(.bold))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(horizon == item.0 ? Theme.ok : Color.white.opacity(0.08), in: Capsule())
+                            .foregroundStyle(horizon == item.0 ? Theme.ink : .white)
+                    }
+                }
+                Text(gapLine)
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.text2)
+                ForEach(ladder.prefix(2), id: \.self) { level in
+                    Text(levelLine(level))
+                        .font(.subheadline)
+                }
+                Button("Biorę to tempo") {
+                    dailyMinutes = minutes
+                    goalDays = horizon
+                    band = goalLevel
+                    took = true
+                }
+                .font(.headline)
+                .foregroundStyle(Theme.ink)
+                .frame(maxWidth: .infinity, minHeight: 54)
+                .background(Theme.ok, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                if took {
+                    Text("Zapisane. Dziennie \(minutes) min, cel \(goalLevel).")
+                        .font(.footnote)
+                        .foregroundStyle(Theme.ok)
+                }
             }
-            .pickerStyle(.menu)
-            Text("W bazie jest 10 000 najczęstszych słów: A1 1500, A2 2000, B1 3000, B2 3500. Sesja bierze tylko Twój poziom.")
-                .font(.footnote)
-                .foregroundStyle(Theme.text2)
-            Spacer()
+            .padding(20)
+            .padding(.bottom, 40)
         }
-        .padding(20)
         .navigationTitle("Plan nauki")
         .containerBackground(for: .navigation) { NightGlow() }
+        .onAppear {
+            if doses.contains(dailyMinutes) { minutes = dailyMinutes }
+            horizon = horizons.min(by: { abs($0.0 - goalDays) < abs($1.0 - goalDays) })?.0 ?? 90
+        }
+    }
+
+    private var wordsLeft: Int {
+        let bands = store.bandProgress()
+        let index = ladder.firstIndex(of: goalLevel) ?? 1
+        let known = bands.prefix(index + 1).reduce(0) { $0 + $1.known }
+        let total = bands.prefix(index + 1).reduce(0) { $0 + $1.total }
+        return max(0, total - known)
+    }
+
+    private var perDay: Int { max(1, minutes / 3) }
+
+    private var daysNeeded: Int {
+        guard wordsLeft > 0 else { return 0 }
+        return Int(ceil(Double(wordsLeft) / Double(perDay)))
+    }
+
+    private var forecastLine: String {
+        if wordsLeft == 0 { return "Ten poziom już masz w liczniku." }
+        let date = Calendar.current.date(byAdding: .day, value: daysNeeded, to: Date()) ?? Date()
+        let text = date.formatted(.dateTime.day().month(.wide).year())
+        return "Przy \(minutes) min (\(perDay) słów dziennie) \(goalLevel) około \(text)."
+    }
+
+    private var gapLine: String {
+        if wordsLeft == 0 { return "Możesz podnieść cel." }
+        if daysNeeded <= horizon {
+            return "Przy \(minutes) min zdążysz w około \(daysNeeded) dni. Termin masz \(horizon)."
+        }
+        let need = max(10, Int(ceil(Double(wordsLeft) / Double(horizon))) * 3)
+        let name = horizons.first { $0.0 == horizon }?.1 ?? "\(horizon) dni"
+        return "W \(name) to tempo nie dowozi \(goalLevel). Trzeba około \(need) min dziennie, albo dłuższy termin."
+    }
+
+    private func levelLine(_ level: String) -> String {
+        let bands = store.bandProgress()
+        let total = bands.first { $0.name == level }?.total ?? 0
+        let days = max(1, Int(ceil(Double(total) / 20.0)))
+        return "\(level): \(total) słów · około \(days) dni przy 60 min"
+    }
+}
+
+struct PaceChart: View {
+    let words: Int
+    let minutes: Int
+    let deadline: Double
+
+    private let doses = [10, 20, 30, 60]
+    private let marks: [Double] = [0, 1, 2, 3, 4, 6, 9, 12, 18, 24]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Canvas { context, size in
+                let plot = CGRect(x: 28, y: 8, width: size.width - 36, height: size.height - 28)
+                for step in [0.0, 0.25, 0.5, 0.75, 1.0] {
+                    let y = plot.maxY - plot.height * step
+                    var line = Path()
+                    line.move(to: CGPoint(x: plot.minX, y: y))
+                    line.addLine(to: CGPoint(x: plot.maxX, y: y))
+                    context.stroke(line, with: .color(.white.opacity(0.08)), lineWidth: 1)
+                    context.draw(Text("\(Int(step * 100))%").font(.system(size: 9)).foregroundColor(Theme.text2), at: CGPoint(x: 14, y: y), anchor: .trailing)
+                }
+                let x = plot.minX + plot.width * (deadline / 24.0)
+                var dash = Path()
+                dash.move(to: CGPoint(x: x, y: plot.minY))
+                dash.addLine(to: CGPoint(x: x, y: plot.maxY))
+                context.stroke(dash, with: .color(Theme.ok), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                context.draw(Text("termin").font(.system(size: 9)).foregroundColor(Theme.ok), at: CGPoint(x: x + 2, y: plot.midY), anchor: .leading)
+                for dose in doses {
+                    var path = Path()
+                    for (index, month) in marks.enumerated() {
+                        let point = CGPoint(
+                            x: plot.minX + plot.width * (month / 24.0),
+                            y: plot.maxY - plot.height * share(dose, month)
+                        )
+                        if index == 0 { path.move(to: point) } else { path.addLine(to: point) }
+                    }
+                    let on = dose == minutes
+                    context.stroke(path, with: .color(on ? Theme.ok : .white.opacity(0.28)), style: StrokeStyle(lineWidth: on ? 3 : 1.5, lineJoin: .round))
+                }
+            }
+            .frame(height: 180)
+            Text("miesiące od dziś · % drogi do celu")
+                .font(.caption2)
+                .foregroundStyle(Theme.text2)
+                .frame(maxWidth: .infinity)
+        }
+    }
+
+    private func share(_ dose: Int, _ month: Double) -> Double {
+        guard words > 0 else { return 1 }
+        let learned = month * 30.4 * Double(max(1, dose / 3))
+        return min(1, learned / Double(words))
     }
 }
 
@@ -791,7 +942,7 @@ struct StreakSheet: View {
                         .blur(radius: 8)
                     Image(systemName: "flame.fill")
                         .font(.system(size: 120))
-                        .foregroundStyle(Theme.orange)
+                        .foregroundStyle(Theme.ok)
                     Text("\(max(store.streak, store.journal.lastActive == LearningStore.dayKey() ? 1 : store.streak))")
                         .font(.system(size: 42, weight: .bold))
                         .foregroundStyle(.white)
