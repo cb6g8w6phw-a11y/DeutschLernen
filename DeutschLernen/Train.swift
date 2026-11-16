@@ -679,6 +679,8 @@ struct ListenView: View {
                 if finished || item == nil {
                     Text(deck.isEmpty ? "Ładuję…" : "Gotowe")
                         .font(.largeTitle.bold())
+                    Text("Dziś \(LearningStore.minuteText(store.journal.listenToday)) · razem \(LearningStore.minuteText(store.journal.listenSeconds))")
+                        .font(.title3.bold())
                     Text("Trafione: \(store.journal.listenOk) z \(store.journal.listenTries)")
                         .font(.title3)
                     Text("Następnym razem będą inne polecenia. Te zrobione dziś nie wracają od razu.")
@@ -694,7 +696,10 @@ struct ListenView: View {
                     Text("Najpierw samo ucho. Tekst i pytanie dopiero po odtworzeniu.")
                         .font(.subheadline)
                         .foregroundStyle(Theme.text2)
-                    Text("\(index + 1) z \(deck.count) · w banku \(CoachData.listen.count + DailyPack.listen.count + SiteTalk.listen.count)")
+                    Text("Dziś \(LearningStore.minuteText(store.journal.listenToday)) · razem \(LearningStore.minuteText(store.journal.listenSeconds))")
+                        .font(.title3.bold())
+                        .foregroundStyle(Theme.text)
+                    Text("\(index + 1) z \(deck.count) · trafione \(store.journal.listenOk) z \(store.journal.listenTries)")
                         .font(.footnote)
                         .foregroundStyle(Theme.text2)
                     Picker("Tempo", selection: $speed) {
@@ -799,6 +804,7 @@ struct ListenView: View {
         .navigationTitle("Słuchanie")
         .containerBackground(for: .navigation) { NightGlow() }
         .onAppear {
+            store.revealListenTime()
             if deck.isEmpty { loadDeck(forceAll: false) }
             voices = AVSpeechSynthesisVoice.speechVoices()
                 .filter { $0.language.hasPrefix("de") }

@@ -831,6 +831,9 @@ final class Mic: ObservableObject {
         stopQueue()
         stopEngine()
         listening = false
+        if note.hasPrefix("Słyszę") || note.hasPrefix("Słucham") || note == "Włączam mikrofon…" {
+            note = ""
+        }
     }
 
     private func stopEngine() {

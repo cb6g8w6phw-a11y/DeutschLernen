@@ -117,6 +117,9 @@ struct Journal: Codable {
     var monthSeconds: Int = 0
     var listenOk: Int = 0
     var listenTries: Int = 0
+    var listenSeconds: Int = 0
+    var listenToday: Int = 0
+    var listenTodayDay: String = ""
     var said: Int = 0
     var scenes: [String] = []
     var sceneStars: [String: Int] = [:]
@@ -139,7 +142,7 @@ struct Journal: Codable {
     var skillVocabBad: Int = 0
 
     private enum CodingKeys: String, CodingKey {
-        case startDay, day, reviews, month, monthSeconds, listenOk, listenTries, said, scenes, sceneStars, mistakes, streak, bestStreak, lastActive, history, todayOK, todayBad, skillListenOK, skillListenBad, skillGrammarOK, skillGrammarBad, skillSentenceOK, skillSentenceBad, skillSpeakOK, skillSpeakBad, skillVocabOK, skillVocabBad
+        case startDay, day, reviews, month, monthSeconds, listenOk, listenTries, listenSeconds, listenToday, listenTodayDay, said, scenes, sceneStars, mistakes, streak, bestStreak, lastActive, history, todayOK, todayBad, skillListenOK, skillListenBad, skillGrammarOK, skillGrammarBad, skillSentenceOK, skillSentenceBad, skillSpeakOK, skillSpeakBad, skillVocabOK, skillVocabBad
     }
 
     init() {}
@@ -153,6 +156,9 @@ struct Journal: Codable {
         monthSeconds = try c.decodeIfPresent(Int.self, forKey: .monthSeconds) ?? 0
         listenOk = try c.decodeIfPresent(Int.self, forKey: .listenOk) ?? 0
         listenTries = try c.decodeIfPresent(Int.self, forKey: .listenTries) ?? 0
+        listenSeconds = try c.decodeIfPresent(Int.self, forKey: .listenSeconds) ?? 0
+        listenToday = try c.decodeIfPresent(Int.self, forKey: .listenToday) ?? 0
+        listenTodayDay = try c.decodeIfPresent(String.self, forKey: .listenTodayDay) ?? ""
         said = try c.decodeIfPresent(Int.self, forKey: .said) ?? 0
         scenes = try c.decodeIfPresent([String].self, forKey: .scenes) ?? []
         sceneStars = try c.decodeIfPresent([String: Int].self, forKey: .sceneStars) ?? [:]
@@ -184,6 +190,9 @@ struct Journal: Codable {
         try c.encode(monthSeconds, forKey: .monthSeconds)
         try c.encode(listenOk, forKey: .listenOk)
         try c.encode(listenTries, forKey: .listenTries)
+        try c.encode(listenSeconds, forKey: .listenSeconds)
+        try c.encode(listenToday, forKey: .listenToday)
+        try c.encode(listenTodayDay, forKey: .listenTodayDay)
         try c.encode(said, forKey: .said)
         try c.encode(scenes, forKey: .scenes)
         try c.encode(sceneStars, forKey: .sceneStars)
@@ -619,10 +628,46 @@ final class LearningStore: ObservableObject {
 
     func noteListen(ok: Bool) {
         roll()
+        if !UserDefaults.standard.bool(forKey: "listenSecondsBackfill") {
+            journal.listenSeconds += journal.listenTries * 40
+            UserDefaults.standard.set(true, forKey: "listenSecondsBackfill")
+        }
         journal.listenTries += 1
         if ok { journal.listenOk += 1 }
+        let day = Self.dayKey()
+        if journal.listenTodayDay != day {
+            journal.listenTodayDay = day
+            journal.listenToday = 0
+        }
+        journal.listenSeconds += 40
+        journal.listenToday += 40
         UserDefaults.standard.set(journal.day, forKey: "didListenDay")
         noteSkill("listen", ok: ok)
+    }
+
+    func revealListenTime() {
+        roll()
+        let day = Self.dayKey()
+        if journal.listenTodayDay != day {
+            journal.listenTodayDay = day
+            journal.listenToday = 0
+        }
+        guard !UserDefaults.standard.bool(forKey: "listenSecondsBackfill") else {
+            publishJournal()
+            return
+        }
+        journal.listenSeconds += journal.listenTries * 40
+        UserDefaults.standard.set(true, forKey: "listenSecondsBackfill")
+        publishJournal()
+    }
+
+    static func minuteText(_ seconds: Int) -> String {
+        let m = max(0, seconds / 60)
+        if m == 1 { return "1 minuta" }
+        let mod10 = m % 10
+        let mod100 = m % 100
+        if mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14) { return "\(m) minuty" }
+        return "\(m) minut"
     }
 
     func noteSaid(ok: Bool = false) {

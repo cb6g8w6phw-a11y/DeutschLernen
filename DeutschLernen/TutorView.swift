@@ -528,24 +528,73 @@ struct TutorView: View {
         let text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, !loading else { return }
         Keyboard.hide()
+        mic.note = ""
         turns.append(Turn(role: "user", german: text, polish: ""))
         if isEnd(text) {
             await summarize()
             return
         }
+        let expected = turns.dropLast().last(where: { $0.role == "model" && !$0.say.isEmpty })?.say ?? ""
+        if !expected.isEmpty {
+            pushLocal(said: text, expected: expected)
+            return
+        }
         loading = true
         defer { loading = false }
         let history = turns.map { GeminiMessage(role: $0.role, text: $0.role == "user" ? $0.german : packed($0)) }
+        let prompt = systemPrompt()
         do {
-            let reply = try await Gemini.send(messages: history, system: systemPrompt())
+            let reply = try await replyOrGiveUp(history, system: prompt)
             let turn = parse(reply)
             if !turn.err.isEmpty { store.addMistake(turn.err) }
             turns.append(turn)
             tickTalk()
+            store.noteSaid(ok: turn.flag != "fix")
             Talk.de(speech(turn))
         } catch {
-            chatError = "Nie udało się dostać odpowiedzi. Sprawdź sieć albo klucz."
+            pushLocal(said: text, expected: "")
         }
+    }
+
+    private func replyOrGiveUp(_ history: [GeminiMessage], system: String) async throws -> String {
+        try await withThrowingTaskGroup(of: String.self) { group in
+            group.addTask { try await Gemini.send(messages: history, system: system) }
+            group.addTask {
+                try await Task.sleep(nanoseconds: 8_000_000_000)
+                throw GeminiError.http(408, "za długo")
+            }
+            let value = try await group.next() ?? ""
+            group.cancelAll()
+            if value.isEmpty { throw GeminiError.badResponse }
+            return value
+        }
+    }
+
+    private func pushLocal(said: String, expected: String) {
+        let ok = expected.isEmpty || TalkMatch.close(said, expected)
+        let exact = !expected.isEmpty && TalkMatch.same(said, expected)
+        if !expected.isEmpty && !exact {
+            turns.append(Turn(
+                role: "model",
+                german: ok ? "Fast. Besser: \(expected)" : "Fast. Richtig ist: \(expected)",
+                polish: "Prawie. Poprawnie: \(expected)",
+                say: "",
+                err: expected,
+                flag: "fix"))
+            if !ok { store.addMistake("Powiedz: \(expected)") }
+        }
+        let beat = nextBeat(after: expected)
+        turns.append(Turn(role: "model", german: beat.de, polish: beat.pl, say: beat.say, flag: ok ? "ok" : "fix"))
+        tickTalk()
+        store.noteSaid(ok: ok)
+        Talk.de(beat.de)
+    }
+
+    private func nextBeat(after expected: String) -> (de: String, pl: String, say: String) {
+        let bank = TalkMatch.beats(after: expected, persona: persona)
+        let beat = bank[situation % bank.count]
+        situation += 1
+        return beat
     }
 
     private func retryLast() async {
@@ -749,6 +798,72 @@ struct TutorView: View {
         let seconds = Int(Date().timeIntervalSince(tick))
         tick = Date()
         if seconds > 2 { store.addTalk(seconds) }
+    }
+}
+
+private enum TalkMatch {
+    static func same(_ said: String, _ want: String) -> Bool {
+        let a = norm(said)
+        let b = norm(want)
+        return !a.isEmpty && a == b
+    }
+
+    static func close(_ said: String, _ want: String) -> Bool {
+        let a = norm(said)
+        let b = norm(want)
+        if a.isEmpty || b.isEmpty { return false }
+        if a == b || a.contains(b) || b.contains(a) { return true }
+        let words = b.split(separator: " ").map(String.init).filter { $0.count > 3 }
+        guard !words.isEmpty else { return false }
+        let hit = words.filter { a.contains($0) }.count
+        return Double(hit) / Double(words.count) >= 0.5
+    }
+
+    static func beats(after expected: String, persona: String) -> [(de: String, pl: String, say: String)] {
+        let low = expected.lowercased()
+        if low.contains("auto") || low.contains("geräusch") || low.contains("werkstatt") { return car }
+        if low.contains("fieber") || low.contains("hals") || low.contains("krank") { return doctor }
+        if low.contains("bon") || low.contains("umtauschen") { return shop }
+        if expected.isEmpty, persona == "Piotr" { return car }
+        if expected.isEmpty, persona == "Lekarz" { return doctor }
+        if expected.isEmpty, persona == "Sklep" { return shop }
+        return site
+    }
+
+    private static let site: [(de: String, pl: String, say: String)] = [
+        ("Gut. Wo genau machst du das?", "Dobrze. Gdzie dokładnie to robisz?", "Ich mache das im ersten Stock, im Büro."),
+        ("Brauchst du noch Material?", "Potrzebujesz jeszcze materiału?", "Ja, ich brauche noch Schrauben und ein Kabel."),
+        ("Wie lange dauert das noch?", "Ile to jeszcze potrwa?", "Ungefähr eine Stunde, dann bin ich fertig."),
+        ("Ist das Material schon da?", "Materiał już jest?", "Ja, die Teile liegen im Container."),
+        ("Kannst du das alleine machen?", "Dasz radę sam?", "Nein, ich brauche noch einen Kollegen."),
+        ("Wann bist du fertig?", "Kiedy kończysz?", "Ich bin gegen drei Uhr fertig.")
+    ]
+
+    private static let car: [(de: String, pl: String, say: String)] = [
+        ("Gut. Wo genau hörst du das?", "Dobrze. Gdzie dokładnie to słyszysz?", "Vorne links, wenn ich über ein Schlagloch fahre."),
+        ("Seit wann ist das so?", "Od kiedy tak jest?", "Seit gestern, nach der Arbeit."),
+        ("Kannst du heute noch warten?", "Możesz dziś jeszcze poczekać?", "Ja, ich kann eine Stunde warten."),
+        ("Brauchst du das Auto morgen früh?", "Potrzebujesz auta jutro rano?", "Ja, ich fahre um sechs zur Baustelle.")
+    ]
+
+    private static let doctor: [(de: String, pl: String, say: String)] = [
+        ("Seit wann ist das so?", "Od kiedy tak jest?", "Seit gestern Abend."),
+        ("Haben Sie Fieber?", "Ma pan gorączkę?", "Ja, seit heute Morgen."),
+        ("Brauchen Sie eine Krankschreibung?", "Potrzebuje pan zwolnienia?", "Ja, bitte für zwei Tage.")
+    ]
+
+    private static let shop: [(de: String, pl: String, say: String)] = [
+        ("Haben Sie den Bon dabei?", "Ma pan paragon?", "Ja, hier ist der Bon."),
+        ("Möchten Sie ein neues Gerät oder das Geld zurück?", "Chce pan nowy sprzęt czy zwrot pieniędzy?", "Ich möchte das Geld zurück."),
+        ("Bar oder mit Karte?", "Gotówka czy karta?", "Mit Karte, bitte.")
+    ]
+
+    private static func norm(_ text: String) -> String {
+        text.lowercased()
+            .folding(options: .diacriticInsensitive, locale: Locale(identifier: "de_DE"))
+            .filter { $0.isLetter || $0.isWhitespace }
+            .split(separator: " ")
+            .joined(separator: " ")
     }
 }
 

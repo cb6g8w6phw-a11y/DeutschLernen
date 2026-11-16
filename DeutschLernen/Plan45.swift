@@ -89,6 +89,11 @@ struct Plan45View: View {
                         Text(block.why)
                             .font(.subheadline)
                             .foregroundStyle(Theme.text2)
+                        if block.id == "listen" {
+                            Text("Ukończone: dziś \(LearningStore.minuteText(store.journal.listenToday)), razem \(LearningStore.minuteText(store.journal.listenSeconds)).")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Theme.ok)
+                        }
                         destination(block.id)
                         Button(done.contains(block.id) ? "Zrobione" : "Odhacz ten blok") {
                             if done.contains(block.id) { done.remove(block.id) } else { done.insert(block.id) }
@@ -105,6 +110,7 @@ struct Plan45View: View {
         .navigationTitle("Dzisiejsza nauka")
         .containerBackground(for: .navigation) { Color.black }
         .onAppear {
+            store.revealListenTime()
             done = Set(UserDefaults.standard.stringArray(forKey: key) ?? [])
         }
     }
