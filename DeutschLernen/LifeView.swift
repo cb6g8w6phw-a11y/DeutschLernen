@@ -28,6 +28,7 @@ struct LifeView: View {
                 .environmentObject(store)
             }
             .navigationTitle("Z twojego życia")
+            .lessonClock("life", goal: DayPlan.minutes("life", store.journal))
             .containerBackground(for: .navigation) { NightGlow() }
             .toolbarBackground(.hidden, for: .navigationBar)
         }

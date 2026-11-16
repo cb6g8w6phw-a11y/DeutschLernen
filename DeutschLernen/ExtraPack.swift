@@ -242,6 +242,7 @@ struct RepairView: View {
             .padding(20)
         }
         .navigationTitle("Trener błędów")
+        .lessonClock("fix", goal: DayPlan.minutes("fix", store.journal))
         .containerBackground(for: .navigation) { NightGlow() }
         .onAppear { if round.isEmpty { reload() } }
         .onChange(of: typed) { old, new in
@@ -456,6 +457,7 @@ struct WorkHubView: View {
             .padding(20)
         }
         .navigationTitle("W pracy")
+        .lessonClock("work", goal: DayPlan.minutes("work", store.journal))
         .containerBackground(for: .navigation) { NightGlow() }
         .onAppear {
             if commandShown.isEmpty { fresh(avoidSame: false) }

@@ -183,20 +183,7 @@ struct SceneStudyView: View {
                 }
                 Text(scene.title).font(.title2.bold())
                 Text(scene.situation).foregroundStyle(Theme.text2)
-                Text("Poziom \(scene.level). Przewiń w dół: cała rozmowa, tłumaczenie, słówka i ćwiczenie są pod spodem. Nic nie jest obcięte.")
-                    .font(.footnote)
-                    .foregroundStyle(Theme.text2)
-                Button {
-                    GermanVoice.shared.speak(lines: scene.lines.map { DeTurn(speaker: $0.who, text: $0.de) })
-                } label: {
-                    Label("Odtwórz cały dialog", systemImage: "speaker.wave.2.fill")
-                        .frame(maxWidth: .infinity, minHeight: 48)
-                }
-                .buttonStyle(MatteGlassButton())
-                LocalPlayBar()
-                Text("Stuknij słowo. Tłumaczenie wyskoczy w małym okienku. Głos jest z iPhone’a, nie z AI.")
-                    .font(.footnote)
-                    .foregroundStyle(Theme.text2)
+                Text("Cały dialog").font(.headline)
                 ForEach(scene.lines) { line in
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
@@ -222,6 +209,17 @@ struct SceneStudyView: View {
                     .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color.white.opacity(0.18), lineWidth: 1))
                 }
+                Button {
+                    GermanVoice.shared.speak(lines: scene.lines.map { DeTurn(speaker: $0.who, text: $0.de) })
+                } label: {
+                    Label("Odtwórz cały dialog", systemImage: "speaker.wave.2.fill")
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                }
+                .buttonStyle(MatteGlassButton())
+                LocalPlayBar()
+                Text("Stuknij słowo. Tłumaczenie wyskoczy w małym okienku. Głos jest z iPhone’a, nie z AI.")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.text2)
                 Text(scene.question).font(.title3.bold())
                 ForEach(scene.options.indices, id: \.self) { index in
                     Button(scene.options[index]) {

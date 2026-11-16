@@ -165,6 +165,7 @@ struct TutorView: View {
                 mic.stop()
                 Talk.stop()
             }
+            .lessonClock("talk", goal: DayPlan.minutes("talk", store.journal))
             .onChange(of: persona) { _, _ in
                 if !turns.contains(where: { $0.role == "user" }) {
                     turns = [opener]

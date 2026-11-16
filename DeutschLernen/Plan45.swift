@@ -55,6 +55,10 @@ enum DayPlan {
         return (blocks, note)
     }
 
+    static func minutes(_ id: String, _ journal: Journal) -> Int {
+        make(journal).blocks.first { $0.id == id }?.minutes ?? 10
+    }
+
     private static func rate(_ ok: Int, _ total: Int) -> Double {
         guard total > 0 else { return 1 }
         return Double(ok) / Double(total)
@@ -89,11 +93,9 @@ struct Plan45View: View {
                         Text(block.why)
                             .font(.subheadline)
                             .foregroundStyle(Theme.text2)
-                        if block.id == "listen" {
-                            Text("Ukończone: dziś \(LearningStore.minuteText(store.journal.listenToday)), razem \(LearningStore.minuteText(store.journal.listenSeconds)).")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(Theme.ok)
-                        }
+                        Text("\(LessonClock.label(block.id)) z \(block.minutes) min")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Theme.ok)
                         destination(block.id)
                         Button(done.contains(block.id) ? "Zrobione" : "Odhacz ten blok") {
                             if done.contains(block.id) { done.remove(block.id) } else { done.insert(block.id) }
@@ -110,7 +112,6 @@ struct Plan45View: View {
         .navigationTitle("Dzisiejsza nauka")
         .containerBackground(for: .navigation) { Color.black }
         .onAppear {
-            store.revealListenTime()
             done = Set(UserDefaults.standard.stringArray(forKey: key) ?? [])
         }
     }
@@ -129,5 +130,58 @@ struct Plan45View: View {
         default:
             NavigationLink("Otwórz błędy") { RepairView() }
         }
+    }
+}
+
+enum LessonClock {
+    static func key(_ id: String) -> String { "lessonClock-\(LearningStore.dayKey())-\(id)" }
+
+    static func seconds(_ id: String) -> Int {
+        UserDefaults.standard.integer(forKey: key(id))
+    }
+
+    static func add(_ id: String, _ extra: Int) {
+        guard extra > 0 else { return }
+        let name = key(id)
+        UserDefaults.standard.set(seconds(id) + extra, forKey: name)
+    }
+
+    static func label(_ id: String) -> String {
+        LearningStore.minuteText(seconds(id))
+    }
+}
+
+private struct LessonClockModifier: ViewModifier {
+    let id: String
+    let goal: Int
+    @State private var start = Date()
+    @State private var base = 0
+
+    func body(content: Content) -> some View {
+        content
+            .safeAreaInset(edge: .top, spacing: 0) {
+                TimelineView(.periodic(from: .now, by: 1)) { _ in
+                    let now = base + max(0, Int(Date().timeIntervalSince(start)))
+                    Text("\(LearningStore.minuteText(now)) z \(goal) min")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.ok)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                        .background(Color.black.opacity(0.85))
+                }
+            }
+            .onAppear {
+                start = Date()
+                base = LessonClock.seconds(id)
+            }
+            .onDisappear {
+                LessonClock.add(id, Int(Date().timeIntervalSince(start)))
+            }
+    }
+}
+
+extension View {
+    func lessonClock(_ id: String, goal: Int) -> some View {
+        modifier(LessonClockModifier(id: id, goal: goal))
     }
 }

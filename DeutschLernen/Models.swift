@@ -628,19 +628,8 @@ final class LearningStore: ObservableObject {
 
     func noteListen(ok: Bool) {
         roll()
-        if !UserDefaults.standard.bool(forKey: "listenSecondsBackfill") {
-            journal.listenSeconds += journal.listenTries * 40
-            UserDefaults.standard.set(true, forKey: "listenSecondsBackfill")
-        }
         journal.listenTries += 1
         if ok { journal.listenOk += 1 }
-        let day = Self.dayKey()
-        if journal.listenTodayDay != day {
-            journal.listenTodayDay = day
-            journal.listenToday = 0
-        }
-        journal.listenSeconds += 40
-        journal.listenToday += 40
         UserDefaults.standard.set(journal.day, forKey: "didListenDay")
         noteSkill("listen", ok: ok)
     }
