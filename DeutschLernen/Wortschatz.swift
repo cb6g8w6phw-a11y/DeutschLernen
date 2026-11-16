@@ -189,8 +189,8 @@ enum VocabBook {
         let ids = UserDefaults.standard.stringArray(forKey: "freshVocab") ?? []
         return ids.compactMap { id -> CoachData.ListenQ? in
             guard let card = known[id] else { return nil }
-            let wrong = built.filter { $0.pl != card.pl }.prefix(2).map(\.pl)
-            guard wrong.count == 2 else { return nil }
+            let wrong = built.filter { $0.pl != card.pl }.prefix(3).map(\.pl)
+            guard wrong.count == 3 else { return nil }
             let options = ([card.pl] + wrong).shuffled()
             return CoachData.ListenQ(de: card.ex.isEmpty ? card.de : card.ex, pl: card.pl, question: "Co znaczy to, co słyszysz?", options: Array(options), answer: options.firstIndex(of: card.pl) ?? 0)
         }
@@ -416,41 +416,30 @@ struct WortSession: View {
                         Text(banner).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ok)
                     }
                     switch mode {
-                    case .fresh:
-                        WortCard(card: card, show: true)
-                        Button("Znam") { mark(card, ok: true) }.primaryButton()
-                        Button("Jeszcze nie") { mark(card, ok: false) }.buttonStyle(.glass)
-                    case .review:
+                    case .fresh, .review, .cards, .quiz:
                         Text(card.de)
                             .font(.system(size: 34, weight: .bold))
                             .foregroundStyle(Theme.ok)
                             .frame(maxWidth: .infinity)
                         if !card.ex.isEmpty {
                             Text(card.ex)
-                                .font(.body)
                                 .foregroundStyle(Theme.text2)
                                 .frame(maxWidth: .infinity)
                         }
-                        reviewOptions(card)
-                    case .cards:
-                        Button { show.toggle() } label: { WortCard(card: face(card), show: show) }
-                            .buttonStyle(.plain)
-                        if mode == .cards {
-                            Button(flipToPolish ? "Pokazuj najpierw niemiecki" : "Pokazuj najpierw polski") { flipToPolish.toggle(); show = false }
-                                .buttonStyle(.glass)
+                        Button {
+                            Talk.de(card.de)
+                        } label: {
+                            Label("Posłuchaj", systemImage: "speaker.wave.2")
                         }
-                        Button("Znam") { mark(card, ok: true) }.primaryButton()
-                        Button("Nie pamiętam") { mark(card, ok: false) }.buttonStyle(.glass)
+                        .buttonStyle(.glass)
+                        pickBlock(card)
                     case .hear:
                         Button {
                             heard = true
                             Talk.de(card.ex.isEmpty ? card.de : card.ex, rate: 0.42)
                         } label: { Label(heard ? "Odtwórz jeszcze raz" : "Posłuchaj bez tekstu", systemImage: "speaker.wave.2.fill").frame(maxWidth: .infinity, minHeight: 52) }
                             .buttonStyle(MatteGlassButton())
-                        if heard { options(card, prompt: "Co słyszysz?") }
-                    case .quiz:
-                        Text(card.de).font(.title.bold())
-                        options(card, prompt: "Co to znaczy?")
+                        if heard { pickBlock(card) }
                     case .type:
                         Text(card.pl).font(.title2.bold())
                         Text(card.exPl).foregroundStyle(Theme.text2)
@@ -460,6 +449,7 @@ struct WortSession: View {
                             .autocorrectionDisabled()
                         Button("Sprawdź") { checkType(card) }.primaryButton().disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
                         if !note.isEmpty { Text(note).foregroundStyle(Theme.text2) }
+                        if showHint { VocabHintCard(card: card) }
                     case .learn:
                         WortDrill(topic: topic, limit: limit)
                     }
@@ -474,24 +464,6 @@ struct WortSession: View {
         .containerBackground(for: .navigation) { Color.black }
         .onAppear(perform: load)
         .onDisappear { Talk.stop() }
-        .sheet(isPresented: $showHint) {
-            if let card {
-                VStack(alignment: .leading, spacing: 16) {
-                    VocabHintCard(card: card)
-                    Button("Dalej") {
-                        showHint = false
-                        advance()
-                    }
-                    .primaryButton()
-                }
-                .padding(20)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .background(Color.black)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-                .presentationBackground(Color.black)
-            }
-        }
     }
 
     private var title: String {
@@ -523,11 +495,11 @@ struct WortSession: View {
     private func prepare() {
         guard index < deck.count else { choices = []; return }
         let card = deck[index]
-        let wrong = VocabBook.all(store).filter { $0.pl != card.pl }.shuffled().prefix(2).map(\.pl)
+        let wrong = VocabBook.all(store).filter { $0.pl != card.pl }.shuffled().prefix(3).map(\.pl)
         choices = ([card.pl] + wrong).shuffled()
     }
 
-    private func reviewOptions(_ card: Vocab) -> some View {
+    private func pickBlock(_ card: Vocab) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             ForEach(choices, id: \.self) { choice in
                 Button(choice) {
@@ -543,9 +515,11 @@ struct WortSession: View {
                 .padding(.horizontal, 14)
                 .foregroundStyle(.white)
                 .background(reviewFill(choice, card), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .disabled(picked != nil && choice != card.pl && note == "Dobrze.")
+                .disabled(picked != nil)
             }
-            if picked != nil, !showHint {
+            if picked != nil {
+                Text(card.pl).font(.headline)
+                if showHint { VocabHintCard(card: card) }
                 Button("Dalej") { advance() }.primaryButton()
             }
         }
@@ -556,33 +530,6 @@ struct WortSession: View {
         if choice == card.pl { return Theme.ok.opacity(0.85) }
         if choice == chosen { return Theme.bad.opacity(0.8) }
         return Color.white.opacity(0.08)
-    }
-
-    private func options(_ card: Vocab, prompt: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(prompt).font(.headline)
-            ForEach(choices, id: \.self) { choice in
-                Button(choice) {
-                    guard picked == nil else { return }
-                    picked = 1
-                    chosen = choice
-                    let ok = choice == card.pl
-                    showHint = !ok
-                    mark(card, ok: ok, advance: false)
-                    note = ok ? "Dobrze." : "Poprawnie: \(card.pl). \(card.de)"
-                }
-                .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
-                .padding(.horizontal, 12)
-                .foregroundStyle(.white)
-                .background(reviewFill(choice, card), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            }
-            if picked != nil {
-                Text(note).foregroundStyle(Theme.text2)
-                Text(card.de).font(.headline)
-                if !card.plural.isEmpty { Text(card.plural).foregroundStyle(Theme.text2) }
-                Button("Dalej") { advance() }.primaryButton()
-            }
-        }
     }
 
     private func checkType(_ card: Vocab) {
@@ -739,6 +686,7 @@ struct WortDrill: View {
                     }
                 }
                 if !note.isEmpty { Text(note).foregroundStyle(Theme.text2) }
+                if showHint, let card { VocabHintCard(card: card) }
                 if picked != nil || showHint {
                     Button("Dalej") { next() }.primaryButton()
                 }
@@ -749,24 +697,6 @@ struct WortDrill: View {
             }
         }
         .onAppear(perform: load)
-        .sheet(isPresented: $showHint) {
-            if let card {
-                VStack(alignment: .leading, spacing: 16) {
-                    VocabHintCard(card: card)
-                    Button("Dalej") {
-                        showHint = false
-                        next()
-                    }
-                    .primaryButton()
-                }
-                .padding(20)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .background(Color.black)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-                .presentationBackground(Color.black)
-            }
-        }
     }
 
     private func fill(_ choice: String, _ card: Vocab) -> Color {
@@ -784,7 +714,7 @@ struct WortDrill: View {
     private func prepare() {
         guard index < deck.count else { return }
         let card = deck[index]
-        let wrong = VocabBook.all(store).filter { $0.pl != card.pl }.shuffled().prefix(2).map(\.pl)
+        let wrong = VocabBook.all(store).filter { $0.pl != card.pl }.shuffled().prefix(3).map(\.pl)
         choices = ([card.pl] + wrong).shuffled()
         picked = nil
         typed = ""
@@ -856,34 +786,71 @@ enum VocabHint {
     static func make(_ card: Vocab) -> (right: String, rightPL: String, neg: String, negPL: String, ask: String, askPL: String) {
         let right = card.ex.isEmpty ? card.de : card.ex
         let rightPL = card.exPl.isEmpty ? card.pl : card.exPl
-        return (right, rightPL, negate(right), "Przeczenie: \(rightPL)", ask(right), "Pytanie: \(rightPL)")
+        return (right, rightPL, negate(right), negatePL(rightPL), ask(right), askPL(rightPL))
+    }
+
+    private static let verb = Set(["ist", "sind", "bin", "bist", "seid", "war", "waren", "hat", "habe", "hast", "habt", "haben", "wird", "werde", "kann", "muss", "will", "soll", "darf", "geht", "gehe", "gehst", "kommt", "komme", "kommst", "macht", "mache", "sagt", "sage", "bleibt", "bleibe", "fährt", "fahre", "braucht", "brauche", "arbeitet", "arbeite", "nimmt", "nehme", "gibt", "gebe", "liegt", "steht", "kostet"])
+    private static let pronoun = Set(["mir", "dir", "ihm", "ihr", "uns", "euch", "mich", "dich", "ihn", "sie"])
+
+    private static func strip(_ sentence: String) -> String {
+        var text = sentence.trimmingCharacters(in: .whitespacesAndNewlines)
+        while let last = text.last, ".!?".contains(last) { text.removeLast() }
+        return text.trimmingCharacters(in: .whitespaces)
     }
 
     private static func negate(_ sentence: String) -> String {
-        let lower = sentence.lowercased()
-        if lower.contains(" nicht") || lower.contains("kein") { return sentence }
-        if sentence.hasSuffix(".") { return String(sentence.dropLast()) + " nicht." }
-        return sentence + " nicht"
+        let raw = strip(sentence)
+        let lower = " \(raw.lowercased()) "
+        if lower.contains(" nicht ") || lower.contains(" kein") { return raw + "." }
+        var parts = raw.split(separator: " ").map(String.init)
+        guard let index = parts.firstIndex(where: { verb.contains($0.lowercased()) }) else { return raw + " nicht." }
+        let after = index + 1
+        if after < parts.count, pronoun.contains(parts[after].lowercased()) {
+            parts.insert("nicht", at: after + 1)
+        } else {
+            parts.insert("nicht", at: after)
+        }
+        return parts.joined(separator: " ") + "."
     }
 
     private static func ask(_ sentence: String) -> String {
-        let clean = sentence.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: "?", with: "")
-        var parts = clean.split(separator: " ").map(String.init)
-        guard parts.count >= 2 else { return sentence.hasSuffix("?") ? sentence : sentence + "?" }
-        let first = parts.removeFirst()
-        let second = parts.removeFirst()
-        let you: [String: String] = [
-            "bin": "Bist", "habe": "Hast", "gehe": "Gehst", "komme": "Kommst",
-            "muss": "Musst", "kann": "Kannst", "will": "Willst", "brauche": "Brauchst",
-            "fahre": "Fährst", "arbeite": "Arbeitest", "mache": "Machst", "sage": "Sagst"
-        ]
-        if first.lowercased() == "ich", let verb = you[second.lowercased()] {
-            let rest = parts.joined(separator: " ")
-            return rest.isEmpty ? "\(verb) du?" : "\(verb) du \(rest)?"
+        let raw = strip(sentence)
+        var parts = raw.split(separator: " ").map(String.init)
+        guard parts.count >= 2 else { return raw + "?" }
+        let you = ["bin": "Bist", "habe": "Hast", "gehe": "Gehst", "komme": "Kommst", "muss": "Musst", "kann": "Kannst", "will": "Willst", "brauche": "Brauchst", "fahre": "Fährst", "arbeite": "Arbeitest", "mache": "Machst", "sage": "Sagst"]
+        if parts[0].lowercased() == "ich", let flipped = you[parts[1].lowercased()] {
+            let rest = parts.dropFirst(2).joined(separator: " ")
+            return rest.isEmpty ? "\(flipped) du?" : "\(flipped) du \(rest)?"
         }
-        let rest = parts.joined(separator: " ")
-        let head = second.prefix(1).uppercased() + second.dropFirst()
-        return rest.isEmpty ? "\(head) \(first.lowercased())?" : "\(head) \(first.lowercased()) \(rest)?"
+        guard let index = parts.firstIndex(where: { verb.contains($0.lowercased()) }), index > 0 else { return raw + "?" }
+        let moved = parts.remove(at: index)
+        let head = moved.prefix(1).uppercased() + moved.dropFirst()
+        let articles = Set(["der", "die", "das", "ein", "eine", "einen", "dem", "den", "des"])
+        let rest = parts.map { articles.contains($0.lowercased()) ? $0.lowercased() : $0 }.joined(separator: " ")
+        return "\(head) \(rest)?"
+    }
+
+    private static func negatePL(_ sentence: String) -> String {
+        let raw = strip(sentence)
+        var parts = raw.split(separator: " ").map(String.init)
+        let spots = Set(["jest", "są", "sa", "mam", "masz", "ma", "idę", "ide", "idzie"])
+        if let index = parts.firstIndex(where: { spots.contains($0.lowercased()) }) {
+            if index == 0 {
+                let first = parts[0].prefix(1).lowercased() + parts[0].dropFirst()
+                parts[0] = first
+                return "Nie " + parts.joined(separator: " ") + "."
+            }
+            parts.insert("nie", at: index)
+            return parts.joined(separator: " ") + "."
+        }
+        let first = raw.prefix(1).lowercased() + raw.dropFirst()
+        return "Nie \(first)."
+    }
+
+    private static func askPL(_ sentence: String) -> String {
+        let raw = strip(sentence)
+        let first = raw.prefix(1).lowercased() + raw.dropFirst()
+        return "Czy \(first)?"
     }
 }
 
