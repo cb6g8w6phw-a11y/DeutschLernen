@@ -130,10 +130,10 @@ enum VocabBook {
         let pool = core(store, topic: topic)
         let map = Dictionary(uniqueKeysWithValues: all(store).map { ($0.de, $0) })
         let saved = UserDefaults.standard.stringArray(forKey: key) ?? []
-        var kept = saved.compactMap { map[$0] }.filter { !VocabPace.parked(store, $0.de) }
+        var kept = saved.compactMap { map[$0] }.filter { !VocabPace.resting(VocabBook.stat(store, $0), $0.de) }
         if kept.count < limit {
             let used = Set(kept.map(\.de))
-            let more = pool.filter { !used.contains($0.de) && !VocabPace.parked(store, $0.de) }.shuffled()
+            let more = pool.filter { !used.contains($0.de) && !VocabPace.resting(VocabBook.stat(store, $0), $0.de) }.shuffled()
             kept.append(contentsOf: more.prefix(limit - kept.count))
         }
         let pick = Array(kept.prefix(limit))
@@ -361,8 +361,8 @@ enum VocabPace {
         UserDefaults.standard.set(raw, forKey: "vocabHitStreak")
     }
 
-    static func parked(_ store: LearningStore, _ de: String) -> Bool {
-        guard let stat = store.stats[de], stat.due > Date() else { return false }
+    static func resting(_ stat: WordStat, _ de: String) -> Bool {
+        guard stat.due > Date() else { return false }
         if streak(de) >= 2 { return true }
         return stat.correct >= 2 && stat.wrong == 0
     }

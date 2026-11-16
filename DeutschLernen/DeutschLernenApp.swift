@@ -22,17 +22,17 @@ struct RootView: View {
     @State private var askNotify = false
     @State private var tab = 0
     @State private var dockHidden = false
-    @State private var dockHeight: CGFloat = 320
+    @State private var dockHeight: CGFloat = 74
     @AppStorage("notifyExplained") private var notifyExplained = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
             Group {
                 switch tab {
-                case 1: NavigationStack { MoreTools(title: "Ucz się") }
+                case 1: NavigationStack { MoreTools() }
                 case 2: NavigationStack { ListenView() }
                 case 3: TutorView()
-                case 4: NavigationStack { MoreTools(title: "Ucz się") }
+                case 4: NavigationStack { MoreTools() }
                 case 5: NavigationStack { SceneLibraryView() }
                 case 6: NavigationStack { GrammarLibraryView() }
                 case 7: NavigationStack { PronounceView() }
@@ -113,25 +113,31 @@ struct AppDock: View {
     var body: some View {
         HStack(spacing: 0) {
             icon(0, "house.fill", "Start")
-            icon(1, "book.fill", "Ucz się")
+            icon(1, "book", "Ucz się")
             icon(2, "headphones", "Słuchaj")
-            icon(3, "mic.fill", "Mów")
+            icon(3, "mic", "Mów")
             icon(11, "person", "Profil")
         }
-        .padding(.vertical, 10)
-        .padding(.horizontal, 6)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .padding(.horizontal, 12)
+        .padding(.top, 8)
+        .padding(.bottom, 6)
+        .padding(.horizontal, 4)
+        .background(Color.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).stroke(Color.white.opacity(0.14), lineWidth: 1))
+        .padding(.horizontal, 16)
     }
 
     private func icon(_ value: Int, _ symbol: String, _ title: String) -> some View {
         Button { tab = value } label: {
-            VStack(spacing: 3) {
-                Image(systemName: symbol).font(.body.weight(.semibold))
-                Text(title).font(.system(size: 10, weight: .semibold)).lineLimit(1)
+            VStack(spacing: 4) {
+                Image(systemName: symbol)
+                    .font(.system(size: 20, weight: .regular))
+                Text(title)
+                    .font(.system(size: 11, weight: .medium))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity)
-            .foregroundStyle(tab == value ? Theme.ok : Theme.text2)
+            .foregroundStyle(tab == value ? Theme.ok : Color.white.opacity(0.72))
         }
         .buttonStyle(.plain)
     }
