@@ -95,7 +95,7 @@ enum VocabBook {
     static func all(_ store: LearningStore) -> [Vocab] {
         var seen = Set<String>()
         var list: [Vocab] = []
-        for card in built + extra + custom {
+        for card in built + extra + levels + custom {
             let key = card.de.lowercased()
             if seen.insert(key).inserted { list.append(card) }
         }
@@ -191,12 +191,14 @@ enum VocabBook {
             }
             add(pool.filter { !FSRS.mastered(stat(store, $0)) && !recent.contains($0.de) }.shuffled())
             add(pool.filter { !FSRS.mastered(stat(store, $0)) }.shuffled())
+            if pick.isEmpty { add(pool.shuffled()) }
         }
+        if mode == "new" && pick.isEmpty { add(pool.shuffled()) }
         return pick
     }
 
     static func core(_ store: LearningStore, topic: String) -> [Vocab] {
-        let mine = topic == "Moje" ? custom : (built + extra).filter { topic == "Wszystko" || topic.isEmpty || $0.topic == topic }
+        let mine = topic == "Moje" ? custom : (built + extra + levels).filter { topic == "Wszystko" || topic.isEmpty || $0.topic == topic }
         if topic == "Moje" { return custom }
         return mine
     }
@@ -242,7 +244,8 @@ enum VocabBook {
     }
 
     static func freshListen() -> [CoachData.ListenQ] {
-        let known = Dictionary(uniqueKeysWithValues: (built + extra + custom).map { ($0.de, $0) })
+        var known: [String: Vocab] = [:]
+        for card in built + extra + levels + custom { known[card.de] = card }
         let ids = UserDefaults.standard.stringArray(forKey: "freshVocab") ?? []
         return ids.compactMap { id -> CoachData.ListenQ? in
             guard let card = known[id] else { return nil }
