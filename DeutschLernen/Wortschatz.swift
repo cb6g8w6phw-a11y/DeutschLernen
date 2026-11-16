@@ -95,7 +95,7 @@ enum VocabBook {
     static func all(_ store: LearningStore) -> [Vocab] {
         var seen = Set<String>()
         var list: [Vocab] = []
-        for card in built + custom {
+        for card in built + extra + custom {
             let key = card.de.lowercased()
             if seen.insert(key).inserted { list.append(card) }
         }
@@ -162,7 +162,7 @@ enum VocabBook {
     }
 
     static func core(_ store: LearningStore, topic: String) -> [Vocab] {
-        let mine = topic == "Moje" ? custom : built.filter { topic == "Wszystko" || topic.isEmpty || $0.topic == topic }
+        let mine = topic == "Moje" ? custom : (built + extra).filter { topic == "Wszystko" || topic.isEmpty || $0.topic == topic }
         if topic == "Moje" { return custom }
         return mine
     }
@@ -208,7 +208,7 @@ enum VocabBook {
     }
 
     static func freshListen() -> [CoachData.ListenQ] {
-        let known = Dictionary(uniqueKeysWithValues: (built + custom).map { ($0.de, $0) })
+        let known = Dictionary(uniqueKeysWithValues: (built + extra + custom).map { ($0.de, $0) })
         let ids = UserDefaults.standard.stringArray(forKey: "freshVocab") ?? []
         return ids.compactMap { id -> CoachData.ListenQ? in
             guard let card = known[id] else { return nil }
@@ -229,7 +229,7 @@ enum VocabBook {
 
 struct WortHome: View {
     @EnvironmentObject var store: LearningStore
-    @AppStorage("wortDaily") private var daily = 10
+    @AppStorage("wortDaily") private var daily = 15
     @State private var topic = "Wszystko"
 
     private var known: Int { VocabBook.all(store).filter { VocabBook.stat(store, $0).correct > 0 }.count }
@@ -286,9 +286,13 @@ struct WortHome: View {
                     .background(Theme.ok.opacity(0.16), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                 }
                 .buttonStyle(.plain)
+                SkillToday()
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                     tile("Nowe słówka", "Codzienna porcja nauki", "book") { WortSession(mode: .fresh, topic: topic, limit: daily) }
                     tile("Powtórki", "Zapamiętywanie na długo", "brain") { WortSession(mode: .review, topic: topic, limit: daily) }
+                    tile("Trudne", "Tylko te, które wypadają", "exclamationmark.triangle") { WeakDrill() }
+                    tile("Mówienie", "Usłysz i powiedz", "mic") { SpeakCoach() }
+                    tile("Luki", "Czego brakuje w zdaniu", "text.badge.plus") { ClozeListen() }
                     tile("Fiszki", "Niemiecki i polski", "rectangle.on.rectangle") { WortSession(mode: .cards, topic: topic, limit: daily) }
                     tile("Wymowa", "Słuchaj i powtarzaj", "speaker.wave.2") { WortSession(mode: .hear, topic: topic, limit: daily) }
                 }
@@ -456,6 +460,12 @@ struct WortSession: View {
                             .frame(maxWidth: .infinity)
                         if !card.ex.isEmpty {
                             Text(card.ex)
+                                .foregroundStyle(Theme.text2)
+                                .frame(maxWidth: .infinity)
+                        }
+                        if !card.plural.isEmpty, card.plural != "—" {
+                            Text("Liczba mnoga: \(card.plural)")
+                                .font(.subheadline)
                                 .foregroundStyle(Theme.text2)
                                 .frame(maxWidth: .infinity)
                         }
@@ -636,7 +646,7 @@ struct WortSession: View {
 struct WortSetup: View {
     @AppStorage("wortMethod") private var method = "choice"
     @EnvironmentObject var store: LearningStore
-    @AppStorage("wortDaily") private var daily = 10
+    @AppStorage("wortDaily") private var daily = 15
 
     var body: some View {
         ScrollView {

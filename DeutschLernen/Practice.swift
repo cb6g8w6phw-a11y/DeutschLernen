@@ -490,6 +490,8 @@ private struct SpeakHub: View {
     var body: some View {
         HubList(title: "Wymowa i rozumienie", items: [
             HubItem(id: "pron", title: "Wymowa", icon: "waveform", screen: AnyView(PronounceView())),
+            HubItem(id: "speakcoach", title: "Mówienie aktywne", icon: "mic.fill", screen: AnyView(SpeakCoach())),
+            HubItem(id: "cloze", title: "Luki ze słuchu", icon: "ear", screen: AnyView(ClozeListen())),
             HubItem(id: "think", title: "Myślenie po niemiecku", icon: "brain", screen: AnyView(ThinkView()))
         ])
     }
