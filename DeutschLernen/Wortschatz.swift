@@ -147,12 +147,19 @@ enum VocabBook {
         return mine
     }
 
+    static func remembered(_ s: WordStat) -> Bool {
+        if s.reps >= 2 || s.gap >= 6 || s.days.count >= 3 { return true }
+        return s.correct >= 2 && s.wrong == 0
+    }
+
     static func due(_ store: LearningStore) -> [Vocab] {
         let now = Date()
         return all(store).filter { card in
             guard let s = store.stats[card.de] else { return false }
-            if s.correct + s.wrong > 0 { return s.due <= now }
-            return s.box == 0 && s.due <= now && s.due.timeIntervalSince1970 > 0
+            let seen = s.correct + s.wrong > 0 || s.reps > 0
+            if !seen { return false }
+            if remembered(s) && s.due > now { return false }
+            return true
         }
     }
 
@@ -210,7 +217,12 @@ struct WortHome: View {
     @State private var topic = "Wszystko"
 
     private var known: Int { VocabBook.all(store).filter { VocabBook.stat(store, $0).correct > 0 }.count }
-    private var held: Int { VocabBook.all(store).filter { VocabBook.stat(store, $0).days.count >= 3 }.count }
+    private var held: Int {
+        VocabBook.all(store).filter { stat in
+            let s = VocabBook.stat(store, stat)
+            return VocabBook.remembered(s)
+        }.count
+    }
     private var due: Int { VocabBook.due(store).count }
     private var rate: String {
         let cards = VocabBook.all(store)
@@ -237,7 +249,7 @@ struct WortHome: View {
                 Text("Ucz się nowych słów").font(.system(size: 32, weight: .bold))
                 Text("Poznawaj, zapamiętuj i wykorzystuj niemieckie słownictwo.")
                     .foregroundStyle(Theme.text2)
-                Stepper("Nowe dziś: \(daily)", value: $daily, in: 10...15)
+                Stepper("Nowe dziś: \(daily)", value: $daily, in: 5...40, step: 5)
                     .padding(12)
                     .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 ScrollView(.horizontal, showsIndicators: false) {
