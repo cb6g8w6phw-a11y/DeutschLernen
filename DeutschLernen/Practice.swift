@@ -356,160 +356,90 @@ struct ActivityList: View {
     }
 }
 
-struct MoreTools: View {
-    var title: String = "Więcej"
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                header
-                topRows
-                bottomRows
-            }
-            .padding(16)
-            .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).stroke(Color.white.opacity(0.08), lineWidth: 1))
-            .padding(16)
-            .padding(.bottom, 12)
-        }
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-        .containerBackground(for: .navigation) { Color.black }
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Więcej").font(.title2.bold)
-            Text("Wszystkie narzędzia do nauki niemieckiego w jednym miejscu.")
-                .font(.subheadline)
-                .foregroundStyle(Theme.text2)
-                .padding(.bottom, 10)
-        }
-    }
-
-    private var topRows: some View {
-        VStack(spacing: 0) {
-            talkRow
-            MoreHairline()
-            wordsRow
-            MoreHairline()
-            grammarRow
-        }
-    }
-
-    private var bottomRows: some View {
-        VStack(spacing: 0) {
-            MoreHairline()
-            speakRow
-            MoreHairline()
-            drillRow
-            MoreHairline()
-            workRow
-        }
-    }
-
-    private var talkRow: some View {
-        MoreRow(title: "Rozmowy i teksty", detail: "Mini dialogi · Teksty i historie · Opisz obrazek", icon: "bubble.left.and.bubble.right", dest: AnyView(TalkHub()))
-    }
-    private var wordsRow: some View {
-        MoreRow(title: "Słownictwo", detail: "Słówka · Całe zwroty · Słownik · Zeszyt", icon: "book", dest: AnyView(WordsHub()))
-    }
-    private var grammarRow: some View {
-        MoreRow(title: "Gramatyka", detail: "Wzorce gramatyczne · Gramatyka", icon: "list.bullet.rectangle", dest: AnyView(GrammarHub()))
-    }
-    private var speakRow: some View {
-        MoreRow(title: "Wymowa i rozumienie", detail: "Wymowa · Myślenie po niemiecku", icon: "headphones", dest: AnyView(SpeakHub()))
-    }
-    private var drillRow: some View {
-        MoreRow(title: "Ćwiczenia i testy", detail: "Pisanie · Test · Egzamin · Ćwicz · Błędy", icon: "pencil", dest: AnyView(DrillHub()))
-    }
-    private var workRow: some View {
-        MoreRow(title: "Niemiecki w pracy", detail: "Budowa · Narzędzia · Polecenia · Rozmowy w pracy", icon: "briefcase", dest: AnyView(WorkHubView()))
-    }
-}
-
-private struct MoreHairline: View {
-    var body: some View {
-        Divider().overlay(Color.white.opacity(0.12)).padding(.leading, 68)
-    }
-}
-
-private struct MoreRow: View {
+private struct ToolLink: Identifiable {
+    let id: String
     let title: String
     let detail: String
     let icon: String
-    let dest: AnyView
+    let screen: AnyView
+}
+
+private struct HubItem: Identifiable {
+    let id: String
+    let title: String
+    let icon: String
+    let screen: AnyView
+}
+
+struct MoreTools: View {
+    var title: String = "Więcej"
+
+    private var tools: [ToolLink] {
+        [
+            ToolLink(id: "talk", title: "Rozmowy i teksty", detail: "Mini dialogi · Teksty i historie · Opisz obrazek", icon: "bubble.left.and.bubble.right", screen: AnyView(TalkHub())),
+            ToolLink(id: "words", title: "Słownictwo", detail: "Słówka · Całe zwroty · Słownik · Zeszyt", icon: "book", screen: AnyView(WordsHub())),
+            ToolLink(id: "grammar", title: "Gramatyka", detail: "Wzorce gramatyczne · Gramatyka", icon: "list.bullet.rectangle", screen: AnyView(GrammarHub())),
+            ToolLink(id: "speak", title: "Wymowa i rozumienie", detail: "Wymowa · Myślenie po niemiecku", icon: "headphones", screen: AnyView(SpeakHub())),
+            ToolLink(id: "drill", title: "Ćwiczenia i testy", detail: "Pisanie · Test · Egzamin · Ćwicz · Błędy", icon: "pencil", screen: AnyView(DrillHub())),
+            ToolLink(id: "work", title: "Niemiecki w pracy", detail: "Budowa · Narzędzia · Polecenia · Rozmowy w pracy", icon: "briefcase", screen: AnyView(WorkHubView()))
+        ]
+    }
 
     var body: some View {
-        NavigationLink { dest } label: {
-            HStack(spacing: 14) {
-                Image(systemName: icon)
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(Theme.ok)
-                    .frame(width: 42, height: 42)
-                    .background(Theme.ok.opacity(0.16), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.body.weight(.semibold)).foregroundStyle(.white)
-                    Text(detail).font(.caption).foregroundStyle(Theme.text2)
+        List(tools) { tool in
+            NavigationLink { tool.screen } label: {
+                HStack(spacing: 14) {
+                    Image(systemName: tool.icon)
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(Theme.ok)
+                        .frame(width: 42, height: 42)
+                        .background(Theme.ok.opacity(0.16), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(tool.title).font(.body.weight(.semibold)).foregroundStyle(.white)
+                        Text(tool.detail).font(.caption).foregroundStyle(Theme.text2)
+                    }
                 }
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(Color.white.opacity(0.35))
+                .padding(.vertical, 6)
             }
-            .padding(.vertical, 12)
-            .contentShape(Rectangle())
+            .listRowBackground(Color.white.opacity(0.05))
         }
-        .buttonStyle(.plain)
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
+        .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            Text("Wszystkie narzędzia do nauki niemieckiego w jednym miejscu.")
+                .font(.subheadline)
+                .foregroundStyle(Theme.text2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 8)
+        }
+        .containerBackground(for: .navigation) { Color.black }
     }
 }
 
-private struct HubLink: View {
+private struct HubList: View {
     let title: String
-    let icon: String
-    var last = false
-    let dest: AnyView
+    let items: [HubItem]
 
     var body: some View {
-        VStack(spacing: 0) {
-            NavigationLink { dest } label: {
+        List(items) { item in
+            NavigationLink { item.screen } label: {
                 HStack(spacing: 14) {
-                    Image(systemName: icon)
+                    Image(systemName: item.icon)
                         .font(.system(size: 17, weight: .medium))
                         .foregroundStyle(Theme.ok)
                         .frame(width: 36, height: 36)
                         .background(Theme.ok.opacity(0.16), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    Text(title).font(.body.weight(.semibold)).foregroundStyle(.white)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(Color.white.opacity(0.35))
+                    Text(item.title).font(.body.weight(.semibold)).foregroundStyle(.white)
                 }
-                .padding(.vertical, 10)
-                .contentShape(Rectangle())
+                .padding(.vertical, 4)
             }
-            .buttonStyle(.plain)
-            if !last {
-                Divider().overlay(Color.white.opacity(0.12)).padding(.leading, 50)
-            }
+            .listRowBackground(Color.white.opacity(0.05))
         }
-    }
-}
-
-private struct HubScreen: View {
-    let title: String
-    let content: AnyView
-
-    var body: some View {
-        ScrollView {
-            content
-                .padding(.horizontal, 16)
-                .padding(.vertical, 6)
-                .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 26, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).stroke(Color.white.opacity(0.08), lineWidth: 1))
-                .padding(16)
-                .padding(.bottom, 12)
-        }
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden)
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .containerBackground(for: .navigation) { Color.black }
@@ -518,79 +448,64 @@ private struct HubScreen: View {
 
 private struct TalkHub: View {
     var body: some View {
-        HubScreen(title: "Rozmowy i teksty", content: AnyView(rows))
-    }
-    private var rows: some View {
-        VStack(spacing: 0) {
-            HubLink(title: "Mini dialogi", icon: "bubble.left.and.bubble.right.fill", dest: AnyView(SceneLibraryView()))
-            HubLink(title: "Teksty i historie", icon: "book.closed.fill", dest: AnyView(TextLibraryView()))
-            HubLink(title: "Opisz obrazek", icon: "photo", dest: AnyView(PictureTalk()))
-            HubLink(title: "Jak mówią", icon: "quote.bubble", dest: AnyView(StreetView()))
-            HubLink(title: "Shadowing", icon: "ear", dest: AnyView(ShadowView()))
-            HubLink(title: "Wiadomości", icon: "newspaper", dest: AnyView(NewsListView()))
-            HubLink(title: "Z twojego życia", icon: "sparkles", dest: AnyView(LifeView()))
-            HubLink(title: "Ścieżka lekcji", icon: "point.topleft.down.curvedto.point.bottomright.scurvepath", last: true, dest: AnyView(CourseView()))
-        }
+        HubList(title: "Rozmowy i teksty", items: [
+            HubItem(id: "scenes", title: "Mini dialogi", icon: "bubble.left.and.bubble.right.fill", screen: AnyView(SceneLibraryView())),
+            HubItem(id: "texts", title: "Teksty i historie", icon: "book.closed.fill", screen: AnyView(TextLibraryView())),
+            HubItem(id: "picture", title: "Opisz obrazek", icon: "photo", screen: AnyView(PictureTalk())),
+            HubItem(id: "street", title: "Jak mówią", icon: "quote.bubble", screen: AnyView(StreetView())),
+            HubItem(id: "shadow", title: "Shadowing", icon: "ear", screen: AnyView(ShadowView())),
+            HubItem(id: "news", title: "Wiadomości", icon: "newspaper", screen: AnyView(NewsListView())),
+            HubItem(id: "life", title: "Z twojego życia", icon: "sparkles", screen: AnyView(LifeView())),
+            HubItem(id: "course", title: "Ścieżka lekcji", icon: "point.topleft.down.curvedto.point.bottomright.scurvepath", screen: AnyView(CourseView()))
+        ])
     }
 }
 
 private struct WordsHub: View {
     var body: some View {
-        HubScreen(title: "Słownictwo", content: AnyView(rows))
-    }
-    private var rows: some View {
-        VStack(spacing: 0) {
-            HubLink(title: "Słówka", icon: "rectangle.stack.fill", dest: AnyView(WortHome()))
-            HubLink(title: "Uzupełnij słówko", icon: "character.cursor.ibeam", dest: AnyView(StudyView()))
-            HubLink(title: "Całe zwroty", icon: "text.bubble", dest: AnyView(PhraseView()))
-            HubLink(title: "Słownik", icon: "text.book.closed", dest: AnyView(WordsView()))
-            HubLink(title: "Zeszyt", icon: "book.closed", dest: AnyView(NotebookView()))
-            HubLink(title: "Słówka z filmu", icon: "play.rectangle", dest: AnyView(ClipView()))
-            HubLink(title: "Z życia", icon: "plus.circle.fill", last: true, dest: AnyView(CaptureView()))
-        }
+        HubList(title: "Słownictwo", items: [
+            HubItem(id: "wort", title: "Słówka", icon: "rectangle.stack.fill", screen: AnyView(WortHome())),
+            HubItem(id: "study", title: "Uzupełnij słówko", icon: "character.cursor.ibeam", screen: AnyView(StudyView())),
+            HubItem(id: "phrase", title: "Całe zwroty", icon: "text.bubble", screen: AnyView(PhraseView())),
+            HubItem(id: "dict", title: "Słownik", icon: "text.book.closed", screen: AnyView(WordsView())),
+            HubItem(id: "note", title: "Zeszyt", icon: "book.closed", screen: AnyView(NotebookView())),
+            HubItem(id: "clip", title: "Słówka z filmu", icon: "play.rectangle", screen: AnyView(ClipView())),
+            HubItem(id: "capture", title: "Z życia", icon: "plus.circle.fill", screen: AnyView(CaptureView()))
+        ])
     }
 }
 
 private struct GrammarHub: View {
     var body: some View {
-        HubScreen(title: "Gramatyka", content: AnyView(rows))
-    }
-    private var rows: some View {
-        VStack(spacing: 0) {
-            HubLink(title: "Wzorce gramatyczne", icon: "text.book.closed.fill", dest: AnyView(GrammarLibraryView()))
-            HubLink(title: "Gramatyka", icon: "textformat", dest: AnyView(GrammarView()))
-            HubLink(title: "Generator zdań", icon: "text.badge.checkmark", last: true, dest: AnyView(SentenceView()))
-        }
+        HubList(title: "Gramatyka", items: [
+            HubItem(id: "patterns", title: "Wzorce gramatyczne", icon: "text.book.closed.fill", screen: AnyView(GrammarLibraryView())),
+            HubItem(id: "grammar", title: "Gramatyka", icon: "textformat", screen: AnyView(GrammarView())),
+            HubItem(id: "sentences", title: "Generator zdań", icon: "text.badge.checkmark", screen: AnyView(SentenceView()))
+        ])
     }
 }
 
 private struct SpeakHub: View {
     var body: some View {
-        HubScreen(title: "Wymowa i rozumienie", content: AnyView(rows))
-    }
-    private var rows: some View {
-        VStack(spacing: 0) {
-            HubLink(title: "Wymowa", icon: "waveform", dest: AnyView(PronounceView()))
-            HubLink(title: "Myślenie po niemiecku", icon: "brain", last: true, dest: AnyView(ThinkView()))
-        }
+        HubList(title: "Wymowa i rozumienie", items: [
+            HubItem(id: "pron", title: "Wymowa", icon: "waveform", screen: AnyView(PronounceView())),
+            HubItem(id: "think", title: "Myślenie po niemiecku", icon: "brain", screen: AnyView(ThinkView()))
+        ])
     }
 }
 
 private struct DrillHub: View {
     var body: some View {
-        HubScreen(title: "Ćwiczenia i testy", content: AnyView(rows))
-    }
-    private var rows: some View {
-        VStack(spacing: 0) {
-            HubLink(title: "Pisanie", icon: "square.and.pencil", dest: AnyView(WriteLearnView()))
-            HubLink(title: "Test", icon: "checkmark.circle", dest: AnyView(PlacementView()))
-            HubLink(title: "Egzamin", icon: "checkmark.seal", dest: AnyView(ExamView()))
-            HubLink(title: "Ćwicz", icon: "figure.run", dest: AnyView(PracticeView()))
-            HubLink(title: "Błędy", icon: "exclamationmark.bubble", dest: AnyView(MistakeReview()))
-            HubLink(title: "Dyktando", icon: "pencil.line", dest: AnyView(DictationView()))
-            HubLink(title: "Gry", icon: "gamecontroller", dest: AnyView(GamesHome()))
-            HubLink(title: "Ratunek", icon: "lifepreserver", last: true, dest: AnyView(RescueView()))
-        }
+        HubList(title: "Ćwiczenia i testy", items: [
+            HubItem(id: "write", title: "Pisanie", icon: "square.and.pencil", screen: AnyView(WriteLearnView())),
+            HubItem(id: "test", title: "Test", icon: "checkmark.circle", screen: AnyView(PlacementView())),
+            HubItem(id: "exam", title: "Egzamin", icon: "checkmark.seal", screen: AnyView(ExamView())),
+            HubItem(id: "practice", title: "Ćwicz", icon: "figure.run", screen: AnyView(PracticeView())),
+            HubItem(id: "mistakes", title: "Błędy", icon: "exclamationmark.bubble", screen: AnyView(MistakeReview())),
+            HubItem(id: "dictation", title: "Dyktando", icon: "pencil.line", screen: AnyView(DictationView())),
+            HubItem(id: "games", title: "Gry", icon: "gamecontroller", screen: AnyView(GamesHome())),
+            HubItem(id: "rescue", title: "Ratunek", icon: "lifepreserver", screen: AnyView(RescueView()))
+        ])
     }
 }
 
