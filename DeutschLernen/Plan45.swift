@@ -15,30 +15,30 @@ enum DayPlan {
         let listen = rate(journal.skillListenOK, listenN)
         let speak = rate(journal.skillSpeakOK, speakN)
         let sentence = rate(journal.skillSentenceOK, sentenceN)
-        var listenMin = 10
-        var talkMin = 10
-        var workMin = 10
-        var lifeMin = 10
-        var note = "Za mało Twoich odpowiedzi, żeby przesuwać czas. Plan jest równy: po 10 minut."
+        var listenMin = 4
+        var talkMin = 3
+        var workMin = 3
+        var lifeMin = 2
+        var note = "Około 14 minut: powtórki, kilka nowych zdań, słuchanie i krótka rozmowa."
         let known = [listenN, speakN, sentenceN].filter { $0 >= 4 }
         if known.count >= 2 {
             if listen <= speak && listen <= sentence {
-                listenMin = 15
-                talkMin = 10
-                workMin = 8
-                lifeMin = 7
-                note = "Słuchanie idzie słabiej niż mówienie. Dziś jest go więcej."
+                listenMin = 5
+                talkMin = 3
+                workMin = 3
+                lifeMin = 2
+                note = "Słuchanie idzie słabiej. Dziś jest go trochę więcej."
             } else if sentence <= speak {
-                listenMin = 8
-                talkMin = 15
-                workMin = 10
-                lifeMin = 7
+                listenMin = 3
+                talkMin = 4
+                workMin = 4
+                lifeMin = 2
                 note = "Zdania idą słabiej. Dziś więcej mówienia i pracy."
             } else {
-                listenMin = 10
-                talkMin = 15
-                workMin = 8
-                lifeMin = 7
+                listenMin = 3
+                talkMin = 5
+                workMin = 3
+                lifeMin = 2
                 note = "Mówienie idzie słabiej. Dziś dłuższa rozmowa."
             }
         }
@@ -50,7 +50,7 @@ enum DayPlan {
             PlanBlock(id: "talk", title: "Rozmowa z AI", minutes: talkMin, why: "Jedno pytanie, Twoja odpowiedź, krótka poprawka."),
             PlanBlock(id: "work", title: "Niemiecki w pracy", minutes: workMin, why: workWhy),
             PlanBlock(id: "life", title: "Codzienne życie", minutes: lifeMin, why: lifeWhy),
-            PlanBlock(id: "fix", title: "Twoje błędy", minutes: 5, why: "Tylko to, co naprawdę pomyliłeś.")
+            PlanBlock(id: "fix", title: "Twoje błędy", minutes: 2, why: "Tylko to, co naprawdę pomyliłeś.")
         ]
         return (blocks, note)
     }
@@ -75,7 +75,7 @@ struct Plan45View: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                Text("45 minut")
+                Text("\(plan.blocks.reduce(0) { $0 + $1.minutes }) minut")
                     .font(.largeTitle.bold())
                 Text(plan.note)
                     .foregroundStyle(Theme.text2)

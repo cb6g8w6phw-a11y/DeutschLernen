@@ -204,6 +204,15 @@ private struct DockPanBridge: UIViewRepresentable {
             true
         }
 
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+            var view = touch.view
+            while let current = view {
+                if current is UIControl { return false }
+                view = current.superview
+            }
+            return true
+        }
+
         @objc func panned(_ gesture: UIPanGestureRecognizer) {
             guard let window = gesture.view as? UIWindow ?? gesture.view?.window else { return }
             guard let scroll = liveScroll(in: window) else { return }

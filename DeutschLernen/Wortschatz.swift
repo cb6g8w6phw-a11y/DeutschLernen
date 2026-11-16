@@ -139,10 +139,16 @@ enum VocabBook {
         if kept.count < cap {
             let used = Set(kept.map(\.de))
             let rest = pool.filter { !used.contains($0.de) }
-            let fresh = rest.filter { tier(store, $0) == 0 }.shuffled()
+            let backlog = Self.due(store).count
+            let allowNew = backlog < 25
+            let fresh = allowNew ? rest.filter { tier(store, $0) == 0 }.shuffled() : []
+            let overdue = rest.filter { card in
+                guard let stat = store.stats[card.de] else { return false }
+                return stat.due <= Date() && (stat.correct + stat.wrong + stat.reps) > 0
+            }
             let learning = rest.filter { tier(store, $0) == 1 }.shuffled()
             let known = rest.filter { tier(store, $0) == 2 }.shuffled()
-            kept.append(contentsOf: (fresh + learning + known).prefix(cap - kept.count))
+            kept.append(contentsOf: (overdue + fresh + learning + known).prefix(cap - kept.count))
         }
         let pick = Array(kept.prefix(cap))
         if !pick.isEmpty { UserDefaults.standard.set(pick.map(\.de), forKey: key) }
@@ -152,7 +158,7 @@ enum VocabBook {
     private static func tier(_ store: LearningStore, _ card: Vocab) -> Int {
         let s = stat(store, card)
         if s.correct + s.wrong + s.reps == 0 { return 0 }
-        return remembered(s) ? 2 : 1
+        return FSRS.mastered(s) ? 2 : 1
     }
 
     static func core(_ store: LearningStore, topic: String) -> [Vocab] {
@@ -161,10 +167,7 @@ enum VocabBook {
         return mine
     }
 
-    static func remembered(_ s: WordStat) -> Bool {
-        if s.reps >= 2 || s.gap >= 6 || s.days.count >= 3 { return true }
-        return s.correct >= 2 && s.wrong == 0
-    }
+    static func remembered(_ s: WordStat) -> Bool { FSRS.mastered(s) }
 
     static func due(_ store: LearningStore) -> [Vocab] {
         let now = Date()
@@ -172,8 +175,7 @@ enum VocabBook {
             guard let s = store.stats[card.de] else { return false }
             let seen = s.correct + s.wrong > 0 || s.reps > 0
             if !seen { return false }
-            if remembered(s) && s.due > now { return false }
-            return true
+            return s.due <= now
         }
     }
 
@@ -227,7 +229,7 @@ enum VocabBook {
 
 struct WortHome: View {
     @EnvironmentObject var store: LearningStore
-    @AppStorage("wortDaily") private var daily = 12
+    @AppStorage("wortDaily") private var daily = 10
     @State private var topic = "Wszystko"
 
     private var known: Int { VocabBook.all(store).filter { VocabBook.stat(store, $0).correct > 0 }.count }
@@ -263,7 +265,7 @@ struct WortHome: View {
                 Text("Ucz się nowych słów").font(.system(size: 32, weight: .bold))
                 Text("Poznawaj, zapamiętuj i wykorzystuj niemieckie słownictwo.")
                     .foregroundStyle(Theme.text2)
-                Stepper("Nowe dziś: \(daily)", value: $daily, in: 5...40, step: 5)
+                Stepper("Nowe dziś: \(daily)", value: $daily, in: 8...20, step: 1)
                     .padding(12)
                     .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -315,10 +317,15 @@ struct WortHome: View {
                 }
             }
             .padding(16)
-            .padding(.bottom, 90)
+            .padding(.bottom, 24)
         }
         .navigationTitle("Słówka")
+        .screenChrome()
         .containerBackground(for: .navigation) { Color.black }
+        .onAppear {
+            if daily > 20 { daily = 20 }
+            if daily < 8 { daily = 8 }
+        }
     }
 
     private func topicChip(_ name: String) -> some View {
@@ -630,7 +637,7 @@ struct WortSession: View {
 struct WortSetup: View {
     @AppStorage("wortMethod") private var method = "choice"
     @EnvironmentObject var store: LearningStore
-    @AppStorage("wortDaily") private var daily = 12
+    @AppStorage("wortDaily") private var daily = 10
 
     var body: some View {
         ScrollView {
@@ -761,22 +768,29 @@ struct WortDrill: View {
     }
 
     private func gradeWrite(_ card: Vocab) {
-        let ok = Normalizer.same(typed, card.de) || Normalizer.same(typed, card.ex)
+        let main = AnswerCheck.judge(typed, card.de)
+        let sample = card.ex.isEmpty ? .wrong : AnswerCheck.judge(typed, card.ex)
+        let ok = main != .wrong || sample != .wrong
+        let typo = ok && main != .exact && sample != .exact
         picked = ok ? card.de : typed
         showHint = !ok
-        note = ok ? "Dobrze." : "Tak się pisze: \(card.de)"
-        remember(card, ok: ok)
+        remember(card, ok: ok, typo: typo)
     }
 
-    private func remember(_ card: Vocab, ok: Bool) {
+    private func remember(_ card: Vocab, ok: Bool, typo: Bool = false) {
         let word = Word(de: card.de, pl: card.pl, ex: card.ex, exPl: card.exPl, topic: card.topic)
         if ok {
-            store.grade(word, .easy)
-            note = "Dobrze. " + ReviewAlgo.when(store.stats[card.de] ?? WordStat())
+            store.grade(word, typo ? .mid : .easy)
+            let when = ReviewAlgo.when(store.stats[card.de] ?? WordStat())
+            note = typo ? "\(AnswerCheck.almost(card.de)) \(when)" : "Dobrze. \(when)"
             Haptic.good()
         } else {
             store.grade(word, .hard)
-            let spot = min(deck.count, index + 3)
+            note = AnswerCheck.miss(card.de)
+            if FSRS.isLeech(store.stats[card.de] ?? WordStat()) {
+                note += " To słowo myli się zbyt często. Otwórz trener błędów."
+            }
+            let spot = min(deck.count, index + 4)
             deck.insert(card, at: spot)
             Haptic.bad()
         }

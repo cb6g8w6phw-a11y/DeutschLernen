@@ -19,11 +19,11 @@ struct ThinkView: View {
     @State private var ok = false
 
     private let items: [ThinkItem] = [
-        ThinkItem(title: "Stuknij to, co słyszysz", prompt: "Bez polskiego. Najpierw ucho.", audio: "Wie viel kostet die Wurst?", words: ["Wie", "viel", "kostet", "die", "Wurst"], extras: ["Hund", "hier", "Kaffee"], meaning: "Ile kosztuje kiełbasa?"),
-        ThinkItem(title: "Odpowiedz po niemiecku", prompt: "Der Chef sagt: Hol bitte die Schaufel.", audio: "Hol bitte die Schaufel.", words: ["Ich", "hole", "sie", "sofort"], extras: ["morgen", "Arzt", "nicht"], meaning: "Zaraz ją przyniosę."),
-        ThinkItem(title: "Stuknij to, co słyszysz", prompt: "Bez polskiego. Najpierw ucho.", audio: "Drei Kilo Tomaten, bitte.", words: ["Drei", "Kilo", "Tomaten", "bitte"], extras: ["Kaffee", "fünf", "hallo"], meaning: "Trzy kilo pomidorów, poproszę."),
-        ThinkItem(title: "Odpowiedz po niemiecku", prompt: "Der Kollege fragt: Wann kommst du?", audio: "Wann kommst du?", words: ["Ich", "komme", "um", "sechs"], extras: ["gestern", "Schaufel", "warum"], meaning: "Przyjdę o szóstej."),
-        ThinkItem(title: "Odpowiedz po niemiecku", prompt: "Jemand spricht zu schnell.", audio: "Die Lieferung kommt erst um zehn, nicht um neun.", words: ["Können", "Sie", "bitte", "langsamer", "sprechen"], extras: ["Bus", "heute", "Wurst"], meaning: "Czy może Pan mówić wolniej?")
+        ThinkItem(title: "Stuknij to, co słyszysz", prompt: "Bez polskiego. Najpierw ucho.", audio: "Wie viel kostet die Wurst?", words: ["Wie", "viel", "kostet", "die", "Wurst"], extras: ["Kaffee", "Wurst", "Euro"], meaning: "Ile kosztuje kiełbasa?"),
+        ThinkItem(title: "Odpowiedz po niemiecku", prompt: "Der Chef sagt: Hol bitte die Schaufel.", audio: "Hol bitte die Schaufel.", words: ["Ich", "hole", "sie", "sofort"], extras: ["später", "gleich", "morgen"], meaning: "Zaraz ją przyniosę."),
+        ThinkItem(title: "Stuknij to, co słyszysz", prompt: "Bez polskiego. Najpierw ucho.", audio: "Drei Kilo Tomaten, bitte.", words: ["Drei", "Kilo", "Tomaten", "bitte"], extras: ["Äpfel", "zwei", "Kilo"], meaning: "Trzy kilo pomidorów, poproszę."),
+        ThinkItem(title: "Odpowiedz po niemiecku", prompt: "Der Kollege fragt: Wann kommst du?", audio: "Wann kommst du?", words: ["Ich", "komme", "um", "sechs"], extras: ["sieben", "acht", "halb"], meaning: "Przyjdę o szóstej."),
+        ThinkItem(title: "Odpowiedz po niemiecku", prompt: "Jemand spricht zu schnell.", audio: "Die Lieferung kommt erst um zehn, nicht um neun.", words: ["Können", "Sie", "bitte", "langsamer", "sprechen"], extras: ["schneller", "nochmal", "laut"], meaning: "Czy może Pan mówić wolniej?")
     ]
 
     private var item: ThinkItem { items[index % items.count] }
@@ -178,28 +178,28 @@ struct PictureTalk: View {
     @FocusState private var writing: Bool
 
     private static let scenes: [TalkPic] = [
-        TalkPic(id: "kawa", level: "A1", title: "Kuchnia", see: "Rano. Kawa stoi na stole w kuchni. Powiedz, co robisz.", order: ["Ich", "trinke", "Kaffee", "in", "der", "Küche"], extra: "gestern", sample: "Ich trinke Kaffee in der Küche.", icons: ["cup.and.saucer", "sunrise", "house"]),
-        TalkPic(id: "bus", level: "A1", title: "Przystanek", see: "Stoisz na przystanku i patrzysz na zegarek.", order: ["Der", "Bus", "kommt", "in", "fünf", "Minuten"], extra: "Katze", sample: "Der Bus kommt in fünf Minuten.", icons: ["bus", "clock", "mappin"]),
-        TalkPic(id: "sklep", level: "A1", title: "Sklep", see: "Przy kasie masz chleb i mleko.", order: ["Ich", "kaufe", "Brot", "und", "Milch"], extra: "rot", sample: "Ich kaufe Brot und Milch.", icons: ["cart", "birthday.cake", "creditcard"]),
-        TalkPic(id: "klucz", level: "A1", title: "Wychodzę", see: "Zamykasz mieszkanie. Klucz jeszcze leży.", order: ["Der", "Schlüssel", "liegt", "auf", "dem", "Tisch"], extra: "schon", sample: "Der Schlüssel liegt auf dem Tisch.", icons: ["key.fill", "door.left.hand.closed", "house"]),
-        TalkPic(id: "deszcz", level: "A1", title: "Za oknem", see: "Patrzysz w okno przed wyjściem do pracy.", order: ["Heute", "regnet", "es", "stark"], extra: "dort", sample: "Heute regnet es stark.", icons: ["cloud.rain", "umbrella", "window.casement"]),
-        TalkPic(id: "pauza", level: "A1", title: "Przerwa", see: "Koledzy siadają. Mówisz, że jest przerwa.", order: ["Wir", "machen", "jetzt", "Pause"], extra: "warm", sample: "Wir machen jetzt Pause.", icons: ["cup.and.saucer", "person.2", "clock"]),
-        TalkPic(id: "szef", level: "A1", title: "Telefon", see: "Dzwonisz, bo szef czeka na odpowiedź.", order: ["Ich", "rufe", "meinen", "Chef", "an"], extra: "leer", sample: "Ich rufe meinen Chef an.", icons: ["phone", "person.crop.circle", "building.2"]),
-        TalkPic(id: "apteka", level: "A1", title: "Apteka", see: "Boli cię głowa po zmianie. Stoisz przy ladzie.", order: ["Ich", "habe", "Kopfschmerzen"], extra: "schnell", sample: "Ich habe Kopfschmerzen.", icons: ["cross.case", "pills", "person"]),
-        TalkPic(id: "obiad", level: "A1", title: "Stołówka", see: "Kucharz pyta, co podać.", order: ["Ich", "möchte", "eine", "Suppe", "bitte"], extra: "dort", sample: "Ich möchte eine Suppe bitte.", icons: ["fork.knife", "cup.and.saucer", "person"]),
-        TalkPic(id: "dom", level: "A1", title: "Po zmianie", see: "Koniec pracy. Jedziesz do domu.", order: ["Ich", "fahre", "nach", "Hause"], extra: "schon", sample: "Ich fahre nach Hause.", icons: ["car", "house", "moon"]),
-        TalkPic(id: "helm", level: "A2", title: "Wejście na plac", see: "Zanim wejdziesz, zakładasz kask. Jedno zdanie, nie lista rzeczy.", order: ["Ich", "setze", "den", "Helm", "auf"], extra: "Brot", sample: "Ich setze den Helm auf.", icons: ["helmet", "figure.walk", "hammer"]),
-        TalkPic(id: "grzanie", level: "A2", title: "Mieszkanie", see: "Wracasz i w pokoju jest zimno.", order: ["Die", "Heizung", "ist", "kaputt"], extra: "Bus", sample: "Die Heizung ist kaputt.", icons: ["thermometer.snowflake", "house", "wrench.and.screwdriver"]),
-        TalkPic(id: "sasiad", level: "A2", title: "Klatka", see: "Sąsiad stoi z szafą na klatce. Prosisz go o chwilę pomocy.", order: ["Kannst", "du", "mir", "bitte", "helfen"], extra: "gestern", sample: "Kannst du mir bitte helfen?", icons: ["person.2", "door.left.hand.open", "hand.raised"]),
-        TalkPic(id: "zug", level: "A2", title: "Dworzec", see: "Tablica świeci na czerwono. Pociąg się spóźnia.", order: ["Der", "Zug", "hat", "Verspätung"], extra: "Schaufel", sample: "Der Zug hat Verspätung.", icons: ["tram", "clock", "signpost.right"]),
-        TalkPic(id: "leiter", level: "A2", title: "Majster", see: "Majster woła z dołu, żebyś przyniósł drabinę.", order: ["Ich", "hole", "die", "Leiter"], extra: "Milch", sample: "Ich hole die Leiter.", icons: ["ladder", "arrow.down", "person.wave.2"]),
-        TalkPic(id: "geld", level: "A2", title: "Bank", see: "Po pracy stoisz przed bankomatem.", order: ["Ich", "muss", "noch", "Geld", "abheben"], extra: "Helm", sample: "Ich muss noch Geld abheben.", icons: ["banknote", "creditcard", "building.columns"]),
-        TalkPic(id: "pranie", level: "A2", title: "Łazienka", see: "Pralka jeszcze chodzi, a ty już chcesz wyjść.", order: ["Die", "Waschmaschine", "läuft", "noch"], extra: "Bus", sample: "Die Waschmaschine läuft noch.", icons: ["washer", "tshirt", "clock"]),
-        TalkPic(id: "spotkanie", level: "A2", title: "Przed domem", see: "Umawiacie się pod blokiem po robocie.", order: ["Wir", "treffen", "uns", "um", "sechs"], extra: "Helm", sample: "Wir treffen uns um sechs.", icons: ["person.2", "clock", "house"]),
-        TalkPic(id: "liste", level: "A2", title: "Lista", see: "W ręce masz kartkę: chleb, mleko, ser.", order: ["Ich", "brauche", "noch", "Brot", "und", "Käse"], extra: "Leiter", sample: "Ich brauche noch Brot und Käse.", icons: ["list.bullet", "cart", "basket"]),
-        TalkPic(id: "dostawa", level: "B1", title: "Dostawa", see: "Zostajesz dłużej, bo towar przyjedzie później. Powiedz dlaczego.", order: ["Ich", "bleibe", "länger", "weil", "die", "Lieferung", "später", "kommt"], extra: "Helm", sample: "Ich bleibe länger, weil die Lieferung später kommt.", icons: ["shippingbox", "clock", "person"]),
-        TalkPic(id: "bahn", level: "B1", title: "Plan B", see: "Autobus nie jedzie. Mówisz, co wtedy robisz.", order: ["Wenn", "der", "Bus", "nicht", "kommt", "nehme", "ich", "die", "Bahn"], extra: "Schaufel", sample: "Wenn der Bus nicht kommt, nehme ich die Bahn.", icons: ["bus", "tram", "arrow.triangle.branch"]),
-        TalkPic(id: "frueher", level: "B1", title: "Wcześniej", see: "Pytasz, czy możesz dziś zejść wcześniej.", order: ["Darf", "ich", "heute", "früher", "gehen"], extra: "Brot", sample: "Darf ich heute früher gehen?", icons: ["clock", "house", "person.crop.circle"])
+        TalkPic(id: "kawa", level: "A1", title: "Kuchnia", see: "Rano. Kawa stoi na stole w kuchni. Powiedz, co robisz.", order: ["Ich", "trinke", "Kaffee", "in", "der", "Küche"], extra: "Tee", sample: "Ich trinke Kaffee in der Küche.", icons: ["cup.and.saucer", "sunrise", "house"]),
+        TalkPic(id: "bus", level: "A1", title: "Przystanek", see: "Stoisz na przystanku i patrzysz na zegarek.", order: ["Der", "Bus", "kommt", "in", "fünf", "Minuten"], extra: "Zug", sample: "Der Bus kommt in fünf Minuten.", icons: ["bus", "clock", "mappin"]),
+        TalkPic(id: "sklep", level: "A1", title: "Sklep", see: "Przy kasie masz chleb i mleko.", order: ["Ich", "kaufe", "Brot", "und", "Milch"], extra: "Käse", sample: "Ich kaufe Brot und Milch.", icons: ["cart", "birthday.cake", "creditcard"]),
+        TalkPic(id: "klucz", level: "A1", title: "Wychodzę", see: "Zamykasz mieszkanie. Klucz jeszcze leży.", order: ["Der", "Schlüssel", "liegt", "auf", "dem", "Tisch"], extra: "Regal", sample: "Der Schlüssel liegt auf dem Tisch.", icons: ["key.fill", "door.left.hand.closed", "house"]),
+        TalkPic(id: "deszcz", level: "A1", title: "Za oknem", see: "Patrzysz w okno przed wyjściem do pracy.", order: ["Heute", "regnet", "es", "stark"], extra: "Schnee", sample: "Heute regnet es stark.", icons: ["cloud.rain", "umbrella", "window.casement"]),
+        TalkPic(id: "pauza", level: "A1", title: "Przerwa", see: "Koledzy siadają. Mówisz, że jest przerwa.", order: ["Wir", "machen", "jetzt", "Pause"], extra: "Feierabend", sample: "Wir machen jetzt Pause.", icons: ["cup.and.saucer", "person.2", "clock"]),
+        TalkPic(id: "szef", level: "A1", title: "Telefon", see: "Dzwonisz, bo szef czeka na odpowiedź.", order: ["Ich", "rufe", "meinen", "Chef", "an"], extra: "Kollegen", sample: "Ich rufe meinen Chef an.", icons: ["phone", "person.crop.circle", "building.2"]),
+        TalkPic(id: "apteka", level: "A1", title: "Apteka", see: "Boli cię głowa po zmianie. Stoisz przy ladzie.", order: ["Ich", "habe", "Kopfschmerzen"], extra: "Husten", sample: "Ich habe Kopfschmerzen.", icons: ["cross.case", "pills", "person"]),
+        TalkPic(id: "obiad", level: "A1", title: "Stołówka", see: "Kucharz pyta, co podać.", order: ["Ich", "möchte", "eine", "Suppe", "bitte"], extra: "Salat", sample: "Ich möchte eine Suppe bitte.", icons: ["fork.knife", "cup.and.saucer", "person"]),
+        TalkPic(id: "dom", level: "A1", title: "Po zmianie", see: "Koniec pracy. Jedziesz do domu.", order: ["Ich", "fahre", "nach", "Hause"], extra: "Arbeit", sample: "Ich fahre nach Hause.", icons: ["car", "house", "moon"]),
+        TalkPic(id: "helm", level: "A2", title: "Wejście na plac", see: "Zanim wejdziesz, zakładasz kask. Jedno zdanie, nie lista rzeczy.", order: ["Ich", "setze", "den", "Helm", "auf"], extra: "Weste", sample: "Ich setze den Helm auf.", icons: ["helmet", "figure.walk", "hammer"]),
+        TalkPic(id: "grzanie", level: "A2", title: "Mieszkanie", see: "Wracasz i w pokoju jest zimno.", order: ["Die", "Heizung", "ist", "kaputt"], extra: "Fenster", sample: "Die Heizung ist kaputt.", icons: ["thermometer.snowflake", "house", "wrench.and.screwdriver"]),
+        TalkPic(id: "sasiad", level: "A2", title: "Klatka", see: "Sąsiad stoi z szafą na klatce. Prosisz go o chwilę pomocy.", order: ["Kannst", "du", "mir", "bitte", "helfen"], extra: "warten", sample: "Kannst du mir bitte helfen?", icons: ["person.2", "door.left.hand.open", "hand.raised"]),
+        TalkPic(id: "zug", level: "A2", title: "Dworzec", see: "Tablica świeci na czerwono. Pociąg się spóźnia.", order: ["Der", "Zug", "hat", "Verspätung"], extra: "Gleis", sample: "Der Zug hat Verspätung.", icons: ["tram", "clock", "signpost.right"]),
+        TalkPic(id: "leiter", level: "A2", title: "Majster", see: "Majster woła z dołu, żebyś przyniósł drabinę.", order: ["Ich", "hole", "die", "Leiter"], extra: "Hammer", sample: "Ich hole die Leiter.", icons: ["ladder", "arrow.down", "person.wave.2"]),
+        TalkPic(id: "geld", level: "A2", title: "Bank", see: "Po pracy stoisz przed bankomatem.", order: ["Ich", "muss", "noch", "Geld", "abheben"], extra: "Konto", sample: "Ich muss noch Geld abheben.", icons: ["banknote", "creditcard", "building.columns"]),
+        TalkPic(id: "pranie", level: "A2", title: "Łazienka", see: "Pralka jeszcze chodzi, a ty już chcesz wyjść.", order: ["Die", "Waschmaschine", "läuft", "noch"], extra: "Seife", sample: "Die Waschmaschine läuft noch.", icons: ["washer", "tshirt", "clock"]),
+        TalkPic(id: "spotkanie", level: "A2", title: "Przed domem", see: "Umawiacie się pod blokiem po robocie.", order: ["Wir", "treffen", "uns", "um", "sechs"], extra: "sieben", sample: "Wir treffen uns um sechs.", icons: ["person.2", "clock", "house"]),
+        TalkPic(id: "liste", level: "A2", title: "Lista", see: "W ręce masz kartkę: chleb, mleko, ser.", order: ["Ich", "brauche", "noch", "Brot", "und", "Käse"], extra: "Wasser", sample: "Ich brauche noch Brot und Käse.", icons: ["list.bullet", "cart", "basket"]),
+        TalkPic(id: "dostawa", level: "B1", title: "Dostawa", see: "Zostajesz dłużej, bo towar przyjedzie później. Powiedz dlaczego.", order: ["Ich", "bleibe", "länger", "weil", "die", "Lieferung", "später", "kommt"], extra: "Rampe", sample: "Ich bleibe länger, weil die Lieferung später kommt.", icons: ["shippingbox", "clock", "person"]),
+        TalkPic(id: "bahn", level: "B1", title: "Plan B", see: "Autobus nie jedzie. Mówisz, co wtedy robisz.", order: ["Wenn", "der", "Bus", "nicht", "kommt", "nehme", "ich", "die", "Bahn"], extra: "Taxi", sample: "Wenn der Bus nicht kommt, nehme ich die Bahn.", icons: ["bus", "tram", "arrow.triangle.branch"]),
+        TalkPic(id: "frueher", level: "B1", title: "Wcześniej", see: "Pytasz, czy możesz dziś zejść wcześniej.", order: ["Darf", "ich", "heute", "früher", "gehen"], extra: "Schicht", sample: "Darf ich heute früher gehen?", icons: ["clock", "house", "person.crop.circle"])
     ]
 
     private var scene: TalkPic { deck.isEmpty ? Self.scenes[0] : deck[index % deck.count] }
@@ -305,16 +305,17 @@ struct PictureTalk: View {
         defer { busy = false }
         let written = typed.trimmingCharacters(in: .whitespacesAndNewlines)
         let said = written.isEmpty ? built.trimmingCharacters(in: .whitespacesAndNewlines) : written
-        let right = exact(said, scene.order)
-        if right {
-            note = "Tak. \(scene.sample)"
+        let verdict = AnswerCheck.judge(said, scene.sample)
+        let right = verdict == .exact || exact(said, scene.order)
+        let typo = !right && verdict == .typo
+        if right || typo {
+            note = typo ? AnswerCheck.almost(scene.sample) : "Tak. \(scene.sample)"
             fix = ""
-            store.noteSkill("sentence", ok: true)
-            let word = Word(de: said, pl: scene.title, ex: scene.sample, exPl: scene.see, topic: "Obrazek", level: "A2")
-            store.grade(word, .easy, produced: true)
+            let word = Word(de: scene.sample, pl: scene.title, ex: scene.sample, exPl: scene.see, topic: "Obrazek", level: "A2")
+            store.grade(word, typo ? .mid : .easy, produced: true)
             Talk.de(scene.sample, rate: 0.44)
         } else {
-            note = "Jeszcze nie. Bez zbędnego słowa, w tej kolejności: \(scene.sample)"
+            note = AnswerCheck.miss(scene.sample)
             store.noteSkill("sentence", ok: false)
             HardBook.add(de: scene.sample, pl: scene.see)
             fix = await polish(said) ?? ""

@@ -13,7 +13,7 @@ struct StatsView: View {
     @State private var generating = false
     @State private var message = ""
     @AppStorage("goalLevel") private var goalLevel = "A2"
-    @AppStorage("dailyMinutes") private var dailyMinutes = 15
+    @AppStorage("dailyMinutes") private var dailyMinutes = 12
     @AppStorage("goalDays") private var goalDays = 90
     @AppStorage("placementBand") private var placement = ""
     @AppStorage("placementScore") private var placementScore = 0

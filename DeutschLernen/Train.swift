@@ -219,6 +219,7 @@ struct HomeArrange: View {
 
 struct TodayView: View {
     @EnvironmentObject var store: LearningStore
+    @AppStorage("dailyMinutes") private var dailyMinutes = 12
 
     var body: some View {
         NavigationStack {
@@ -247,25 +248,25 @@ struct TodayView: View {
                                 .padding(.vertical, 5)
                                 .background(Theme.ok, in: Capsule())
                             Spacer()
-                            Text("45 minut")
+                            Text("\(dailyMinutes) minut")
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(Theme.text2)
                         }
                         Text("Zrozum Niemców\nna budowie.")
                             .font(.system(size: 32, weight: .bold))
-                        Text("Dzisiaj poćwiczysz polecenia szefa, szybką mowę i odpowiadanie bez zastanawiania się.")
+                        Text("Jedna kolejka: powtórki, nowe zdania, słuchanie i krótkie mówienie.")
                             .foregroundStyle(Theme.text2)
                             .fixedSize(horizontal: false, vertical: true)
                         HStack {
                             Text("Postęp lekcji")
                                 .foregroundStyle(Theme.text2)
                             Spacer()
-                            Text("\(doneMinutes) / 45 min")
+                            Text("\(planNow) / \(dailyMinutes) min")
                                 .font(.headline)
                         }
-                        ProgressView(value: Double(doneMinutes), total: 45)
+                        ProgressView(value: Double(planNow), total: Double(max(dailyMinutes, 1)))
                             .tint(Theme.ok)
-                        NavigationLink { Plan45View() } label: {
+                        NavigationLink { DailyRunView() } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "play.circle")
                                 Text("Rozpocznij dzisiejszą naukę")
@@ -318,32 +319,25 @@ struct TodayView: View {
                     .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                 }
                 .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .padding(.bottom, 12)
+                .padding(.top, 12)
+                .padding(.bottom, 24)
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar(.hidden, for: .navigationBar)
-            .safeAreaPadding(.top, 8)
+            .navigationTitle("Start")
+            .screenChrome()
             .containerBackground(for: .navigation) { Color.black }
         }
     }
 
     private var dayPlan: (blocks: [PlanBlock], note: String) { DayPlan.make(store.journal) }
 
-    private var done: Set<String> {
-        Set(UserDefaults.standard.stringArray(forKey: "plan45-\(LearningStore.dayKey())") ?? [])
-    }
+    private var planNow: Int { min(dailyMinutes, store.creditedToday) }
 
     private var sentences: Int {
-        store.stats.filter { $0.key.contains(" ") && $0.value.days.count >= 3 }.count
-    }
-
-    private var doneMinutes: Int {
-        dayPlan.blocks.filter { done.contains($0.id) }.reduce(0) { $0 + $1.minutes }
+        store.stats.filter { $0.key.contains(" ") && $0.value.correct > 0 }.count
     }
 
     private var phrases: Int {
-        HardBook.all().filter { $0.hits >= 2 }.count
+        HardBook.all().filter { $0.hits >= 1 }.count
     }
 
     private var bandNow: String {
@@ -794,9 +788,10 @@ struct ListenView: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 8)
-            .padding(.bottom, 120)
+            .padding(.bottom, 24)
         }
         .navigationTitle("Słuchanie")
+        .screenChrome()
         .lessonClock("listen", goal: DayPlan.minutes("listen", store.journal))
         .containerBackground(for: .navigation) { NightGlow() }
         .onAppear {

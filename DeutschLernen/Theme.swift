@@ -62,6 +62,12 @@ extension View {
             .padding(.horizontal, 16)
             .background(Capsule().stroke(Color.white.opacity(0.2), lineWidth: 1))
     }
+
+    func screenChrome() -> some View {
+        toolbarBackground(.visible, for: .navigationBar)
+            .toolbarBackground(Color.black, for: .navigationBar)
+            .navigationBarTitleDisplayMode(.inline)
+    }
 }
 
 struct MatteGlassButton: ButtonStyle {

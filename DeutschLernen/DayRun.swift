@@ -240,7 +240,7 @@ struct DailyRunView: View {
             Text("Powtórka: \(reviewHits) z \(fixes.count).")
             Text("Nowe zdanie samodzielnie: \(phraseHits > 0 ? "weszło na dziś" : "jeszcze nie").")
             Text("Mówienie: \(voiceLine)")
-            Text("Wraca po 1, 3, 7 i 14 dniach. Jak znowu sprawia problem, odstęp skraca się do poprzedniego.")
+            Text("Jedno poprawne zdanie zalicza je na dziś i ustawia termin powtórki. Opanowane jest dopiero po powtórce z dłuższą przerwą.")
                 .foregroundStyle(Theme.text2)
             Text("Opanowane dotychczas: \(store.masteredCount).")
                 .font(.footnote)
@@ -307,10 +307,11 @@ struct DailyRunView: View {
 
     private func acceptTyped(_ word: Word, _ line: String) {
         writing = false
-        if Normalizer.same(typed, line) {
+        let verdict = AnswerCheck.judge(typed, line)
+        if verdict != .wrong {
             voice = 1
             said = true
-            store.grade(word, .easy, produced: true)
+            store.grade(word, verdict == .typo ? .mid : .easy, produced: true)
         } else {
             voice = 2
             said = false
@@ -336,21 +337,29 @@ struct DailyRunView: View {
 
     private func gradeFresh(_ word: Word, _ line: String, hinted: Bool) {
         writing = false
-        let ok = Normalizer.same(typed, line)
+        let verdict = AnswerCheck.judge(typed, line)
+        let ok = verdict != .wrong
         if hinted {
-            note = ok ? "Z podpowiedzią weszło. Teraz to samo bez początku." : "Jeszcze nie. Tak się pisze: \(line)"
-            self.hinted = true
-            typed = ""
-            if !ok { store.scheduleTomorrow(word) }
+            if ok {
+                phraseHits += 1
+                store.grade(word, .mid, produced: true)
+                note = verdict == .typo ? AnswerCheck.almost(line) : "Zaliczone. Wróci po przerwie, jeszcze nie jest opanowane."
+                advanceFresh()
+            } else {
+                note = AnswerCheck.miss(line)
+                self.hinted = true
+                typed = ""
+                store.scheduleTomorrow(word)
+            }
         } else if ok {
             phraseHits += 1
             store.grade(word, .easy, produced: true)
-            note = "Sam napisałeś. To pierwszy dzień, nie koniec nauki."
+            note = verdict == .typo ? AnswerCheck.almost(line) : "Zaliczone. Wróci po przerwie, jeszcze nie jest opanowane."
             advanceFresh()
         } else {
             store.scheduleTomorrow(word)
             HardBook.add(de: line, pl: word.pl)
-            note = "Bez podpowiedzi nie weszło. Zostaje na jutro. Tak: \(line)"
+            note = AnswerCheck.miss(line) + " Zostaje na jutro."
             advanceFresh()
         }
     }
@@ -373,17 +382,18 @@ struct DailyRunView: View {
 
     private func finishCheck(_ word: Word, _ line: String) {
         writing = false
-        let ok = Normalizer.same(typed, line)
+        let verdict = AnswerCheck.judge(typed, line)
+        let ok = verdict != .wrong
         if ok {
-            store.grade(word, .easy, produced: true)
-            note = "Pamiętasz. I tak wraca po przerwie, zanim będzie opanowane."
+            store.grade(word, verdict == .typo ? .mid : .easy, produced: true)
+            note = verdict == .typo ? AnswerCheck.almost(line) : "Pamiętasz. I tak wraca po przerwie, zanim będzie opanowane."
         } else {
             store.scheduleTomorrow(word)
             HardBook.add(de: line, pl: word.pl)
             store.addMistake("\(typed)| \(line)")
-            note = "Nie pamiętasz jeszcze. Poprawnie: \(line)"
+            note = AnswerCheck.miss(line)
         }
-        store.noteSkill("sentence", ok: ok)
+        if !ok { store.noteSkill("sentence", ok: false) }
         held = true
         phase = 4
     }

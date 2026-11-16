@@ -26,11 +26,26 @@ targets:
         INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: "Rozpoznawanie mowy zamienia to, co mówisz, na tekst po niemiecku."
         INFOPLIST_KEY_NSCameraUsageDescription: "Aparat skanuje niemieckie listy, instrukcje i tabliczki."
         INFOPLIST_KEY_NSPhotoLibraryUsageDescription: "Zdjęcie z galerii można przetłumaczyć i dodać do powtórek."
-        MARKETING_VERSION: "13.9"
-        CURRENT_PROJECT_VERSION: "126"
+        MARKETING_VERSION: "14.0"
+        CURRENT_PROJECT_VERSION: "127"
         SWIFT_VERSION: "5.0"
+        ENABLE_TESTABILITY: YES
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_FILE: DeutschLernen/Info.plist
+  DeutschLernenTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "26.0"
+    sources:
+      - path: Tests
+    dependencies:
+      - target: DeutschLernen
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.DeutschLernenTests
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"
   DeutschWidget:
     type: app-extension
     platform: iOS
@@ -46,8 +61,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.DeutschLernen.widget
         GENERATE_INFOPLIST_FILE: NO
-        MARKETING_VERSION: "13.9"
-        CURRENT_PROJECT_VERSION: "126"
+        MARKETING_VERSION: "14.0"
+        CURRENT_PROJECT_VERSION: "127"
         SWIFT_VERSION: "5.0"
         SKIP_INSTALL: YES
         TARGETED_DEVICE_FAMILY: "1"

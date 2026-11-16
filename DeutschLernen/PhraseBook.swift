@@ -17,7 +17,7 @@ enum HardBook {
         return rows
     }
 
-    static func openLines() -> [HardLine] { all().filter { $0.hits < 2 } }
+    static func openLines() -> [HardLine] { all().filter { $0.hits < 1 } }
 
     static func add(de: String, pl: String) {
         let clean = de.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -518,19 +518,19 @@ struct NotebookView: View {
     @State private var note = ""
     @FocusState private var writing: Bool
 
-    private var openRows: [HardLine] { rows.filter { $0.hits < 2 } }
-    private var done: Int { rows.filter { $0.hits >= 2 }.count }
+    private var openRows: [HardLine] { rows.filter { $0.hits < 1 } }
+    private var done: Int { rows.filter { $0.hits >= 1 }.count }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                Text("Zostaje, aż dwa razy napiszesz zdanie sam. Potem schodzi.")
+                Text("Jedno poprawne zdanie zalicza je od razu. Potem wraca po przerwie, ale jeszcze nie jest opanowane.")
                     .foregroundStyle(Theme.text2)
                 Text("Otwarte: \(openRows.count). Opanowane: \(done).")
                     .font(.headline)
                 if let item = typing {
                     Text(item.pl).font(.title3.bold())
-                    Text("Pomyłki: \(item.misses). Dobre podejścia: \(item.hits) z 2.")
+                    Text("Pomyłki: \(item.misses). Dobre podejścia: \(item.hits).")
                         .font(.footnote)
                         .foregroundStyle(Theme.text2)
                     TextField("Całe zdanie", text: $typed, axis: .vertical)
@@ -572,17 +572,17 @@ struct NotebookView: View {
 
     private func grade(_ item: HardLine) {
         writing = false
-        let ok = Normalizer.same(typed, item.de)
+        let verdict = AnswerCheck.judge(typed, item.de)
+        let ok = verdict != .wrong
         HardBook.mark(id: item.id, ok: ok)
         store.noteSkill("sentence", ok: ok)
         rows = HardBook.all()
         if ok {
-            let hits = rows.first { $0.id == item.id }?.hits ?? 2
-            note = hits >= 2 ? "Dwa razy dobrze. Schodzi z zeszytu." : "Raz. Zostaje, aż powtórzysz drugi raz."
-            if hits >= 2 { typing = nil }
+            note = verdict == .typo ? AnswerCheck.almost(item.de) : "Zaliczone. Wróci po przerwie, jeszcze nie jest opanowane."
+            typing = nil
             Haptic.good()
         } else {
-            note = "Jeszcze nie. Zostaje. Tak się pisze: \(item.de)"
+            note = AnswerCheck.miss(item.de)
             Haptic.bad()
         }
         typed = ""

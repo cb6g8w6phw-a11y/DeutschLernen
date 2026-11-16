@@ -417,6 +417,28 @@ struct RepairView: View {
 
 // MARK: - Praca
 
+struct WorkMaterialsView: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+                NavigationLink { BuildView() } label: {
+                    Text("Narzędzia, materiały i polecenia z budowy").frame(maxWidth: .infinity).padding(.vertical, 8)
+                }
+                NavigationLink { WorkCourseView() } label: {
+                    Text("Kurs: polecenia, narzędzia, wymiary, bezpieczeństwo").frame(maxWidth: .infinity).padding(.vertical, 8)
+                }
+                NavigationLink { SiteCourseView() } label: {
+                    Text("Dialogi z budowy").frame(maxWidth: .infinity).padding(.vertical, 8)
+                }
+            }
+            .padding(20)
+        }
+        .navigationTitle("Materiały z budowy")
+        .screenChrome()
+        .containerBackground(for: .navigation) { NightGlow() }
+    }
+}
+
 struct WorkHubView: View {
     @EnvironmentObject var store: LearningStore
     @State private var step = 0
@@ -444,19 +466,24 @@ struct WorkHubView: View {
                 case 2: safetyStep
                 default: done
                 }
-                NavigationLink { BuildView() } label: {
-                    Text("Narzędzia, materiały i polecenia z budowy").frame(maxWidth: .infinity).padding(.vertical, 8)
+                NavigationLink { WorkMaterialsView() } label: {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Materiały z budowy").font(.headline).foregroundStyle(.white)
+                        Text("Narzędzia, kurs poleceń i dialogi z szefem.")
+                            .font(.subheadline)
+                            .foregroundStyle(Theme.text2)
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Theme.ok.opacity(0.16), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
-                NavigationLink { WorkCourseView() } label: {
-                    Text("Kurs: polecenia, narzędzia, wymiary, bezpieczeństwo").frame(maxWidth: .infinity).padding(.vertical, 8)
-                }
-                NavigationLink { SiteCourseView() } label: {
-                    Text("Dialogi z budowy").frame(maxWidth: .infinity).padding(.vertical, 8)
-                }
+                .buttonStyle(.plain)
             }
             .padding(20)
+            .padding(.bottom, 24)
         }
         .navigationTitle("W pracy")
+        .screenChrome()
         .lessonClock("work", goal: DayPlan.minutes("work", store.journal))
         .containerBackground(for: .navigation) { NightGlow() }
         .onAppear {
@@ -467,25 +494,30 @@ struct WorkHubView: View {
 
     private var bossStep: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Możesz wylosować inną sytuację. Poprawna odpowiedź nie stoi zawsze na początku.")
-                .font(.footnote)
-                .foregroundStyle(Theme.text2)
             Text(boss.title).font(.headline)
             Text("„\(boss.de)”").font(.title3.bold())
             Button { Talk.de(boss.de, rate: 0.46) } label: { Label("Odsłuchaj", systemImage: "speaker.wave.2") }
                 .buttonStyle(.glass)
             Text(boss.hint)
                 .foregroundStyle(Theme.text2)
+            Text("Podpowiedź A1. Stuknij słowo, żeby wstawić je do odpowiedzi.")
+                .font(.footnote)
+                .foregroundStyle(Theme.text2)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 88), spacing: 8)], spacing: 8) {
+                ForEach(chips, id: \.self) { word in
+                    Button(word) {
+                        typed = typed.trimmingCharacters(in: .whitespaces)
+                        typed = typed.isEmpty ? word : typed + " " + word
+                    }
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .background(Color.white.opacity(0.08), in: Capsule())
+                }
+            }
             TextField("Po niemiecku", text: $typed, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .focused($writing)
-            Button("Wyślij") {
-                let said = Normalizer.clean(typed)
-                let ok = boss.bits.contains { said.contains($0) }
-                note = ok ? boss.good : boss.bad
-                store.noteSkill("sentence", ok: ok)
-                writing = false
-            }
+            Button("Wyślij") { sendBoss() }
             .primaryButton()
             .disabled(typed.trimmingCharacters(in: .whitespaces).isEmpty)
             if !note.isEmpty {
@@ -495,6 +527,34 @@ struct WorkHubView: View {
             Button("Inna sytuacja") { fresh(avoidSame: true) }
                 .buttonStyle(.glass)
         }
+    }
+
+    private var chips: [String] {
+        var sentence = boss.good
+        if let range = sentence.range(of: ": ", options: .backwards) {
+            sentence = String(sentence[range.upperBound...])
+        }
+        var seen = Set<String>()
+        return sentence.split(separator: " ").compactMap { part in
+            let word = part.trimmingCharacters(in: CharacterSet.punctuationCharacters)
+            guard word.count > 1, seen.insert(word.lowercased()).inserted else { return nil }
+            return word
+        }
+    }
+
+    private func sendBoss() {
+        let said = AnswerCheck.fold(typed)
+        let ok = boss.bits.contains { said.contains($0) }
+        let sample = chips.joined(separator: " ")
+        if ok {
+            note = "Dobrze. \(sample)"
+        } else if AnswerCheck.judge(typed, sample) == .typo {
+            note = AnswerCheck.almost(sample)
+        } else {
+            note = "\(boss.bad) \(AnswerCheck.miss(sample))"
+        }
+        store.noteSkill("sentence", ok: ok || AnswerCheck.judge(typed, sample) == .typo)
+        writing = false
     }
 
     private var commandStep: some View {

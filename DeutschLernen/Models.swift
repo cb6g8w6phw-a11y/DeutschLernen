@@ -53,8 +53,13 @@ struct WordStat: Codable {
     var gap: Int = 0
     var reps: Int = 0
     var lapses: Int = 0
+    var stability: Double = 0
+    var difficulty: Double = 0
+    var lastReview: Date? = nil
 
-    private enum CodingKeys: String, CodingKey { case box, correct, wrong, due, days, ease, gap, reps, lapses }
+    private enum CodingKeys: String, CodingKey {
+        case box, correct, wrong, due, days, ease, gap, reps, lapses, stability, difficulty, lastReview
+    }
 
     init() {}
 
@@ -69,6 +74,15 @@ struct WordStat: Codable {
         gap = try c.decodeIfPresent(Int.self, forKey: .gap) ?? 0
         reps = try c.decodeIfPresent(Int.self, forKey: .reps) ?? 0
         lapses = try c.decodeIfPresent(Int.self, forKey: .lapses) ?? 0
+        stability = try c.decodeIfPresent(Double.self, forKey: .stability) ?? 0
+        difficulty = try c.decodeIfPresent(Double.self, forKey: .difficulty) ?? 0
+        lastReview = try c.decodeIfPresent(Date.self, forKey: .lastReview)
+        if stability <= 0 {
+            if gap > 0 { stability = Double(gap) }
+            else if days.count >= 3 { stability = 21 }
+        }
+        if reps < 2, days.count >= 3 { reps = 2 }
+        if gap < 21, days.count >= 3, stability >= 21 { gap = 21 }
     }
 
     func encode(to encoder: Encoder) throws {
@@ -82,32 +96,21 @@ struct WordStat: Codable {
         try c.encode(gap, forKey: .gap)
         try c.encode(reps, forKey: .reps)
         try c.encode(lapses, forKey: .lapses)
+        try c.encode(stability, forKey: .stability)
+        try c.encode(difficulty, forKey: .difficulty)
+        try c.encodeIfPresent(lastReview, forKey: .lastReview)
     }
 }
 
 enum ReviewAlgo {
     static func apply(_ stat: inout WordStat, quality: Int, now: Date = Date()) {
-        let q = min(5, max(0, quality))
-        var ease = stat.ease
-        if ease < 1.3 { ease = 2.5 }
-        ease += 0.1 - Double(5 - q) * (0.08 + Double(5 - q) * 0.02)
-        if ease < 1.3 { ease = 1.3 }
-        stat.ease = ease
-        if q < 3 {
-            stat.reps = 0
-            stat.gap = 0
-            stat.lapses += 1
-            stat.due = Calendar.current.date(byAdding: .minute, value: 10, to: now) ?? now
-            return
+        let rating: FSRSRating
+        switch quality {
+        case ..<3: rating = .again
+        case 3, 4: rating = .good
+        default: rating = .easy
         }
-        let interval: Int
-        if stat.reps <= 0 { interval = 1 }
-        else if stat.reps == 1 { interval = 6 }
-        else { interval = max(stat.gap + 1, Int((Double(max(stat.gap, 1)) * ease).rounded())) }
-        stat.reps += 1
-        stat.gap = interval
-        stat.box = min(stat.reps, 5)
-        stat.due = Calendar.current.date(byAdding: .day, value: interval, to: now) ?? now
+        FSRS.apply(&stat, rating: rating, now: now, fuzz: true)
     }
 
     static func when(_ stat: WordStat) -> String {
@@ -397,33 +400,46 @@ final class LearningStore: ObservableObject {
     }
 
     /// Sesja: najpierw słabe/zaległe powtórki, potem kilka nowych z puli 10 000.
-    func nextSession(size: Int = 8, maxNew: Int = 4, level: String = "oba") -> [Word] {
+    func nextSession(size: Int = 8, maxNew: Int = 8, level: String = "oba") -> [Word] {
         let pool = catalog(level: level)
         let now = Date()
-        let reviews = pool.filter { w in
-            if let s = stats[w.de] { return s.due <= now }
-            return false
+        let reviews = pool.filter { word in
+            guard let stat = stats[word.de] else { return false }
+            return stat.due <= now
         }.sorted { a, b in
-            let sa = stats[a.de]!, sb = stats[b.de]!
+            let sa = stats[a.de] ?? WordStat()
+            let sb = stats[b.de] ?? WordStat()
             if sa.due != sb.due { return sa.due < sb.due }
-            if sa.ease != sb.ease { return sa.ease < sb.ease }
+            if sa.stability != sb.stability { return sa.stability < sb.stability }
             return sa.wrong > sb.wrong
         }
-        let reviewCap = min(reviews.count, max(2, size / 2))
-        var out = Array(reviews.prefix(reviewCap))
+        let reviewCap = min(reviews.count, max(1, (size * 6) / 10))
+        var out = Array(reviews.prefix(max(reviewCap, min(reviews.count, size))))
+        let allowNew = reviews.count < 25
+        let newLimit = allowNew ? min(maxNew, 10) : 0
+        var addedNew = 0
         let recent = Set(UserDefaults.standard.stringArray(forKey: "recentNewWords") ?? [])
-        func take(_ list: [Word]) {
+        func takeNew(_ list: [Word]) {
+            for word in list where out.count < size && addedNew < newLimit && !out.contains(where: { $0.de == word.de }) {
+                out.append(word)
+                addedNew += 1
+            }
+        }
+        func takeSeen(_ list: [Word]) {
             for word in list where out.count < size && !out.contains(where: { $0.de == word.de }) {
                 out.append(word)
             }
         }
-        take(pool.filter { stats[$0.de] == nil && !recent.contains($0.de) }.shuffled())
-        take(pool.filter { stats[$0.de] == nil }.shuffled())
-        take(pool.filter { word in
-            (stats[word.de]?.days.count ?? 0) < 3 && !recent.contains(word.de)
+        if allowNew {
+            takeNew(pool.filter { stats[$0.de] == nil && !recent.contains($0.de) }.shuffled())
+            takeNew(pool.filter { stats[$0.de] == nil }.shuffled())
+        }
+        takeSeen(pool.filter { word in
+            guard let stat = stats[word.de] else { return false }
+            return !FSRS.mastered(stat) && !recent.contains(word.de)
         }.shuffled())
         if out.isEmpty {
-            out = Array(pool.shuffled().prefix(max(size, 1)))
+            out = Array(pool.shuffled().prefix(max(min(size, 8), 1)))
         }
         var memory = UserDefaults.standard.stringArray(forKey: "recentNewWords") ?? []
         for word in out where stats[word.de] == nil {
@@ -493,8 +509,10 @@ final class LearningStore: ObservableObject {
 
     // MARK: statystyki
 
-    var masteredCount: Int { stats.values.filter { $0.days.count >= 3 }.count }
-    var learningCount: Int { stats.values.filter { $0.days.count < 3 }.count }
+    var masteredCount: Int { stats.values.filter { FSRS.mastered($0) }.count }
+    var learningCount: Int {
+        stats.values.filter { ($0.correct + $0.wrong + $0.reps) > 0 && !FSRS.mastered($0) }.count
+    }
     var newCount: Int { words.count - stats.count }
 
     var weakWords: [Word] {
@@ -533,6 +551,8 @@ final class LearningStore: ObservableObject {
         let now = Date()
         return words.filter { stats[$0.de]?.due ?? .distantFuture <= now }.count
     }
+
+    var creditedToday: Int { journal.day == Self.dayKey() ? journal.todayOK : 0 }
 
     var reviewsToday: Int { journal.day == Self.dayKey() ? journal.reviews : 0 }
     var monthTalkSeconds: Int {
@@ -586,7 +606,7 @@ final class LearningStore: ObservableObject {
         for word in words { levelOf[word.de] = word.level }
         for word in FreqBank.all where levelOf[word.de] == nil { levelOf[word.de] = word.level }
         var known = ["A1": 0, "A2": 0, "B1": 0, "B2": 0]
-        for (de, stat) in stats where stat.days.count >= 3 {
+        for (de, stat) in stats where FSRS.mastered(stat) {
             let level = known[levelOf[de] ?? ""] != nil ? (levelOf[de] ?? "A2") : "A2"
             known[level, default: 0] += 1
         }
@@ -628,7 +648,7 @@ final class LearningStore: ObservableObject {
         guard let index = journal.mistakes.firstIndex(where: { $0.id == id }) else { return }
         if ok {
             journal.mistakes[index].hits += 1
-            if journal.mistakes[index].hits >= 2 { journal.mistakes.remove(at: index) }
+            if journal.mistakes[index].hits >= 1 { journal.mistakes.remove(at: index) }
         } else {
             journal.mistakes[index].hits = 0
         }
