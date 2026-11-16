@@ -431,6 +431,7 @@ struct WortSession: View {
     @State private var showHint = false
     @State private var chosen: String?
     @State private var wasOK = false
+    @State private var total = 0
 
     private var card: Vocab? { index < deck.count ? deck[index] : nil }
 
@@ -443,7 +444,7 @@ struct WortSession: View {
                     Text(mode == .review ? "Weź najpierw nowe słówka. Trudne wrócą same." : "Dodaj własne albo wybierz inną kategorię.")
                         .foregroundStyle(Theme.text2)
                 } else if let card {
-                    Text("\(min(index + 1, deck.count)) z \(deck.count)").font(.footnote).foregroundStyle(Theme.text2)
+                    Text("\(index + 1) z \(max(total, 1))").font(.footnote).foregroundStyle(Theme.text2)
                     if !banner.isEmpty {
                         Text(banner).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.ok)
                     }
@@ -516,11 +517,14 @@ struct WortSession: View {
     }
 
     private func load() {
+        guard deck.isEmpty else { return }
         if mode == .review {
             deck = Array(VocabBook.due(store).prefix(max(limit, 1)))
         } else {
             deck = VocabBook.today(store, limit: limit, topic: topic)
         }
+        total = deck.count
+        index = 0
         prepare()
     }
 
@@ -621,13 +625,9 @@ struct WortSession: View {
         showHint = false
         chosen = nil
         banner = ""
-        if wasOK, index < deck.count {
-            replace(deck[index])
-        } else if index < deck.count {
-            again(deck[index])
-            index += 1
-        }
-        if index > deck.count { index = deck.count }
+        guard index < deck.count else { return }
+        if !wasOK { again(deck[index]) }
+        index += 1
         prepare()
     }
 
@@ -701,7 +701,7 @@ struct WortDrill: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             if let card {
-                Text("\(index + 1) z \(deck.count)").font(.footnote).foregroundStyle(Theme.text2)
+                Text("\(index + 1) z \(max(limit, deck.count))").font(.footnote).foregroundStyle(Theme.text2)
                 Text(writing ? card.pl : card.de).font(.title.bold())
                 if writing {
                     TextField("Po niemiecku", text: $typed)
