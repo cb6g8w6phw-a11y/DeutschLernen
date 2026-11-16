@@ -253,6 +253,9 @@ struct QuizView: View {
                         .font(.subheadline)
                         .foregroundStyle(Theme.text2)
                         .multilineTextAlignment(.center)
+                    if !wasCorrect {
+                        VocabHintCard(card: VocabBook.from(w))
+                    }
                 }
                 Button { next() } label: {
                     Text("Następne").primaryButton()

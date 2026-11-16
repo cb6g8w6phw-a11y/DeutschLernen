@@ -15,6 +15,28 @@ enum Talk {
         Speaker.shared.stop()
     }
 
+    static func spoken(_ raw: String) -> String {
+        let labels: Set<String> = ["du", "chef", "arzt", "verkäufer", "verkaufer", "amt", "kollege", "kollegin", "kunde", "kassierer", "kassiererin", "nachbar", "kellner"]
+        let lines = raw.components(separatedBy: .newlines).map { line -> String in
+            var s = line.trimmingCharacters(in: .whitespaces)
+            for _ in 0..<3 {
+                guard let colon = s.firstIndex(of: ":") else { break }
+                let head = s[..<colon].trimmingCharacters(in: .whitespaces)
+                let key = head.lowercased()
+                if labels.contains(key) {
+                    s = s[s.index(after: colon)...].trimmingCharacters(in: .whitespaces)
+                } else {
+                    break
+                }
+            }
+            if s.lowercased().hasPrefix("chef,") {
+                s = String(s.dropFirst(5)).trimmingCharacters(in: .whitespaces)
+            }
+            return s
+        }
+        return lines.filter { !$0.isEmpty }.joined(separator: " ")
+    }
+
     static func germanVoices() -> [AVSpeechSynthesisVoice] {
         AVSpeechSynthesisVoice.speechVoices()
             .filter { $0.language.hasPrefix("de") }
@@ -81,7 +103,7 @@ final class Speaker: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     func speak(_ text: String, rate: Float, voice: String?) {
         try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
         try? AVAudioSession.sharedInstance().setActive(true)
-        let clean = text.replacingOccurrences(of: "*", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let clean = Talk.spoken(text.replacingOccurrences(of: "*", with: "")).trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return }
         generation += 1
         synth.stopSpeaking(at: .immediate)
@@ -250,7 +272,7 @@ final class VoiceBox: NSObject, ObservableObject {
     private let female = ["21m00Tcm4TlvDq8ikWAM", "MF3mGyEYCl7XYWbV9V6O"]
 
     func speak(_ text: String, rate: Float, voice: String?) {
-        let clean = text.replacingOccurrences(of: "*", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let clean = Talk.spoken(text.replacingOccurrences(of: "*", with: "")).trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return }
         generation += 1
         let gen = generation

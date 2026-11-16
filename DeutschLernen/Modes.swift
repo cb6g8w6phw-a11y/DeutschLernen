@@ -323,9 +323,19 @@ struct PictureTalk: View {
     }
 
     private func exact(_ said: String, _ order: [String]) -> Bool {
-        let got = Normalizer.clean(said).split(separator: " ").map(String.init)
-        let want = order.map { Normalizer.clean($0) }
-        return got == want
+        let got = fold(said)
+        let want = order.flatMap { fold($0) }
+        return got == want || got == fold(scene.sample)
+    }
+
+    private func fold(_ s: String) -> [String] {
+        var t = s.lowercased()
+        t = t.replacingOccurrences(of: "ä", with: "ae")
+            .replacingOccurrences(of: "ö", with: "oe")
+            .replacingOccurrences(of: "ü", with: "ue")
+            .replacingOccurrences(of: "ß", with: "ss")
+        let letters = t.unicodeScalars.filter { CharacterSet.alphanumerics.contains($0) || $0 == " " }
+        return String(String.UnicodeScalarView(letters)).split(separator: " ").map(String.init)
     }
 
     private var answerLine: some View {
@@ -383,7 +393,7 @@ struct PictureTalk: View {
         let prompt = """
         Uczeń opisuje obrazek po niemiecku. Obrazek: \(scene.title). Wzorzec: \(scene.sample).
         Napisał: \(said)
-        Popraw zdanie po niemiecku, jednym zdaniem. Pod spodem jedna linia po polsku, co było nie tak. Bez ocen procentowych.
+        Popraw zdanie po niemiecku, jednym zdaniem. Pod spodem jedna linia po polsku, co było nie tak. Kropka i przecinek nie są błędem. Bez ocen procentowych.
         """
         return try? await Gemini.send(messages: [GeminiMessage(role: "user", text: prompt)], system: "Krótka poprawka. Najpierw niemieckie zdanie, potem polski komentarz.")
     }

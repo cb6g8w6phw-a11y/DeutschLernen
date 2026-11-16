@@ -226,6 +226,9 @@ struct GrammarLessonView: View {
             }
             if let picked {
                 MerkeBox(text: picked == lesson.answer ? "Dobrze. Wzorzec: \(lesson.pattern)" : "Jeszcze nie. \(lesson.explain)")
+                if picked != lesson.answer {
+                    VocabHintCard(card: .line(lesson.pattern, lesson.explain))
+                }
                 if picked == lesson.answer {
                     Button("Ułóż zdanie") { step = 2 }.primaryButton()
                 } else {

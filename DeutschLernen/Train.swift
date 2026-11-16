@@ -754,7 +754,7 @@ struct ListenView: View {
                                     .font(.headline)
                                     .foregroundStyle(Theme.ok)
                             } else {
-                                MerkeBox(text: "Gut zu wissen: poprawnie jest „\(item.options[item.answer])”. \(item.pl)")
+                                VocabHintCard(card: .line(Talk.spoken(item.de), item.pl))
                             }
                             Button { Talk.de(item.de, rate: speed, voice: voice.isEmpty ? nil : voice) } label: {
                                 Label("Posłuchaj jeszcze raz, już z tekstem", systemImage: "speaker.wave.2")

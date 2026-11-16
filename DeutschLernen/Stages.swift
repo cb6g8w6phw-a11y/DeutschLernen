@@ -295,7 +295,10 @@ struct PlacementView: View {
                         }
                         .frame(maxWidth: .infinity, minHeight: 48)
                         .foregroundStyle(.white)
-                        .background(i == picked ? Theme.accent : Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .background(tone(i), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    }
+                    if let picked, picked != items[index].answer {
+                        VocabHintCard(card: .line(items[index].ask, items[index].options[items[index].answer]))
                     }
                     if picked != nil {
                         Button("Dalej") {
@@ -315,5 +318,12 @@ struct PlacementView: View {
         }
         .navigationTitle("Test na start")
         .containerBackground(for: .navigation) { Color.black }
+    }
+
+    private func tone(_ i: Int) -> Color {
+        guard let picked else { return Color.white.opacity(0.08) }
+        if i == items[index].answer { return Theme.ok.opacity(0.85) }
+        if i == picked { return Theme.bad.opacity(0.75) }
+        return Color.white.opacity(0.08)
     }
 }

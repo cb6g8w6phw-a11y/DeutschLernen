@@ -10,6 +10,10 @@ struct Vocab: Identifiable, Codable, Hashable {
     let topic: String
     let kind: String
     let note: String
+
+    static func line(_ de: String, _ pl: String) -> Vocab {
+        Vocab(de: de, pl: pl, plural: "", ex: de, exPl: pl, topic: "Zdanie", kind: "", note: "")
+    }
 }
 
 @MainActor
@@ -126,19 +130,29 @@ enum VocabBook {
     static let topics = ["Budowa", "Narzędzia", "Materiały", "Praca", "Codzienne życie", "Sklep", "Lekarz", "Urząd", "Mieszkanie", "Jedzenie", "Transport", "Czasowniki", "Przymiotniki", "Zwroty", "Moje"]
 
     static func today(_ store: LearningStore, limit: Int, topic: String) -> [Vocab] {
-        let key = "wortToday-\(LearningStore.dayKey())-\(topic)-\(limit)"
+        let cap = max(limit, 1)
+        let key = "wortToday-\(LearningStore.dayKey())-\(topic)-\(cap)"
         let pool = core(store, topic: topic)
-        let map = Dictionary(uniqueKeysWithValues: all(store).map { ($0.de, $0) })
+        let map = Dictionary(uniqueKeysWithValues: pool.map { ($0.de, $0) })
         let saved = UserDefaults.standard.stringArray(forKey: key) ?? []
-        var kept = saved.compactMap { map[$0] }.filter { !VocabPace.resting(VocabBook.stat(store, $0), $0.de) }
-        if kept.count < limit {
+        var kept = saved.compactMap { map[$0] }
+        if kept.count < cap {
             let used = Set(kept.map(\.de))
-            let more = pool.filter { !used.contains($0.de) && !VocabPace.resting(VocabBook.stat(store, $0), $0.de) }.shuffled()
-            kept.append(contentsOf: more.prefix(limit - kept.count))
+            let rest = pool.filter { !used.contains($0.de) }
+            let fresh = rest.filter { tier(store, $0) == 0 }.shuffled()
+            let learning = rest.filter { tier(store, $0) == 1 }.shuffled()
+            let known = rest.filter { tier(store, $0) == 2 }.shuffled()
+            kept.append(contentsOf: (fresh + learning + known).prefix(cap - kept.count))
         }
-        let pick = Array(kept.prefix(limit))
-        UserDefaults.standard.set(pick.map(\.de), forKey: key)
+        let pick = Array(kept.prefix(cap))
+        if !pick.isEmpty { UserDefaults.standard.set(pick.map(\.de), forKey: key) }
         return pick
+    }
+
+    private static func tier(_ store: LearningStore, _ card: Vocab) -> Int {
+        let s = stat(store, card)
+        if s.correct + s.wrong + s.reps == 0 { return 0 }
+        return remembered(s) ? 2 : 1
     }
 
     static func core(_ store: LearningStore, topic: String) -> [Vocab] {
@@ -496,7 +510,7 @@ struct WortSession: View {
 
     private func load() {
         if mode == .review {
-            deck = VocabBook.due(store)
+            deck = Array(VocabBook.due(store).prefix(max(limit, 1)))
         } else {
             deck = VocabBook.today(store, limit: limit, topic: topic)
         }
@@ -506,7 +520,7 @@ struct WortSession: View {
     private func prepare() {
         guard index < deck.count else { choices = []; return }
         let card = deck[index]
-        let wrong = VocabBook.all(store).filter { $0.pl != card.pl }.shuffled().prefix(3).map(\.pl)
+        let wrong = VocabBook.all(store).filter { $0.pl != card.pl }.shuffled().prefix(2).map(\.pl)
         choices = ([card.pl] + wrong).shuffled()
     }
 
@@ -729,7 +743,7 @@ struct WortDrill: View {
     private func prepare() {
         guard index < deck.count else { return }
         let card = deck[index]
-        let wrong = VocabBook.all(store).filter { $0.pl != card.pl }.shuffled().prefix(3).map(\.pl)
+        let wrong = VocabBook.all(store).filter { $0.pl != card.pl }.shuffled().prefix(2).map(\.pl)
         choices = ([card.pl] + wrong).shuffled()
         picked = nil
         typed = ""
