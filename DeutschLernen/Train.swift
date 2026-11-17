@@ -219,7 +219,8 @@ struct HomeArrange: View {
 
 struct TodayView: View {
     @EnvironmentObject var store: LearningStore
-    @AppStorage("dailyMinutes") private var dailyMinutes = 12
+    @AppStorage("dailyMinutes") private var dailyMinutes = 45
+    @State private var planTick = 0
 
     var body: some View {
         NavigationStack {
@@ -248,46 +249,89 @@ struct TodayView: View {
                                 .padding(.vertical, 5)
                                 .background(Theme.ok, in: Capsule())
                             Spacer()
-                            Text("\(dailyMinutes) minut")
+                            Stepper("\(dailyMinutes) minut", value: $dailyMinutes, in: 15...90, step: 15)
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(Theme.text2)
                         }
-                        Text("Zrozum Niemców\nna budowie.")
-                            .font(.system(size: 32, weight: .bold))
-                        Text("Jedna kolejka: powtórki, nowe zdania, słuchanie i krótkie mówienie.")
-                            .foregroundStyle(Theme.text2)
-                            .fixedSize(horizontal: false, vertical: true)
-                        HStack {
-                            Text("Postęp lekcji")
+                        if let current {
+                            Text(current.title)
+                                .font(.system(size: 32, weight: .bold))
+                            Text("Aplikacja dobiera kolejność z powtórek, błędów i słabszej umiejętności.")
                                 .foregroundStyle(Theme.text2)
-                            Spacer()
-                            Text("\(planNow) / \(dailyMinutes) min")
-                                .font(.headline)
-                        }
-                        ProgressView(value: Double(planNow), total: Double(max(dailyMinutes, 1)))
-                            .tint(Theme.ok)
-                        NavigationLink { DailyRunView() } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "play.circle")
-                                Text("Rozpocznij dzisiejszą naukę")
-                                    .font(.body.weight(.bold))
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("1. TERAZ – ZACZNIJ TUTAJ")
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(Theme.ok)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Theme.ok.opacity(0.16), in: Capsule())
+                                Text(current.title).font(.title3.bold())
+                                Text("\(current.minutes) minut · \(current.detail)")
+                                    .foregroundStyle(Theme.text2)
+                                Text("Dlaczego? \(current.why)")
+                                    .font(.subheadline)
+                                    .foregroundStyle(Theme.ok)
+                                PlanStepLink(block: current, prominent: true)
+                                Button("Pomiń i daj inne") {
+                                    DayPlan.advance(done: false)
+                                    planTick += 1
+                                }
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(Theme.text2)
                             }
-                            .foregroundStyle(Theme.ink)
-                            .frame(maxWidth: .infinity, minHeight: 54)
-                            .background(Theme.ok, in: Capsule())
+                            .padding(14)
+                            .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                            ForEach(Array(upcoming.enumerated()), id: \.element.id) { offset, step in
+                                HStack(alignment: .top, spacing: 12) {
+                                    Text("\(offset + 2)")
+                                        .font(.headline)
+                                        .foregroundStyle(Theme.text2)
+                                        .frame(width: 18)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(step.title).font(.headline)
+                                        Text("\(step.minutes) minut · \(step.detail)")
+                                            .font(.subheadline)
+                                            .foregroundStyle(Theme.text2)
+                                    }
+                                }
+                            }
+                            HStack {
+                                Text("Krok \(min(DayPlan.index() + 1, max(planBlocks.count, 1))) z \(planBlocks.count)")
+                                    .foregroundStyle(Theme.text2)
+                                Spacer()
+                                Text("\(studiedMinutes) / \(dailyMinutes) min")
+                                    .font(.headline)
+                            }
+                            ProgressView(value: Double(DayPlan.index()), total: Double(max(planBlocks.count, 1)))
+                                .tint(Theme.ok)
+                        } else {
+                            Text("Dzień zamknięty")
+                                .font(.system(size: 32, weight: .bold))
+                            Text("Zrobione: \(DayPlan.finished().count). Pominięte: \(DayPlan.skipped().count).")
+                            Text("Czas dziś: \(studiedMinutes) min. Poprawne odpowiedzi: \(store.journal.day == LearningStore.dayKey() ? store.journal.todayOK : 0).")
+                                .foregroundStyle(Theme.text2)
+                            if let strong = strongSkill {
+                                Text("Mocniej wychodzi: \(strong).").foregroundStyle(Theme.ok)
+                            }
+                            if let miss = store.journal.mistakes.first {
+                                Text("Do poprawy: \(miss.fix.isEmpty ? miss.text : miss.fix)")
+                                    .foregroundStyle(Theme.text2)
+                            }
+                            Text("Jutro plan zacznie się od innego tematu, nie od tego samego kroku.")
+                                .foregroundStyle(Theme.text2)
                         }
-                        .buttonStyle(.plain)
                     }
                     .padding(16)
                     .background(Color(hex: "13241C"), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .id(planTick)
                     Text("Twój trening")
                         .font(.title3.weight(.semibold))
                     LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                        trainTile("Słuchanie", "Zrozum szybki niemiecki", "headphones", dayPlan.blocks.first { $0.id == "listen" }?.minutes ?? 10) { ListenView() }
-                        trainTile("Rozmowa AI", "Rozmawiaj po niemiecku", "mic", dayPlan.blocks.first { $0.id == "talk" }?.minutes ?? 10) { TutorView() }
+                        trainTile("Słuchanie", "Zrozum szybki niemiecki", "headphones", dayPlan.blocks.first { $0.kind == "listen" }?.minutes ?? 10) { ListenView() }
+                        trainTile("Rozmowa AI", "Rozmawiaj po niemiecku", "mic", dayPlan.blocks.first { $0.kind == "talk" || $0.kind == "speak" }?.minutes ?? 10) { TutorView() }
                         trainTile("Czat Gemini", "Rozmowa bez limitu", "text.bubble", 0) { ChatView() }
-                        trainTile("Praca", "Szef i współpracownicy", "helmet", dayPlan.blocks.first { $0.id == "work" }?.minutes ?? 10) { WorkHubView() }
-                        trainTile("Codzienne życie", "Niemiecki poza pracą", "house", dayPlan.blocks.first { $0.id == "life" }?.minutes ?? 10) { DailySituationsView() }
+                        trainTile("Praca", "Szef i współpracownicy", "helmet", dayPlan.blocks.first { $0.kind == "scene" }?.minutes ?? 10) { WorkHubView() }
+                        trainTile("Codzienne życie", "Niemiecki poza pracą", "house", dayPlan.blocks.first { $0.kind == "text" }?.minutes ?? 8) { DailySituationsView() }
                     }
                     NavigationLink { RepairView() } label: {
                         HStack(spacing: 12) {
@@ -326,7 +370,55 @@ struct TodayView: View {
             .navigationTitle("Start")
             .screenChrome()
             .containerBackground(for: .navigation) { Color.black }
+            .onAppear {
+                if UserDefaults.standard.object(forKey: "minutes45") == nil {
+                    dailyMinutes = 45
+                    UserDefaults.standard.set(true, forKey: "minutes45")
+                }
+                DayPlan.catchUp(store)
+                planTick += 1
+            }
+            .onChange(of: dailyMinutes) { _, _ in
+                if DayPlan.index() == 0 { DayPlan.rebuild(store) }
+                planTick += 1
+            }
         }
+    }
+
+    private var planBlocks: [PlanBlock] {
+        _ = planTick
+        return DayPlan.ensure(store)
+    }
+
+    private var current: PlanBlock? {
+        let blocks = planBlocks
+        let cursor = DayPlan.index()
+        guard cursor < blocks.count else { return nil }
+        return blocks[cursor]
+    }
+
+    private var upcoming: [PlanBlock] {
+        let blocks = planBlocks
+        let cursor = DayPlan.index() + 1
+        guard cursor < blocks.count else { return [] }
+        return Array(blocks[cursor...])
+    }
+
+    private var studiedMinutes: Int {
+        let ids = ["vocab", "vocab2", "listen", "speak", "talk", "work", "life", "fix"]
+        return ids.reduce(0) { $0 + LessonClock.seconds($1) } / 60
+    }
+
+    private var strongSkill: String? {
+        let rows = [
+            ("słuchanie", store.journal.skillListenOK, store.journal.skillListenBad),
+            ("mówienie", store.journal.skillSpeakOK, store.journal.skillSpeakBad),
+            ("zdania", store.journal.skillSentenceOK, store.journal.skillSentenceBad),
+            ("słówka", store.journal.skillVocabOK, store.journal.skillVocabBad)
+        ]
+        return rows.filter { $0.1 + $0.2 >= 3 }.max { lhs, rhs in
+            Double(lhs.1) / Double(lhs.1 + lhs.2) < Double(rhs.1) / Double(rhs.1 + rhs.2)
+        }?.0
     }
 
     private var dayPlan: (blocks: [PlanBlock], note: String) { DayPlan.make(store.journal) }
