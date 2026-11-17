@@ -3,7 +3,7 @@ import SwiftUI
 struct PlanBlock: Identifiable, Equatable {
     let id: String
     let title: String
-    let minutes: Int
+    var minutes: Int
     let why: String
     var detail: String = ""
     var kind: String = ""

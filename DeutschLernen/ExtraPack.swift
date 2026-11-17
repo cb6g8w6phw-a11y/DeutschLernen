@@ -187,6 +187,7 @@ struct RepairView: View {
     @State private var note = ""
     @State private var cleared: [String: Int] = [:]
     @State private var solved = 0
+    @State private var options: [String] = []
     @FocusState private var writing: Bool
 
     private var item: RepairItem? { index < round.count ? round[index] : nil }

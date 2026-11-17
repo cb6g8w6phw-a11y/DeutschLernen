@@ -787,7 +787,7 @@ final class LearningStore: ObservableObject {
         if changed { publishJournal() }
     }
 
-    static func dayKey(_ date: Date = Date()) -> String {
+    nonisolated static func dayKey(_ date: Date = Date()) -> String {
         let f = DateFormatter()
         f.calendar = Calendar(identifier: .gregorian)
         f.locale = Locale(identifier: "en_US_POSIX")
