@@ -362,6 +362,7 @@ struct GrammarLessonView: View {
             streak: store.streak
         )
         ProgressBook.add(row)
+        if okCount + badCount > 0 { DayPlan.complete(kind: "grammar") }
         report = row
     }
 

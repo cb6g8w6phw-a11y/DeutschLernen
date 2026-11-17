@@ -604,6 +604,7 @@ struct TextStudyView: View {
             streak: store.streak
         )
         ProgressBook.add(row)
+        if correct + wrong > 0 { DayPlan.complete(kind: "text") }
         report = row
     }
 }

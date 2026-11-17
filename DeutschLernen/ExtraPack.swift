@@ -186,7 +186,7 @@ struct RepairView: View {
     @State private var typed = ""
     @State private var note = ""
     @State private var cleared: [String: Int] = [:]
-    @State private var options: [String] = []
+    @State private var solved = 0
     @FocusState private var writing: Bool
 
     private var item: RepairItem? { index < round.count ? round[index] : nil }
@@ -321,6 +321,11 @@ struct RepairView: View {
 
     private func check(_ item: RepairItem) {
         writing = false
+        solved += 1
+        let key = "plan-fix-work-\(LearningStore.dayKey())"
+        let done = UserDefaults.standard.integer(forKey: key) + 1
+        UserDefaults.standard.set(done, forKey: key)
+        if done >= 4 { DayPlan.complete(kind: "fix") }
         if Normalizer.same(typed, item.right) {
             var next = cleared
             next[item.right] = (next[item.right] ?? 0) + 1
@@ -347,6 +352,9 @@ struct RepairView: View {
         typed = ""
         note = ""
         options = index < round.count ? mix(for: round[index]) : []
+        if round.isEmpty, solved > 0 {
+            DayPlan.complete(kind: "fix")
+        }
     }
 
     private func chips(_ item: RepairItem) -> some View {

@@ -637,6 +637,9 @@ struct TutorView: View {
                 role: "model",
                 german: "Koniec sesji. Te zwroty są już w fiszkach.",
                 polish: list))
+            if turns.contains(where: { $0.role == "user" }) {
+                DayPlan.complete(kind: "talk")
+            }
         } catch {
             note = error.localizedDescription
         }

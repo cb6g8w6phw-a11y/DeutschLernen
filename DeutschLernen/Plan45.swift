@@ -67,25 +67,23 @@ enum DayPlan {
 
     static func index() -> Int { UserDefaults.standard.integer(forKey: indexKey) }
 
-    static func markOpened(_ clock: String) {
-        let name = "daypath-base-\(LearningStore.dayKey())-\(clock)"
-        if UserDefaults.standard.object(forKey: name) == nil {
-            UserDefaults.standard.set(LessonClock.seconds(clock), forKey: name)
-        }
+    static func currentKind() -> String? {
+        let blocks = load()
+        let cursor = index()
+        guard cursor < blocks.count else { return nil }
+        return blocks[cursor].kind
     }
 
-    @MainActor
-    static func catchUp(_ store: LearningStore) {
-        let blocks = ensure(store)
+    @discardableResult
+    static func complete(kind: String) -> Bool {
+        let blocks = load()
         let cursor = index()
-        guard cursor < blocks.count else { return }
+        guard cursor < blocks.count else { return false }
         let step = blocks[cursor]
-        let name = "daypath-base-\(LearningStore.dayKey())-\(step.clock)"
-        guard UserDefaults.standard.object(forKey: name) != nil else { return }
-        let base = UserDefaults.standard.integer(forKey: name)
-        if LessonClock.seconds(step.clock) >= base + 60 {
-            advance(done: true)
-        }
+        guard step.kind == kind else { return false }
+        if finished().contains(step.id) { return false }
+        advance(done: true)
+        return true
     }
 
     static func advance(done: Bool) {
@@ -207,7 +205,6 @@ struct PlanStepLink: View {
                     step.lessonClock(block.clock, goal: block.minutes)
                 }
             }
-            .onAppear { DayPlan.markOpened(block.clock) }
         } label: {
             Text(prominent ? "Rozpocznij pierwsze ćwiczenie" : "Rozpocznij")
                 .font(.body.weight(.bold))

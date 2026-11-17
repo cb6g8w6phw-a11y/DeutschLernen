@@ -261,15 +261,65 @@ struct WortRun: View {
             } else {
                 Text("Wróci jutro albo wcześniej: \(tomorrow.joined(separator: ", "))").foregroundStyle(Theme.text2)
             }
+            Text("Ten krok planu zalicza się dopiero, gdy ta sesja jest skończona.")
+                .font(.footnote)
+                .foregroundStyle(Theme.text2)
         }
+    }
+
+    private var saveKey: String { "wort-run-\(mode)-\(topic)-\(band)-\(LearningStore.dayKey())" }
+    private var planKind: String {
+        if mode == "hard" { return "weak" }
+        if mode == "new" { return "fresh" }
+        return ""
+    }
+
+    private struct RunSave: Codable {
+        var ids: [String]
+        var index: Int
+        var good: Int
+        var bad: [String]
+        var tomorrow: [String]
+        var fresh: Int
     }
 
     private func load() {
         guard !loaded else { return }
         loaded = true
+        if restore() { return }
         deck = VocabBook.today(store, limit: limit, topic: topic, band: band, mode: mode)
         fresh = deck.filter { VocabBook.stat(store, $0).correct + VocabBook.stat(store, $0).wrong + VocabBook.stat(store, $0).reps == 0 }.count
+        persist()
         prepare()
+    }
+
+    private func restore() -> Bool {
+        guard let data = UserDefaults.standard.data(forKey: saveKey),
+              let saved = try? JSONDecoder().decode(RunSave.self, from: data),
+              !saved.ids.isEmpty else { return false }
+        var map: [String: Vocab] = [:]
+        for card in VocabBook.all(store) { map[card.de] = card }
+        let cards = saved.ids.compactMap { map[$0] }
+        guard !cards.isEmpty else { return false }
+        if saved.index >= cards.count {
+            UserDefaults.standard.removeObject(forKey: saveKey)
+            return false
+        }
+        deck = cards
+        good = saved.good
+        bad = saved.bad
+        tomorrow = saved.tomorrow
+        fresh = saved.fresh
+        index = saved.index
+        prepare()
+        return true
+    }
+
+    private func persist() {
+        let saved = RunSave(ids: deck.map(\.de), index: index, good: good, bad: bad, tomorrow: tomorrow, fresh: fresh)
+        if let data = try? JSONEncoder().encode(saved) {
+            UserDefaults.standard.set(data, forKey: saveKey)
+        }
     }
 
     private func prepare() {
@@ -323,6 +373,10 @@ struct WortRun: View {
             tomorrow.append(card.de)
         }
         index += 1
+        persist()
+        if index >= deck.count, !deck.isEmpty, !planKind.isEmpty {
+            DayPlan.complete(kind: planKind)
+        }
         prepare()
     }
 }

@@ -272,7 +272,7 @@ struct TodayView: View {
                                     .font(.subheadline)
                                     .foregroundStyle(Theme.ok)
                                 PlanStepLink(block: current, prominent: true)
-                                Button("Pomiń i daj inne") {
+                                Button("Pomiń") {
                                     DayPlan.advance(done: false)
                                     planTick += 1
                                 }
@@ -375,7 +375,7 @@ struct TodayView: View {
                     dailyMinutes = 45
                     UserDefaults.standard.set(true, forKey: "minutes45")
                 }
-                DayPlan.catchUp(store)
+                DayPlan.ensure(store)
                 planTick += 1
             }
             .onChange(of: dailyMinutes) { _, _ in
@@ -930,6 +930,9 @@ struct ListenView: View {
         saved = false
         index += 1
         showIsland()
+        if !deck.isEmpty, index >= deck.count {
+            DayPlan.complete(kind: "listen")
+        }
     }
 
     private func showIsland() {

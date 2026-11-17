@@ -124,6 +124,9 @@ struct SpeakCoach: View {
                     }
                 } else if started {
                     LessonDone(title: "Koniec mówienia", line: "Zdania, które wypadły, wrócą w trudnych.")
+                        .onAppear {
+                            if !deck.isEmpty { DayPlan.complete(kind: "speak") }
+                        }
                 } else {
                     Text("Ładuję…")
                 }
@@ -135,9 +138,11 @@ struct SpeakCoach: View {
         .onAppear {
             mic.arm("de-DE")
             guard deck.isEmpty else { return }
+            if restore() { return }
             let pack = VocabBook.today(store, limit: 8, topic: "Wszystko")
             deck = pack.isEmpty ? Array(VocabBook.extra.prefix(8)) : pack
             started = true
+            persist()
             if let first = deck.first { Talk.de(first.ex.isEmpty ? first.de : first.ex, rate: 0.46) }
         }
         .onChange(of: mic.listening) { was, now in
@@ -175,7 +180,33 @@ struct SpeakCoach: View {
         missing = []
         mic.text = ""
         revealed = false
+        persist()
         if index < deck.count { Talk.de(line, rate: 0.46) }
+    }
+
+    private var speakKey: String { "speak-run-\(LearningStore.dayKey())" }
+
+    private func persist() {
+        UserDefaults.standard.set(deck.map(\.de), forKey: speakKey)
+        UserDefaults.standard.set(index, forKey: speakKey + "-i")
+    }
+
+    private func restore() -> Bool {
+        let ids = UserDefaults.standard.stringArray(forKey: speakKey) ?? []
+        let saved = UserDefaults.standard.integer(forKey: speakKey + "-i")
+        guard !ids.isEmpty else { return false }
+        var map: [String: Vocab] = [:]
+        for card in VocabBook.all(store) { map[card.de] = card }
+        let cards = ids.compactMap { map[$0] }
+        guard !cards.isEmpty, saved < cards.count else {
+            UserDefaults.standard.removeObject(forKey: speakKey)
+            return false
+        }
+        deck = cards
+        index = saved
+        started = true
+        if index < deck.count { Talk.de(line, rate: 0.46) }
+        return true
     }
 }
 
